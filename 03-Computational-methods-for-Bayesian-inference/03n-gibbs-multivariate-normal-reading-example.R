@@ -121,7 +121,7 @@ mean(ytildepost[,2] > ytildepost[,1])
 # compare joint density of means
 d2d = MASS::kde2d(mupost[,1], mupost[,2], n = 50)
 # to plot results
-autoimage::pimage(d2d, col = topo.colors(64),
+autoimage::pimage(d2d, col = hcl.colors(64),
        xlab = "mu pretest", ylab = "mu posttest")
 contour(d2d, add = TRUE)
 points(mupost[1:100,], pch = 20)

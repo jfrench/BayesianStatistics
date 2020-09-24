@@ -1,7 +1,7 @@
 # An approximating the posterior with a normal
 # From an unnormalized density
 
-# Data distribution: y_1, ..., y_n | \theta ~ i.i.d Poisson(theta)
+# Data distribution: y_1, ..., y_n | theta ~ i.i.d Poisson(theta)
 # Prior distribution: theta ~ Exp(1)
 
 # Generate some synthetic data
@@ -101,11 +101,9 @@ vqtheta_robust = Vectorize(qtheta_robust, vectorize.args = "theta")
 # determine normalizing constant
 (nconst = integrate(f = vqtheta_robust, lower = 0, upper = 10, y = y))
 
-
-
 # posterior density function
 dpost = function(theta, y) {
-  qtheta(theta, y)/nconst$value
+  qtheta_robust(theta, y)/nconst$value
 }
 
 # vectorized version of dpost for integrate function

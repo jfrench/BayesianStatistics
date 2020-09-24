@@ -29,10 +29,10 @@ plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
 lines(theta, gM(theta), col = "blue")
 abline(v = 1/2)
 
-B = 100000
+B = 1000
 mytheta = numeric(B)
 
-i = 0
+i = 0 # the samples accepted
 while (i < B) {
   x = runif(1) # sample from g distribution
 

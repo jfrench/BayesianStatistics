@@ -1,7 +1,7 @@
 # An approximating the posterior with a normal
 # From an unnormalized density
 
-# Data distribution: y_1, ..., y_n | \theta ~ i.i.d Poisson(theta)
+# Data distribution: y_1, ..., y_n | theta ~ i.i.d Poisson(theta)
 # Prior distribution: theta ~ Exp(1)
 
 # Generate some synthetic data

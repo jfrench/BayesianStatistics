@@ -1,4 +1,5 @@
 # library(mvtnorm)
+# library(cubature)
 
 # An example of finding the posterior mean
 # for two-parameter posterior
@@ -60,7 +61,7 @@ map = optim(par = c(12.5, 1),
             y = y,
             control = list(fnscale = -1))
 
-# return the observation information matrix
+# return the observed information matrix
 obs_I = function(thetahat, n) {
   mu = thetahat[1]
   sigma = sqrt(thetahat[2])
@@ -68,6 +69,7 @@ obs_I = function(thetahat, n) {
   d2dmu2 = -n/sigma^2
   # derivative of log likelihood w/r to mu and sigmasq
   d2dmudsigmasq = -sum((y - mu))/sigma^4
+  # 2nd derivative of log likelihood w/r to sigmasq
   d2dsigmasq2 = n/(2 * sigma^4) - 1/sigma^6 * sum((y-mu)^2)
   #
   H = cbind(c(d2dmu2, d2dmudsigmasq), c(d2dmudsigmasq, d2dsigmasq2))
