@@ -33,12 +33,13 @@ gibbs = function(theta) {
   theta_sims = matrix(0, nrow = B, ncol = 2)
   # run gibbs sampler for B cycles
   for (i in 1:B) {
-    # determine full conditional mean
-    m1 = y1 + rho*(theta[2] - y2)
-    # simulate from distribution from full conditional for theta1
+    # determine full conditional mean for theta1
+    m1 = y1 + rho * (theta[2] - y2)
+    # simulate from full conditional distribution for theta1
     theta[1] = rnorm(1, m1, sigma)
-    # do the same thing for theta2
-    m2 = y2 + rho*(theta[1] - y1)
+    # determine full conditional mean for theta2
+    m2 = y2 + rho * (theta[1] - y1)
+    # simulate from full conditional distribution for theta1
     theta[2] = rnorm(1, m2, sigma)
     # save sample
     theta_sims[i, ] = theta
@@ -54,7 +55,7 @@ plot(chain1, pch = ".", xlab = expression(theta[1]),
 title("Samples from Gibbs sampler")
 
 # Create three more chains with different starting values
-chain2 = gibbs(c(-2.5, 2.5))
+chain2 = gibbs(c(-2.5, -2.5))
 chain3 = gibbs(c(2.5, -2.5))
 chain4 = gibbs(c(2.5, 2.5))
 #plot samples from each chain
