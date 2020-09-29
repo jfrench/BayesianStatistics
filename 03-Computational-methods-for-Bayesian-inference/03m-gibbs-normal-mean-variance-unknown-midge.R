@@ -77,7 +77,7 @@ taunsq = (nu0*sigma0^2 + (n - 1) * s^2 + k0 * n/kn * (ybar - mu0)^2)/vn
 plot(density(mupost), main = "", xlab = "mu", xlim = c(1.6, 2))
 # plot true posterior density for mu
 x = seq(-1, 3, len = 1001)
-lines(x, dst(museq, df = nun, mean = mun, sd = sqrt(taunsq/kn)),
+lines(x, dst(x, df = nun, mean = mun, sd = sqrt(taunsq/kn)),
       col = "orange")
 title("Posterior Density for mu")
 legend("topright", legend = c("Gibbs", "true"), col = c("black", "orange"),
