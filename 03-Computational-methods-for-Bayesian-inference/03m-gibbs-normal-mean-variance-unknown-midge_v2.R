@@ -10,14 +10,14 @@
 # the population mean theta.
 
 # Data distribution: y_1, ..., y_n| mu, sigma^2 ~ iid N(mu, sigma^2)
-# Prior for mu: mu | sigma^2, mu0, kappa0 ~  N(mu0, sigma^2/kapp0)
+# Prior for mu: mu | sigma^2, mu0, kappa0 ~  N(mu0, sigma^2/kappa0)
 # w/ mu0 = 1.9 and kappa0 = 1
 # Prior for sigma^2: sigma^2 | nu0, sigma0^2 ~ Inv-Chisq(nu0, sigma0^2),
-# w/ nu = 1 and sigma0 = 0.1.
+# w/ nu0 = 1 and sigma0 = 0.1.
 
 # Studies of other populations suggest that the true mean should be
 # around 1.9 mm with a standard deviation of 0.1.  However, this
-# population may be different from the others, so we choose k0 = vu0 =
+# population may be different from the others, so we choose k0 = nu0 =
 # 1 so that the prior distributions are only weakly centered around
 # these estimates from other populations.
 
@@ -77,7 +77,7 @@ taunsq = (nu0*sigma0^2 + (n - 1) * s^2 + k0 * n/kn * (ybar - mu0)^2)/vn
 plot(density(mupost), main = "", xlab = "mu", xlim = c(1.6, 2))
 # plot true posterior density for mu
 x = seq(-1, 3, len = 1001)
-lines(x, dst(x, df = nun, mean = mun, sigma = taunsq/kn),
+lines(x, dst(x, df = nun, mean = mun, sigma = sqrt(taunsq/kn)),
       col = "orange")
 title("Posterior Density for mu")
 legend("topright", legend = c("Gibbs", "true"), col = c("black", "orange"),
@@ -101,11 +101,11 @@ qst(p, df = nun, mean = mun, sigma = sqrt(taunsq/kn))
 quantile(sigmasqpost, prob = p)
 qinvchisq(p, df = vn, scale = taunsq)
 
-#95% posterior interval for mu
+#95% central credible interval for mu
 quantile(mupost, c(.025, .975))
 qst(c(0.025, 0.975), df = nun, mean = mun, sigma = sqrt(taunsq/kn))
 
-#95% posterior interval for sigmasq
+#95% central credible interval for sigmasq
 quantile(sigmasqpost, c(.025, .975))
 qinvchisq(c(0.025, 0.975), df = vn, scale = taunsq)
 
