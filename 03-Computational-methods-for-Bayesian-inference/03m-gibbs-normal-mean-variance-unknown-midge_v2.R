@@ -10,8 +10,8 @@
 # the population mean theta.
 
 # Data distribution: y_1, ..., y_n| mu, sigma^2 ~ iid N(mu, sigma^2)
-# Prior for mu: mu | sigma^2, mu0, kappa0 ~  N(mu0, sigma^2/kappa0)
-# w/ mu0 = 1.9 and kappa0 = 1
+# Prior for mu: mu | sigma^2, mu0, k0 ~  N(mu0, sigma^2/k0)
+# w/ mu0 = 1.9 and k0 = 1
 # Prior for sigma^2: sigma^2 | nu0, sigma0^2 ~ Inv-Chisq(nu0, sigma0^2),
 # w/ nu0 = 1 and sigma0 = 0.1.
 

@@ -1,5 +1,5 @@
-# library(MASS)
-# library(autoimage)
+library(MASS)
+library(autoimage)
 
 ### Taken from Chapter 7 of A First Course in Bayesian Statistical Methods
 ### by Peter Hoff.
