@@ -12,27 +12,35 @@ library(mvtnorm) # need to sample from multivariate normal and evaluate
 # The proposal distribution will also be bivariate normal,
 # centered at the current iteration value of theta with a
 # scaled version of I for the covariance.
-# i.e., theta.star | theta^(t-1) ~ N(theta^(t-1) , const * I).
+# i.e., theta_star | theta^(t-1) ~ N(theta^(t-1) , const * I).
 #
 # Since the proposal distribution is not only symmetric,
-# but depends only on the distance |theta.star - theta.current|,
+# but depends only on the distance |theta_star - theta_current|,
 # we can implement the  random walk metropolis algorithm
 # because the ratio r simplifies to the ratio of posterior
 # densities.
 
-#Define function to perform metropolis algorithm
-mh = function(B, start, Imat, const) {
+# Define function to perform metropolis algorithm
+# B = number of cycles to run
+# start = d-dimensional vector of starting values
+# const = scaling constant c related to size of jump for
+#         proprosal distribution
+mh = function(B, start, const) {
+  # identity matrix for proposal distribution
+  Imat = diag(length(start))
   # store iterations
   theta = matrix(0, nrow = B + 1, ncol = length(start))
   theta[1, ] = start # first row of matrix is starting values
 	for (i in 2:(B + 1)) {
 	  # use c to convert from matrix to vector
-		theta.star = c(rmvnorm(1, theta[i - 1, ], const * Imat))
+		theta_star = c(rmvnorm(1, theta[i - 1, ], const * Imat))
+		# Because we're using a random walk M-H, the acceptance ratio
+		# simplifies to the ratio of the likelihood functions evaluated at
     # observed values of c(0, 0)
-		r = dmvnorm(theta.star, mean = c(0, 0), sigma = Imat) /
-         dmvnorm(theta[i - 1,], mean = c(0, 0), sigma = Imat)
+		r = dmvnorm(c(0, 0), mean = theta_star, sigma = Imat) /
+         dmvnorm(c(0, 0), mean = theta[i - 1,], sigma = Imat)
 		if (runif(1) <= min(r, 1)) {
-			theta[i,] = theta.star
+			theta[i,] = theta_star
 		} else {
 			theta[i,] = theta[i - 1,]
 		}
@@ -41,12 +49,11 @@ mh = function(B, start, Imat, const) {
 }
 
 B = 1000
-Imat = matrix(c(1, 0, 0, 1), nrow = 2)
-mh1 = mh(B, c(0, 0), Imat, const = .2^2)
-mh2 = mh(B, c(-3, 3), Imat, const = .2^2)
-mh3 = mh(B, c(-3, -3), Imat, const = .2^2)
-mh4 = mh(B, c(3, -3), Imat, const = .2^2)
-mh5 = mh(B, c(3, 3), Imat, const = .2^2)
+mh1 = mh(B, c(0, 0), const = .2^2)
+mh2 = mh(B, c(-3, 3), const = .2^2)
+mh3 = mh(B, c(-3, -3), const = .2^2)
+mh4 = mh(B, c(3, -3), const = .2^2)
+mh5 = mh(B, c(3, 3), const = .2^2)
 
 # Plot first 50 steps of M-H chain.  Note starting point.
 plot(c(-4, 4), c(-4, 4), type = "n", xlab = "theta1", ylab = "theta2")
@@ -78,11 +85,11 @@ points(mh4[(B/2 + 1):(B + 1), ], pch = ".")
 points(mh5[(B/2 + 1):(B + 1), ], pch = ".")
 
 # Try same things with a different proposal that allows for larger jumps
-mh1 = mh(B, c(0, 0), Imat, const = 1)
-mh2 = mh(B, c(-3, 3), Imat, const = 1)
-mh3 = mh(B, c(-3, -3), Imat, const = 1)
-mh4 = mh(B, c(3, -3), Imat, const = 1)
-mh5 = mh(B, c(3, 3), Imat, const = 1)
+mh1 = mh(B, c(0, 0), const = 1)
+mh2 = mh(B, c(-3, 3), const = 1)
+mh3 = mh(B, c(-3, -3), const = 1)
+mh4 = mh(B, c(3, -3), const = 1)
+mh5 = mh(B, c(3, 3), const = 1)
 
 # Plot first 50 steps of M-H chain.  Note starting point.
 plot(c(-4, 4), c(-4, 4), type = "n",

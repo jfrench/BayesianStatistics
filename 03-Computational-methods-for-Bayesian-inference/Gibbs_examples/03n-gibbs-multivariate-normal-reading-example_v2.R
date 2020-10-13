@@ -1,5 +1,8 @@
 library(MASS)
 library(autoimage)
+# load useful distributions
+# devtools::install_github("jfrench/bayesutils")
+library(bayesutils)
 
 ### Taken from Chapter 7 of A First Course in Bayesian Statistical Methods
 ### by Peter Hoff.
@@ -29,10 +32,6 @@ library(autoimage)
 # choosing nu0 = 4 loosely centers samples of Sigma around K0.
 # So we choose K0[1,1]=K0[2,2] = 625 and the diagonal elements equal to
 # 312.5.  We make the same choice for L0.
-
-# load useful distributions
-# devtools::install_github("jfrench/bayesutils")
-library(bayesutils)
 
 # load data
 y = matrix(c(
@@ -77,7 +76,7 @@ for (i in 1:B) {
 	#simulate from distribution
 	Ln = solve(solve(L0) + n * solve(Sigma))
 	mun = Ln %*% (solve(L0) %*% mu0 + n * solve(Sigma) %*% ybar)
-	mu = as.vector((rmvnorm(1, mu = mun, v = Ln)))
+	mu = c((rmvnorm(1, mu = mun, v = Ln)))
 
 	#determine full conditional distribution of Sigma,
 	#simulate from distribution
@@ -113,7 +112,7 @@ lines(dposttest, col = "orange")
 legend("topleft", legend = c("mu pretest", "mu postest"),
 	col = c("black", "orange"), lwd = c(1, 1))
 
-# Determine probability mu2 > mu1
+# Determine posterior probability mu2 > mu1
 mean(mupost[,2] > mupost[,1])
 
 # Determine probability ytilde2 > ytilde1
