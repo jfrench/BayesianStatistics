@@ -3,12 +3,12 @@ library(coda)
 #Example 7.2, Givens and Hoeting (2005), Estimating a mixture parameter
 
 # Suppose we have observed 100 observations sampled
-# i.i.d. from the mixture distribution: theta * N(7, .5^2) + (1 - theta) * N(10, .5)^2
+# i.i.d. from the mixture distribution: theta * N(7, .5^2) + (1 - theta) * N(10, .5^2)
 # Suppose we want to estimate theta.  Note that the true theta = .7
 #
-# Data distribution: p(y | theta) = theta * N(7, .5^2) + (1 - theta) * N(10, .5)^2
+# Data distribution: p(y | theta) = theta * N(7, .5^2) + (1 - theta) * N(10, .5^2)
 # Prior distribution: theta ~ Beta(1, 1)
-# Jumping distribution: theta.star ~ Beta(alpha, beta)
+# Proposal distribution: theta_star ~ Beta(alpha, beta)
 
 y = c(7.25325222659913, 6.85652267046824, 7.23643792894966, 7.03343611519664,
 6.9186591609056, 6.65649879051228, 6.42308043084932, 7.46636287619574,
@@ -41,45 +41,62 @@ y = c(7.25325222659913, 6.85652267046824, 7.23643792894966, 7.03343611519664,
 # these do not depend on the current value of theta,
 # so we can implement an independence MH sampler.
 
-#Calculate likelihood of a value
+#Calculate likelihood of a single value y
 lik = function(y, w) {
 	w * dnorm(y, 7, .5) + (1 - w) * dnorm(y, 10, .5)
 }
 
-# proposal densities
+# log of joint likelihood
+log_jlik = function(y, w) {
+  sum(log(lik(y, w)))
+}
+
+# plot target and proposal densities
+
+# seq of theta values
 x = seq(0, 1, len = 1001)
+# plot proposal density Beta(2, 10)
 plot(x, dbeta(x, 2, 10), type = "l", ylab = "density")
-abline(h = 1, col = "red")
-legend("topright", legend = c("Beta(2, 10)", "Beta(1, 1)"), col = c("black", "red"),
+# Beta(1, 1) proposal density
+abline(h = 1, col = "blue")
+# target (scaled)
+# compute log-likelihood evaluated at many values of w
+loglik_x = sapply(x, function(w) sum(log(lik(y, w))))
+# transform loglik_x back to original scale (with some scaling for plotting purposes)
+# and plot it
+lines(x, exp(loglik_x + 130), col = "orange")
+# plot legend
+legend("bottomright", legend = c("Beta(2, 10)", "Beta(1, 1)", "Likelihood"), col = c("black", "blue", "orange"),
        lty = 1)
-title("jump densities")
+title("Proposal densities vs Likelihood")
+# notice that the Beta(2, 10) proposal is nowhere near the target density,
+# which creates an inefficient sampler
 
 #histogram of data
 hist(y, breaks = 25, freq = FALSE)
 
 #plot true density
 theta = seq(5, 12, len = 1000)
-const = integrate(lik, 5, 12, w = .7, subdivisions = 100000)
-lines(theta, lik(theta, .7)/const$value)
+lines(theta, lik(theta, .7))
 
 #Derive r to understand steps
-independence.chain = function(B, start, jump.parm) {
-  alpha = jump.parm[1]
-  beta = jump.parm[2]
+independence_chain = function(B, start, jump_parm) {
+  alpha = jump_parm[1]
+  beta = jump_parm[2]
 
   theta = numeric(B + 1)
   theta[1] = start
 
   for (i in 2:length(theta)) {
-    theta.star = rbeta(1, alpha, beta)
-    num.r = sum(log(lik(y, theta.star))) + log(dbeta(theta.star, 1, 1)) -
-             log(dbeta(theta.star, alpha, beta))
-    den.r = sum(log(lik(y, theta[i - 1]))) + log(dbeta(theta[i - 1], 1, 1)) -
-             log(dbeta(theta[i - 1], alpha, beta))
-    r = num.r - den.r
+    theta_star = rbeta(1, alpha, beta)
+    log_numr = log_jlik(y, theta_star) + dbeta(theta_star, 1, 1, log = TRUE) -
+               dbeta(theta_star, alpha, beta, log = TRUE)
+    log_denr = log_jlik(y, theta[i - 1]) + dbeta(theta[i - 1], 1, 1, log = TRUE) -
+               dbeta(theta[i - 1], alpha, beta, log = TRUE)
+    logr = log_numr - log_denr
 
-    if (log(runif(1)) <= min(r, 0)) {
-      theta[i] = theta.star
+    if (log(runif(1)) <= min(logr, 0)) {
+      theta[i] = theta_star
     } else {
       theta[i] = theta[i - 1]
     }
@@ -90,8 +107,9 @@ independence.chain = function(B, start, jump.parm) {
 set.seed(72)
 B = 10000
 ini = rbeta(1, 1, 1)
-mh1 = independence.chain(B, start = ini, jump.parm = c(1, 1))
-mh2 = independence.chain(B, start = ini, jump.parm = c(2, 10))
+# run chains for different proposal distributions
+mh1 = independence_chain(B, start = ini, jump_parm = c(1, 1))
+mh2 = independence_chain(B, start = ini, jump_parm = c(2, 10))
 
 mean(mh1)
 mean(mh2)
@@ -105,17 +123,17 @@ hist(mh1[201:10001], xlab = expression(theta), main = "Posterior for Beta(1,1) p
 hist(mh2[201:10001], xlab = expression(theta), main = "Posterior for Beta(2,10) prior")
 
 # run chains from several different starting values
-mh1a = independence.chain(B, start = 0, jump.parm = c(1, 1))
-mh1b = independence.chain(B, start = .1, jump.parm = c(1, 1))
-mh1c = independence.chain(B, start = .2, jump.parm = c(1, 1))
-mh1d = independence.chain(B, start = .3, jump.parm = c(1, 1))
-mh1e = independence.chain(B, start = .4, jump.parm = c(1, 1))
-mh1f = independence.chain(B, start = .5, jump.parm = c(1, 1))
-mh1g = independence.chain(B, start = .6, jump.parm = c(1, 1))
-mh1h = independence.chain(B, start = .7, jump.parm = c(1, 1))
-mh1i = independence.chain(B, start = .8, jump.parm = c(1, 1))
-mh1j = independence.chain(B, start = .9, jump.parm = c(1, 1))
-mh1k = independence.chain(B, start = 1, jump.parm = c(1, 1))
+mh1a = independence_chain(B, start = 0, jump_parm = c(1, 1))
+mh1b = independence_chain(B, start = .1, jump_parm = c(1, 1))
+mh1c = independence_chain(B, start = .2, jump_parm = c(1, 1))
+mh1d = independence_chain(B, start = .3, jump_parm = c(1, 1))
+mh1e = independence_chain(B, start = .4, jump_parm = c(1, 1))
+mh1f = independence_chain(B, start = .5, jump_parm = c(1, 1))
+mh1g = independence_chain(B, start = .6, jump_parm = c(1, 1))
+mh1h = independence_chain(B, start = .7, jump_parm = c(1, 1))
+mh1i = independence_chain(B, start = .8, jump_parm = c(1, 1))
+mh1j = independence_chain(B, start = .9, jump_parm = c(1, 1))
+mh1k = independence_chain(B, start = 1, jump_parm = c(1, 1))
 
 # create mcmc objects of each chain, discarding warmup
 mc1 = mcmc(mh1a[5002:10001])
@@ -161,6 +179,4 @@ raftery.diag(mc)
 # z scores for a test of equality (should be between -2 and 2)
 # if converged
 geweke.diag(mc)
-
-
 

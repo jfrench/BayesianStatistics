@@ -12,10 +12,15 @@ library(coda)
 
 # Proposal distribution: theta_star ~ Beta(alpha, beta)
 
+# B - number of cycles
+# start - the starting value of theta
+# jump_par - the parameters of the proposal distribution
 mh = function(B, start, jump_parm) {
+  # extract the parameters of our proposal/jumping distribution
   alpha = jump_parm[1]
   beta = jump_parm[2]
 
+  # create a vector to store the values from our M-H algorithm
   theta = numeric(B + 1)
   theta[1] = start
 
@@ -54,10 +59,10 @@ chain5 = mh(B, start = 0.9, jump_parm = jpar)
 
 # combine chains into mcmc list.  Discard half as warmup
 mc = mcmc.list(mcmc(chain1[keep]),
-                mcmc(chain2[keep]),
-                mcmc(chain3[keep]),
-                mcmc(chain4[keep]),
-                mcmc(chain5[keep]))
+               mcmc(chain2[keep]),
+               mcmc(chain3[keep]),
+               mcmc(chain4[keep]),
+               mcmc(chain5[keep]))
 
 # trace plot for the 5 chains
 traceplot(mc)
@@ -104,10 +109,10 @@ chain5 = mh(B, start = 0.95, jump_parm = jpar)
 # combine chains into mcmc list.  Discard half as warmup.  Keep every
 # 10th observation
 mc = mcmc.list(mcmc(chain1[keep]),
-                mcmc(chain2[keep]),
-                mcmc(chain3[keep]),
-                mcmc(chain4[keep]),
-                mcmc(chain5[keep]))
+               mcmc(chain2[keep]),
+               mcmc(chain3[keep]),
+               mcmc(chain4[keep]),
+               mcmc(chain5[keep]))
 
 # trace plot for the 5 chains
 traceplot(mc)
