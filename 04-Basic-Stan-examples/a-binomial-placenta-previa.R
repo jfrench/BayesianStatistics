@@ -51,20 +51,26 @@ fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
 # draw samples from the model
 # stan_samples = sampling(stan_mod, data = stan_dat, iter = 1000, chains = 4)
 
-# traceplot of chains
-stan_trace(fit)
-# density plot of parameters
-stan_dens(fit)
-# ACF plot of chain
-stan_ac(fit, "theta")
 # summary of stanfit object
 summary(fit, pars = c("theta", "ytilde"), probs = c(0.025, 0.975))
 
+# rstan plotting functions
+# posterior intervals and point estimates
+# traceplot of chains
+stan_trace(fit)
+# density plot of theta
+stan_dens(fit, "theta")
+# histogram of ytilde
+stan_hist(fit, "ytilde")
+# ACF plot of chain
+stan_ac(fit, "theta")
+
+# coda plots
 # convert samples to coda object
 codasamples = As.mcmc.list(fit)
 
-# trace plots of samples
-traceplot(codasamples)
+# trace plots of posterior samples
+coda::traceplot(codasamples)
 
 # density plots of samples
 densplot(codasamples)
@@ -72,10 +78,13 @@ densplot(codasamples)
 # summarize codasamples
 summary(codasamples, quantiles = c(.025, .975))
 
-posterior = as.array(fit)
-# posterior interval
+# bayesplot plots
+posterior = as.array(fit) # convert to array for plotting
+# central posterior interval (median shown as point, by default)
+# shows 50% and 95% posterior intervals, by default
 mcmc_intervals(posterior, pars = "theta")
-# area plot of each parameter
+# area plot of each parameter (shows 50% credible interval by default)
+# shows median as vertical line
 mcmc_areas(posterior, pars = "theta")
 mcmc_areas(posterior, pars = "ytilde")
 # histogram

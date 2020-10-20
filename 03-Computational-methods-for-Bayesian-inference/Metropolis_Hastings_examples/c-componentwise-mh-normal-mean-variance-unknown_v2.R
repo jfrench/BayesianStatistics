@@ -13,7 +13,7 @@ library(coda)
 
 # Proposal distributions:
 # mu_star | mu^(t-1) ~ N(mu^(t-1), mustar_sigma^2) w/ mustar_sigma^2 = 0.2^2
-# sigmasq_star ~ Inv-Chisq(df_sigmasqstar, scale_sigmasqstar^2)) with
+# sigmasq_star ~ Inv-Chisq(df_sigmasqstar, scale_sigmasqstar^2) with
 # df_sigmasqstar = 2 and scale_sigmasqstar = 0.1.
 
 ### Midge Example
