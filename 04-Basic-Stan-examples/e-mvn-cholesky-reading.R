@@ -1,3 +1,7 @@
+library(rstan)
+library(bayesplot)
+library(mvtnorm)
+
 ### Chapter 7 Example from A First Course in Bayesian Statistical Methods
 ### by P. Hoff.
 
@@ -25,8 +29,6 @@
 # choosing nu0 = 4 loosely centers samples of Sigma around L0.
 # So we choose L0[1,1]=L0[2,2] = 625 and the diagonal elements equal to
 # 312.5.
-
-library(rstan)
 
 # load data
 y = matrix(c(
@@ -56,9 +58,12 @@ transformed parameters{
   chol_Sigma = cholesky_decompose(Sigma);
 }
 model {
+  // specify prior distributions for mu and Sigma
   mu ~ multi_normal(mu0, Sigma/k0);
   Sigma ~ inv_wishart(nu0, L0);
 
+  // specify data distribution in terms of Cholesky
+  // parameterization of the multivariate normal
   for(i in 1:n){
     y[i] ~ multi_normal_cholesky(mu, chol_Sigma);
   }
@@ -79,9 +84,17 @@ L0 = matrix(c(625, 312.5, 312.5, 625), nrow = 2)
 stan_dat = list(n = 22, y = y,
                  mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
-# fit model
-fit = stan(model_code = stanmod, data = stan_dat,
-            iter = 1000)
+# # reading_chol_fit model
+# reading_chol_fit = stan(model_code = stanmod, data = stan_dat,
+#             iter = 1000)
+# compile model
+# reading_chol_mod = stan_model(model_code = stanmod)
+# # save model
+# save(reading_chol_mod, file = "reading_chol_mod.rda", compress = "xz")
+# load compiled model
+load(file = "reading_chol_mod.rda")
+# draw samples from the model
+reading_chol_fit = sampling(reading_chol_mod, data = stan_dat, iter = 1000, chains = 4)
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
@@ -89,10 +102,10 @@ fit = stan(model_code = stanmod, data = stan_dat,
 # mu2 45.90558 51.56652 53.72375 55.86592 61.38130
 
 # results should be similar
-summary(fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
+summary(reading_chol_fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
 
-# extract samples list from fit
-samples = extract(fit)
+# extract samples list from reading_chol_fit
+samples = extract(reading_chol_fit)
 
 # determine posterior probability that
 # post-test mean greater than pre-test mean
@@ -103,8 +116,7 @@ mean(samples$mu[,2] > samples$mu[,1])
 mean(samples$ytilde[,2] > samples$ytilde[,1])
 
 # trace plots of results
-library(bayesplot)
-posterior = as.array(fit)
+posterior = as.array(reading_chol_fit)
 mcmc_trace(posterior, pars = c("mu[1]", "mu[2]"))
 mcmc_trace(posterior, regex_pars = "mu")
 
@@ -117,11 +129,11 @@ mcmc_scatter(posterior, pars = c("mu[1]", "mu[2]"))
 mcmc_scatter(posterior, regex_pars = "mu")
 
 # plot of acf of chains
-stan_ac(fit, "mu[1]")
-stan_ac(fit, "mu[2]")
-stan_ac(fit, "Sigma[1,1]")
-stan_ac(fit, "Sigma[1,2]")
-stan_ac(fit, "Sigma[2,2]")
+stan_ac(reading_chol_fit, "mu[1]")
+stan_ac(reading_chol_fit, "mu[2]")
+stan_ac(reading_chol_fit, "Sigma[1,1]")
+stan_ac(reading_chol_fit, "Sigma[1,2]")
+stan_ac(reading_chol_fit, "Sigma[2,2]")
 
 # perform posterior predictive checks
 nrep = 50

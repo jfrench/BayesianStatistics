@@ -1,4 +1,4 @@
-# Create gibbs sampler for N(mu, sigma^2) sampling distribution
+# Create sampler for N(mu, sigma^2) sampling distribution
 # with mu and sigma^2 unknown.
 
 # Midge Example
@@ -9,7 +9,7 @@
 # flies). From these nine measurements we wish to make inference on
 # the population mean theta.
 
-# Data distribution: y| mu, sigma^2 ~ iid N(mu, sigma^2)
+# Data distribution: y1, ..., yn | mu, sigma^2 ~ iid N(mu, sigma^2)
 # Prior for mu: mu | sigma^2 ~  N(mu0, sigma^2/k0)
 # w/ mu0 = 1.9 and k0 = 1
 # Prior for sigma^2: sigma^2 ~ Inv-Chisq(nu0, sigma0^2),
@@ -50,7 +50,10 @@ model {
   sigmasq ~ inv_gamma(nu0/2, nu0/2*sigma0^2);
 }
 generated quantities {
+  // create vector to store replicated values
   vector[n] yrep;
+  // draw replicated values of each observation
+  // from the posterior predictive distribution
   for (j in 1:n) {
     yrep[j] = normal_rng(mu, sqrt(sigmasq));
   }
@@ -61,10 +64,17 @@ y = c(1.64, 1.70, 1.72, 1.74, 1.82, 1.82, 1.82, 1.90, 2.08)
 stan_dat = list(n = length(y), y = y, mu0 = 1.9, k0 = 1,
                  nu0 = 1, sigma0 = 0.1)
 
-# fit model using stand with 4 chains
-fit = stan(model_code = stanmod, data = stan_dat, iter = 1e5)
+# # midge_fit model using stand with 4 chains
+# midge_fit = stan(model_code = stanmod, data = stan_dat, iter = 1e5)
+# # compile model
+# midge_mod = stan_model(model_code = stanmod)
+# # save model
+# save(midge_mod, file = "midge_mod.rda", compress = "xz")
+load(file = "midge_mod.rda")
+# draw samples from the model
+midge_fit = sampling(midge_mod, data = stan_dat, iter = 1000, chains = 4)
 
-summary(fit, par = c("mu", "sigmasq"), prob = c(0.025, 0.975))
+summary(midge_fit, par = c("mu", "sigmasq"), prob = c(0.025, 0.975))
 # Approximate posterior from previous analysis
 # > #95% central posterior interval for mu
 # > quantile(mu, c(.025, .975))
@@ -76,18 +86,18 @@ summary(fit, par = c("mu", "sigmasq"), prob = c(0.025, 0.975))
 #          2.5%       97.5%
 #   0.007488022 0.047175081
 
-posterior = as.array(fit)
+posterior = as.array(midge_fit)
 mcmc_trace(posterior, pars = c("mu", "sigmasq"))
 
 # density plots of results
 mcmc_dens_overlay(posterior, pars = c("mu", "sigmasq"))
 
 # plot of acf of chains
-stan_ac(fit, "mu")
-stan_ac(fit, "sigmasq")
+stan_ac(midge_fit, "mu")
+stan_ac(midge_fit, "sigmasq")
 
 # a comparison of the errors from y - yrep
-yrep = extract(fit, "yrep")$yrep
+yrep = extract(midge_fit, "yrep")$yrep
 
 # histogram comparing y, yrep
 ppc_hist(y, yrep[21:28,])

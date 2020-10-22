@@ -4,7 +4,7 @@
 # We will make posterior inference about mu and sigma^2, the mean and
 # variance of the light measurements.
 
-# Data distribution:  y1, ..., yn ~ iid N(mu, sigma^2)
+# Data distribution:  y1, ..., yn | mu, sigma^2 ~ iid N(mu, sigma^2)
 # Prior distributions: p(mu) propto 1
 # p(log(sigma)) propto 1, implying p(sigma^2) propto 1/sigma^2
 
@@ -31,6 +31,7 @@ transformed parameters {
   sigma = exp(logsigma);
 }
 model {
+  // specify data distribution
   y ~ normal(mu, sigma);
   // no priors for mu and logsigma means that mu and
   // logsigma have unnormalized uniform priors over the real line
@@ -51,28 +52,35 @@ generated quantities {
 data(newcomb, package = "MASS") # load data
 stan_dat = list(n = length(newcomb), y = newcomb)
 
-# fit model using stan with 4 chains
-fit = stan(model_code = stanmod, data = stan_dat, iter = 100000, chains = 4)
+# # fit model using stan with 4 chains
+# sol_fit = stan(model_code = stanmod, data = stan_dat, iter = 100000, chains = 4)
+# # compile model
+# sol_mod = stan_model(model_code = stanmod)
+# # save model
+# save(sol_mod, file = "sol_mod.rda", compress = "xz")
+load(file = "sol_mod.rda")
+# draw samples from the model
+sol_fit = sampling(sol_mod, data = stan_dat, iter = 1000, chains = 4)
 
 # trace plots of results
-posterior = as.array(fit)
+posterior = as.array(sol_fit)
 mcmc_trace(posterior, pars = c("mu", "sigmasq"))
 
 # density plots of results
 mcmc_dens_overlay(posterior, pars = c("mu", "sigmasq"))
 
 # plot of acf of chains
-stan_ac(fit, "mu")
-stan_ac(fit, "sigmasq")
+stan_ac(sol_fit, "mu")
+stan_ac(sol_fit, "sigmasq")
 
 # summary of chains
-summary(fit, pars = c("mu", "sigmasq"),
+summary(sol_fit, pars = c("mu", "sigmasq"),
         prob = c(0.025, 0.975))$summary
 # exact 95% posterior intervals for mu and sigma^2, respectively
 # > qst(c(.025, .975), df  = n - 1, mean = m, sd = s/sqrt(n))
 # [1] 23.57059 28.85365
 #  > ### 95% central posterior interval for sigma^2
-#  > qinvchisq(c(.025, .975), df = n - 1, scale = s)
+#  > qinvchisq(c(.025, .975), df = n - 1, scale = s^2)
 # [1]  84.15867 168.26293
 
 # compare the empirical distribution of the data y
@@ -81,7 +89,7 @@ summary(fit, pars = c("mu", "sigmasq"),
 # important for model checking!
 
 y = newcomb
-yrep = extract(fit, "yrep")$yrep
+yrep = extract(sol_fit, "yrep")$yrep
 # histogram comparing y, yrep
 ppc_hist(y, yrep[31:38,])
 

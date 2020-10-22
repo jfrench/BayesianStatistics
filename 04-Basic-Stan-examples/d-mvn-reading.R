@@ -42,8 +42,8 @@ stanmod = "
 data {
   int<lower=1> n; // number of trials
   vector[2] y[n]; // 2d array of size n
-  vector[2] mu0; //prior mean for mu
-  real<lower=0> k0; //prior number of observations for mu
+  vector[2] mu0; // prior mean for mu
+  real<lower=0> k0; // prior number of observations for mu
   real<lower=0> nu0; // df for prior for Sigma
   cov_matrix[2] L0; // scale of prior for Sigma
 }
@@ -52,9 +52,11 @@ parameters {
   cov_matrix[2] Sigma;
 }
 model {
+  // specify my prior distributions for mu and Sigma
   mu ~ multi_normal(mu0, Sigma/k0);
   Sigma ~ inv_wishart(nu0, L0);
 
+  // specify the data distribution for each observation
   for(i in 1:n){
     y[i] ~ multi_normal(mu, Sigma);
   }
@@ -68,11 +70,17 @@ generated quantities {
 L0 = matrix(c(625, 312.5, 312.5, 625), nrow = 2)
 
 stan_dat = list(n = 22, y = y,
-                 mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
+                mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
-# fit model using stan with 4 chains
-fit = stan(model_code = stanmod, data = stan_dat,
-            iter = 1000)
+# # reading_fit model using stan with 4 chains
+# reading_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000)
+# reading_mod = stan_model(model_code = stanmod)
+# # save model
+# save(reading_mod, file = "reading_mod.rda", compress = "xz")
+# load compiled model
+load(file = "reading_mod.rda")
+# draw samples from the model
+reading_fit = sampling(reading_mod, data = stan_dat, iter = 1000, chains = 4)
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
@@ -80,10 +88,10 @@ fit = stan(model_code = stanmod, data = stan_dat,
 # mu2 45.90558 51.56652 53.72375 55.86592 61.38130
 
 # results should be similar
-summary(fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
+summary(reading_fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
 
-# extract samples list from fit
-samples = extract(fit)
+# extract samples list from reading_fit
+samples = extract(reading_fit)
 
 # determine posterior probability that
 # post-test mean greater than pre-test mean
