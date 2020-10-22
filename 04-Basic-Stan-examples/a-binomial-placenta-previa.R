@@ -45,10 +45,10 @@ stan_dat = list(n = 980, y = 437, alpha = 1, beta = 1)
 
 # compile the model, sample from model, returns object of class stanfit
 fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
-# alternatively
-# describe model
+# # alternatively
+# # describe model
 # stan_mod = stan_model(model_code = stanmod)
-# draw samples from the model
+# # draw samples from the model
 # stan_samples = sampling(stan_mod, data = stan_dat, iter = 1000, chains = 4)
 
 # summary of stanfit object
