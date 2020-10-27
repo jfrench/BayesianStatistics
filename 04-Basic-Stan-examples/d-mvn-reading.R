@@ -8,6 +8,8 @@
 # Each row of the data set is a two-dimensional vector representing a single
 # case, distributed N(mu, Sigma).
 
+# Data distribution:
+# y_1, ..., y_n | mu, Sigma ~ i.i.d. N_2(mu, Sigma)
 # For priors:
 # mu | Sigma ~ N(mu0, Sigma/k0)
 # Sigma ~ Inv-Wishart(nu, L0^(-1))
@@ -94,9 +96,9 @@ summary(reading_fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary
 samples = extract(reading_fit)
 
 # determine posterior probability that
-# post-test mean greater than pre-test mean
+# post-instruction test score mean greater than pre-instruction test score mean
 mean(samples$mu[,2] > samples$mu[,1])
 
-# determine probability that post-test score
-# greater than pre-test score for new student
+# determine probability that post-instruction test score
+# greater than pre-instruction test score for new student
 mean(samples$ytilde[,2] > samples$ytilde[,1])

@@ -97,12 +97,12 @@ stan_dat = list(n = n, y = soda$Time,
                 I = diag(n), csq = 100^2, v = v)
 
 # fit model using stan with 4 chains
-soda_g2_fit = stan(model_code = stanmod, data = stan_dat,
-                   iter = 10000, chains = 4)
+# soda_g2_fit = stan(model_code = stanmod, data = stan_dat,
+#                    iter = 10000, chains = 4)
 
-soda_g2_mod = stan_model(model_code = stanmod)
+# soda_g2_mod = stan_model(model_code = stanmod)
 # # save model
-save(soda_g2_mod, file = "soda_g2_mod.rda", compress = "xz")
+# save(soda_g2_mod, file = "soda_g2_mod.rda", compress = "xz")
 load(file = "soda_g2_mod.rda")
 # draw samples from the model
 soda_g2_fit = sampling(soda_g2_mod, data = stan_dat, iter = 10000, chains = 4)

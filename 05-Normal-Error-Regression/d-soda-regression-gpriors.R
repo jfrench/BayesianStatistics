@@ -1,5 +1,7 @@
 library(rstan)
 library(dplyr)
+library(tidyr)
+library(ggplot2)
 
 #Example:  Soft drink delivery times (Chapter 5 of Bayesian Modeling
 #Using Winbugs by Ntzoufras
@@ -16,8 +18,8 @@ library(dplyr)
 #of cases of stocked products and the distance walked by the
 #employee (measured in feet).
 #
-# Data distribution: y_i ~ ¼N(x_i *beta, 1/tau).
-# Prior distribuiton:
+# Data distribution: y_i ~ N(x_i *beta, 1/tau).
+# Prior distributions:
 # beta ~ N(0, sigma^2 * c^2 * (X'X)^(-1))
 # tau ~ Gamma(0.01,0.01).
 
@@ -77,7 +79,6 @@ parameters {
 transformed parameters{
   real<lower=0> sigmasq; //get sigmasq from the precision
   sigmasq = 1/prec;
-
 }
 model {
   vector[n] mu;  // mean of responses.  Temporary
@@ -102,22 +103,30 @@ dat2 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
             V = solve(crossprod(X)), v = v, csq = 100^2)
 
 # fit models using stan with for both g-priors
-fit1 = stan(model_code = mod, data = dat1,
-            iter = 10000, seed = 30)
-fit2 = stan(model_code = mod, data = dat2,
-             iter = 10000, seed = 31)
+# soda_fit1 = stan(model_code = mod, data = dat1,
+#             iter = 10000, seed = 30)
+# soda_fit2 = stan(model_code = mod, data = dat2,
+#              iter = 10000, seed = 31)
 
-fits = rbind(cbind(as.data.frame(fit1), model = "model1"),
-              cbind(as.data.frame(fit2), model = "model2"))
+# compile model
+# soda_gprior_mod = stan_model(model_code = mod)
+# save model
+# save(soda_gprior_mod, file = "soda_gprior_mod.rda", compress = "xz")
+load(file = "soda_gprior_mod.rda")
+# draw samples from the model
+soda_gprior_fit1 = sampling(soda_gprior_mod, data = dat1, iter = 10000, seed = 30)
+soda_gprior_fit2 = sampling(soda_gprior_mod, data = dat2, iter = 10000, seed = 31)
 
-library(tidyr)
-df = gather_(fits,
-              key_col = "parameter", value_col = "value",
-              gather_cols = c("beta[1]", "beta[2]", "beta[3]"))
+fits = rbind(cbind(as.data.frame(soda_gprior_fit1), model = "model1"),
+              cbind(as.data.frame(soda_gprior_fit2), model = "model2"))
+
+df = tidyr::gather_(fits,
+                    key_col = "parameter", value_col = "value",
+                    gather_cols = c("beta[1]", "beta[2]", "beta[3]"))
 
 # check convergence with gelman-rubin statistics
-summary(fit1)$summary[,"Rhat"]
-summary(fit2)$summary[,"Rhat"]
+summary(soda_gprior_fit1)$summary[,"Rhat"]
+summary(soda_gprior_fit2)$summary[,"Rhat"]
 
 # density plots of betas
 ggplot(df, aes(x = value)) + geom_density(aes(fill = model), alpha = 0.4) +

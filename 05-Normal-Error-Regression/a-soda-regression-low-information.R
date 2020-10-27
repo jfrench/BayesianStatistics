@@ -18,11 +18,10 @@ library(bayesplot)
 # and the distance walked by the employee (measured in
 # feet).
 #
-# Data distribution: y_i ~ N(x*beta,1/tau).
+# Data distribution: y_i ~ N(x_i^T*beta, 1/tau) for i = 1, 2, ..., n
 # Prior distributions:
 # beta_j ~ N(0, 10^4) (sigmasq = 10^4)
 # tau ~ Gamma(0.01,0.01).
-
 
 # load and format data set
 soda = matrix(c(
@@ -55,7 +54,9 @@ soda = matrix(c(
 soda = as.data.frame(soda)
 colnames(soda) = c("Time", "Cases", "Distance")
 
+# obtain the number of observations
 n = length(soda$Cases)
+# obtain the sample variance of the data
 v = var(soda$Time)
 
 # Create model.  Notice the quotes
@@ -68,13 +69,13 @@ data {
   real<lower=0> v; // sample variance of y
 }
 parameters {
-  real<lower=0> prec;
+  real<lower=0> prec; // tau
   real beta0;
   real beta1;
   real beta2;
 }
 transformed parameters{
-  real<lower=0> sigma; //get sigmasq from the precision
+  real<lower=0> sigma; //get sigma from the precision
   sigma = sqrt(1/prec);
 }
 model {
@@ -84,7 +85,7 @@ model {
   beta2 ~ normal(0.0, 100);
   prec ~ gamma(0.01, 0.01);
 
-  // sampling distribution
+  // data distribution
   for(i in 1:n){
     y[i] ~ normal(beta0 + beta1*cases[i] + beta2*dist[i], sigma);
   }
