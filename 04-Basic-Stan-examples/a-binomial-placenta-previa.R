@@ -1,3 +1,9 @@
+# Load libraries rstan (to use stan) and coda (to analyze results)
+# and bayesplot for cool plots
+library(rstan)
+library(coda)
+library(bayesplot)
+
 ### Example from Bayesian Data Analysis, 3rd edition
 ### 2.5 Placenta previa example
 # Placenta previa is a condition in which the placenta of an unborn child is
@@ -12,12 +18,6 @@
 # Data distribution: y ~ Bin(n, theta) with n = 980 and observed y = 437
 # Prior: theta ~ Beta(1, 1)
 # Posterior: Beta(y + 1, n - y + 1) = Beta(438, 544)
-
-# Load libraries rstan (to use stan) and coda (to analyze results)
-# and bayesplot for cool plots
-library(rstan)
-library(coda)
-library(bayesplot)
 
 # Create model.  Notice the quotes
 stanmod = "
@@ -43,31 +43,33 @@ generated quantities{
 # Specify the data in R, using a list format compatible with STAN:
 stan_dat = list(n = 980, y = 437, alpha = 1, beta = 1)
 
-# compile the model, sample from model, returns object of class stanfit
-fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
+# compile the model, sample from model, returns object of class stanplacenta_previa_fit
+# placenta_previa_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
 # # alternatively
 # # describe model
-# stan_mod = stan_model(model_code = stanmod)
-# # draw samples from the model
-# stan_samples = sampling(stan_mod, data = stan_dat, iter = 1000, chains = 4)
+# placenta_previa_mod = stan_model(model_code = stanmod)
+# save(placenta_previa_mod, file = "placenta_previa_mod.rda", compress = "xz")
+load(file = "placenta_previa_mod.rda")
+# draw samples from the model
+placenta_previa_fit = sampling(placenta_previa_mod, data = stan_dat, iter = 1000, chains = 4)
 
-# summary of stanfit object
-summary(fit, pars = c("theta", "ytilde"), probs = c(0.025, 0.975))
+# summary of stanplacenta_previa_fit object
+summary(placenta_previa_fit, pars = c("theta", "ytilde"), probs = c(0.025, 0.975))
 
 # rstan plotting functions
 # posterior intervals and point estimates
 # traceplot of chains
-stan_trace(fit)
+stan_trace(placenta_previa_fit)
 # density plot of theta
-stan_dens(fit, "theta")
+stan_dens(placenta_previa_fit, "theta")
 # histogram of ytilde
-stan_hist(fit, "ytilde")
+stan_hist(placenta_previa_fit, "ytilde")
 # ACF plot of chain
-stan_ac(fit, "theta")
+stan_ac(placenta_previa_fit, "theta")
 
 # coda plots
 # convert samples to coda object
-codasamples = As.mcmc.list(fit)
+codasamples = As.mcmc.list(placenta_previa_fit)
 
 # trace plots of posterior samples
 coda::traceplot(codasamples)
@@ -79,7 +81,7 @@ densplot(codasamples)
 summary(codasamples, quantiles = c(.025, .975))
 
 # bayesplot plots
-posterior = as.array(fit) # convert to array for plotting
+posterior = as.array(placenta_previa_fit) # convert to array for plotting
 # central posterior interval (median shown as point, by default)
 # shows 50% and 95% posterior intervals, by default
 mcmc_intervals(posterior, pars = "theta")

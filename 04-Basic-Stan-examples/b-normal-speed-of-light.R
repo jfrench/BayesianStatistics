@@ -1,3 +1,7 @@
+library(rstan)
+library(coda)
+library(bayesplot)
+
 # Example taken from Bayesian Data Analysis, 3rd edition
 ### Speed of light example
 # We have 66 observations from an experiment to estimate the speed of light.
@@ -11,10 +15,6 @@
 # Note: If the user doesn't specify a prior distribution in Stan,
 # then Stan assumes a uniform prior over the valid range of the
 # parameter.
-
-library(rstan)
-library(coda)
-library(bayesplot)
 
 # Create model.  Notice the quotes
 stanmod = "

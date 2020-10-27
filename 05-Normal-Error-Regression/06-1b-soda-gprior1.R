@@ -110,13 +110,13 @@ stan_dat = list(n = n, y = soda$Time,
 # soda_g1_fit = stan(model_code = stanmod, data = stan_dat,
 #                    iter = 10000, chains = 4)
 # save(soda_g1_fit, file = "soda_g1_fit.rda", compress = "xz")
-load(file = "soda_g1_fit.rda")
+# load(file = "soda_g1_fit.rda")
 # soda_g1_mod = stan_model(model_code = stanmod)
-# # # save model
+# # save model
 # save(soda_g1_mod, file = "soda_g1_mod.rda", compress = "xz")
-# load(file = "soda_g1_mod.rda")
+load(file = "soda_g1_mod.rda")
 # # draw samples from the model
-# soda_g1_fit = sampling(soda_g1_mod, data = stan_dat, iter = 10000, chains = 4)
+soda_g1_fit = sampling(soda_g1_mod, data = stan_dat, iter = 10000, chains = 4)
 
 # plot of densities
 stan_dens(soda_g1_fit, par = c("beta", "sigmasq"), separate_chains = TRUE)
