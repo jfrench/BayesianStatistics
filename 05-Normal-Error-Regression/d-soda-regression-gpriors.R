@@ -118,7 +118,7 @@ soda_gprior_fit1 = sampling(soda_gprior_mod, data = dat1, iter = 10000, seed = 3
 soda_gprior_fit2 = sampling(soda_gprior_mod, data = dat2, iter = 10000, seed = 31)
 
 fits = rbind(cbind(as.data.frame(soda_gprior_fit1), model = "model1"),
-              cbind(as.data.frame(soda_gprior_fit2), model = "model2"))
+             cbind(as.data.frame(soda_gprior_fit2), model = "model2"))
 
 df = tidyr::gather_(fits,
                     key_col = "parameter", value_col = "value",
