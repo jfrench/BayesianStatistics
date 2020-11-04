@@ -66,6 +66,7 @@ model {
   // in the model block
   mu = mu0 + alpha2*tutor2 + alpha3*tutor3 + alpha4*tutor4;
 
+  // data distribution
   for(i in 1:n){
     y[i] ~ normal(mu[i], sqrt(sigmasq));
   }
@@ -82,6 +83,15 @@ stan_dat = list(n = length(grades), y = grades,
 load(file = "tutor_mod.rda")
 # draw samples from the model
 tutor_fit = sampling(tutor_mod, data = stan_dat, iter = 10000)
+
+# alternative example with specified starting values
+# init_list = list(list(sigmasq = 1, mu0 = 9, alpha2 = 0, alpha3 = 9, alpha4 = 4),
+#                  list(sigmasq = 2, mu0 = 25, alpha2 = 1, alpha3 = -5, alpha4 = 1),
+#                  list(sigmasq = 3, mu0 = 50, alpha2 = 2, alpha3 = -19, alpha4 = 10),
+#                  list(sigmasq = 4, mu0 = 75, alpha2 = 3, alpha3 = -10, alpha4 = 7))
+#
+# tutor_fit = sampling(tutor_mod, data = stan_dat, iter = 10000, chains = 4,
+#                      init = init_list)
 
 # summary of tutor_fitted values
 summary(tutor_fit)$summary
