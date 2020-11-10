@@ -81,8 +81,8 @@ dat = list(n = n, y = y, x = x, d2 = D2, v = v)
 # oxygen_pl_mod = stan_model(model_code = pl_mod)
 # save(oxygen_pl_mod, file = "oxygen_pl_mod.rda", compress = "xz")
 load("oxygen_pl_mod.rda")
-fit_oxygen_pl = stan(model_code = pl_mod, data = dat, iter = 5000,
-            control = list(adapt_delta = 0.99), seed = 43)
+fit_oxygen_pl = sampling(oxygen_pl_mod, data = dat, iter = 5000,
+                         control = list(adapt_delta = 0.99), seed = 43)
 
 # check convergence with gelman-rubin statistics
 summary(fit_oxygen_pl)$summary[,"Rhat"]
@@ -162,8 +162,8 @@ generated quantities {
 # oxygen_sl_mod = stan_model(model_code = sl_mod)
 # save(oxygen_sl_mod, file = "oxygen_sl_mod.rda", compress = "xz")
 load("oxygen_sl_mod.rda")
-fit_oxygen_sl = stan(model_code = sl_mod, data = dat, iter = 5000,
-                     control = list(adapt_delta = 0.99), seed = 43)
+fit_oxygen_sl = sampling(oxygen_sl_mod, data = dat, iter = 5000,
+                         control = list(adapt_delta = 0.99), seed = 43)
 
 # check convergence with gelman-rubin statistics
 summary(fit_oxygen_sl)$summary[,"Rhat"]
