@@ -284,7 +284,7 @@ fit_aircraft_mod_a = sampling(aircraft_mod_a, data = aircraft_data, iter = 10000
 fit_aircraft_mod_tb = sampling(aircraft_mod_tb, data = aircraft_data, iter = 10000, refresh = 0)
 fit_aircraft_mod_ta = sampling(aircraft_mod_ta, data = aircraft_data, iter = 10000, refresh = 0)
 fit_aircraft_mod_ba = sampling(aircraft_mod_ba, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_tba = sampline(aircraft_mod_tba, data = aircraft_data, iter = 10000, refresh = 0)
+fit_aircraft_mod_tba = sampling(aircraft_mod_tba, data = aircraft_data, iter = 10000, refresh = 0)
 
 # compute and waic and looic
 waic_t = waic(extract_log_lik(fit_aircraft_mod_t))
