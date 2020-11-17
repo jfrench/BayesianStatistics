@@ -114,7 +114,7 @@ ggplot(yrep_freqdf, aes(x = x, y = freq)) +
 ppo = colMeans(chains[,65:94])
 plot(freq ~ damage, y_freqdf, type = "h")
 plot(ppo ~ damage)
-# too many 0's, not enough 1's
 
+# too many 0's, not enough 1's
 lattice::xyplot(damage ~ bombload, group = type)
 lattice::xyplot(damage ~ airexp, group = type)
