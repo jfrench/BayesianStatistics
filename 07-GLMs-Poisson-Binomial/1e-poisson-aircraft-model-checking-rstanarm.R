@@ -32,11 +32,9 @@ airexp = c(91.5, 84, 76.5, 69, 61.5, 80, 72.5, 65, 57.5, 50,
 df = data.frame(damage = damage, type = factor(type), bombload = bombload, airexp = airexp)
 
 glmod = stan_glm(damage ~ type * airexp + type * bombload,
-                data = df,
-                family = poisson(link = "log"),
-                prior = normal(0, 10^1.5),
-                prior_intercept = normal(0, 10^1.5),
-                chains = 2)
+                 data = df,
+                 family = poisson(link = "log"),
+                 chains = 2)
 plot(glmod)
 
 # density of y vs yrep
@@ -51,5 +49,7 @@ pp_check(glmod, plotfun = "boxplot")
 pp_check(glmod, plotfun = "scatter_avg")
 # scatterplot of y vs realization of yrep
 pp_check(glmod, plotfun = "scatter", nreps = 9)
+# posterior intervals for yrep vs y
+pp_check(glmod, plotfun = "intervals")
 # average errors versus an x variable
 pp_check(glmod, plotfun = "error_scatter_avg_vs_x", x = "bombload")

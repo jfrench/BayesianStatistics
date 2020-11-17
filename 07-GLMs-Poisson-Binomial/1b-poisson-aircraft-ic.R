@@ -231,8 +231,8 @@ parameters {
   real beta3;
 }
 transformed parameters{
-real mu[n];
-for(i in 1:n) mu[i] = exp(beta0 + beta1 * type[i] + beta2 * bombload[i] + beta3 * airexp[i]);
+  real mu[n];
+  for(i in 1:n) mu[i] = exp(beta0 + beta1 * type[i] + beta2 * bombload[i] + beta3 * airexp[i]);
 }
 model {
   // prior distributions
@@ -278,13 +278,13 @@ load("aircraft_mod_ba.rda")
 load("aircraft_mod_tba.rda")
 
 # sampling from compiled models
-fit_aircraft_mod_t = sampling(aircraft_mod_t, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_b = sampling(aircraft_mod_b, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_a = sampling(aircraft_mod_a, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_tb = sampling(aircraft_mod_tb, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_ta = sampling(aircraft_mod_ta, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_ba = sampling(aircraft_mod_ba, data = aircraft_data, iter = 10000, refresh = 0)
-fit_aircraft_mod_tba = sampling(aircraft_mod_tba, data = aircraft_data, iter = 10000, refresh = 0)
+fit_aircraft_mod_t = sampling(aircraft_mod_t, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_b = sampling(aircraft_mod_b, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_a = sampling(aircraft_mod_a, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_tb = sampling(aircraft_mod_tb, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_ta = sampling(aircraft_mod_ta, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_ba = sampling(aircraft_mod_ba, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_tba = sampling(aircraft_mod_tba, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
 
 # compute and waic and looic
 waic_t = waic(extract_log_lik(fit_aircraft_mod_t))
@@ -304,9 +304,8 @@ loo_ba = loo(extract_log_lik(fit_aircraft_mod_ba))
 loo_tba = loo(extract_log_lik(fit_aircraft_mod_tba))
 
 # compare results
-compare(waic_t, waic_b, waic_a, waic_tb,
-        waic_ta, waic_ba, waic_tba)
+loo_compare(waic_t, waic_b, waic_a, waic_tb,
+            waic_ta, waic_ba, waic_tba)
 
-compare(loo_t, loo_b, loo_a, loo_tb,
-        loo_ta, loo_ba, loo_tba)
-
+loo_compare(loo_t, loo_b, loo_a, loo_tb,
+            loo_ta, loo_ba, loo_tba)

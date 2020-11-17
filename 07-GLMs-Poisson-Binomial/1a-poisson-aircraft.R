@@ -27,7 +27,7 @@ airexp = c(91.5, 84, 76.5, 69, 61.5, 80, 72.5, 65, 57.5, 50,
 	 112.3, 96.7, 81.1, 65.6, 50, 120, 104.4, 88.9, 73.7, 57.8)
 
 n = length(damage)
-mod_tba = "
+aircraft_code = "
 data {
   int<lower=1> n;      // number of observations
   int<lower=0> y[n];   // number of damaged locations.
@@ -70,32 +70,32 @@ aircraft_data = list(n = n, y = damage, type = type, bombload = bombload,
             airexp = airexp)
 
 # draw samples from the model
-# aircraft_mod_tba = stan_model(model_code = mod_tba)
-# save(aircraft_mod_tba, file = "aircraft_mod_tba.rda", compress = "xz")
-load("aircraft_mod_tba.rda")
+# aircraft_mod = stan_model(model_code = aircraft_code)
+# save(aircraft_mod, file = "aircraft_mod.rda", compress = "xz")
+load("aircraft_mod.rda")
 # draw samples from the stan model
-fit_aircraft_mod_tba= sampling(aircraft_mod_tba, data = aircraft_data,
-                               iter = 50000, seed = 101)
+fit_aircraft= sampling(aircraft_mod, data = aircraft_data,
+                       iter = 10000, seed = 101, chains = 2)
 
 # check convergence with gelman-rubin statistics
-summary(fit_aircraft_mod_tba)$summary[,"Rhat"]
+summary(fit_aircraft)$summary[,"Rhat"]
 
 # check convergence with trace plots
-stan_trace(fit_aircraft_mod_tba, c("beta0", "beta1", "beta2", "beta3"))
+stan_trace(fit_aircraft, c("beta0", "beta1", "beta2", "beta3"))
 
-# summary of fit_aircraft_mod_tbated values
-summary(fit_aircraft_mod_tba)$summary[c("beta0", "beta1", "beta2", "beta3"),]
+# summary of fit_aircraft output
+summary(fit_aircraft)$summary[c("beta0", "beta1", "beta2", "beta3"),]
 
 # posterior means and 95% central posterior intervals
-summary(fit_aircraft_mod_tba)$summary[c("beta0", "beta1", "beta2", "beta3"), c("mean", "2.5%", "97.5%")]
+summary(fit_aircraft)$summary[c("beta0", "beta1", "beta2", "beta3"), c("mean", "2.5%", "97.5%")]
 
 # plot of densities
-stan_dens(fit_aircraft_mod_tba, par = c("beta0", "beta1", "beta2", "beta3"),
+stan_dens(fit_aircraft, par = c("beta0", "beta1", "beta2", "beta3"),
           separate_chains = TRUE)
 
 # posterior means and 95% central posterior intervals
 # of exponentiated parameters
-summary(fit_aircraft_mod_tba)$summary[c("exp_beta0", "exp_beta1", "exp_beta2", "exp_beta3"),
+summary(fit_aircraft)$summary[c("exp_beta0", "exp_beta1", "exp_beta2", "exp_beta3"),
                      c("mean", "2.5%", "97.5%")]
 
 #mean, median, low, high profile predictor values
@@ -105,7 +105,7 @@ low.x = c(min(bombload), max(airexp))
 high.x = c(max(bombload), min(airexp))
 
 #mean, median, low, high profile posterior values.  Separate calculations by type
-chains = as.data.frame(fit_aircraft_mod_tba)
+chains = as.data.frame(fit_aircraft)
 
 low.a4 = with(chains, exp(beta0 + low.x[1] * beta2 + low.x[2] * beta3))
 med.a4 = with(chains, exp(beta0 + median.x[1] * beta2 + median.x[2] * beta3))

@@ -34,7 +34,7 @@ airexp = c(91.5, 84, 76.5, 69, 61.5, 80, 72.5, 65, 57.5, 50,
 	 112.3, 96.7, 81.1, 65.6, 50, 120, 104.4, 88.9, 73.7, 57.8)
 
 n = length(damage)
-mod_tba = "
+tba_code_pp_check = "
 data {
   int<lower=1> n;  // number of observations
   int y[n];        // number of damaged locations.
@@ -77,22 +77,22 @@ generated quantities {
 # Specify the data in R, using a list format compatible with STAN:
 aircraft_data = list(n = n, y = damage, type = type, bombload = bombload,
                      airexp = airexp)
-# aircraft_mod_tba = stan_model(model_code = mod_tba)
-# save(aircraft_mod_tba, file = "aircraft_mod_tba.rda", compress = "xz")
+# aircraft_mod_pp_check = stan_model(model_code = tba_code_pp_check)
+# save(aircraft_mod_pp_check, file = "aircraft_mod_pp_check.rda", compress = "xz")
 # load all compiled models
-load("aircraft_mod_tba.rda")
-fit_aircraft_mod_tba = sampling(aircraft_mod_tba,
-                                data = aircraft_data,
-                                iter = 5000, chains = 2)
+load("aircraft_mod_pp_check.rda")
+fit_aircraft_check = sampling(aircraft_mod_pp_check,
+                              data = aircraft_data,
+                              iter = 5000, chains = 2)
 
 # check convergence with gelman-rubin statistics
-summary(fit_aircraft_mod_tba)$summary[,"Rhat"]
+summary(fit_aircraft_check)$summary[,"Rhat"]
 
 # plot of densities
-stan_dens(fit_aircraft_mod_tba, par = c("beta0", "beta1", "beta2", "beta3"),
+stan_dens(fit_aircraft_check, par = c("beta0", "beta1", "beta2", "beta3"),
           separate_chains = TRUE)
 
-chains = as.data.frame(fit_aircraft_mod_tba)
+chains = as.data.frame(fit_aircraft_check)
 
 lambda = exp(chains[,5:34])
 # 30 x nsim yrep

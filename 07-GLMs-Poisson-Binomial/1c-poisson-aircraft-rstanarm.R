@@ -16,7 +16,6 @@ library(loo)
 # with log(lambda_i) = beta0 + beta_1 * type + beta2 * bombload + beta3 * airexp
 # Prior distribution: beta_j ∼ N(0, 10^3) (sigmasq = 10^3).
 
-
 # Enter data manually
 damage = c(0, 1, 0, 0, 0, 0, 1, 0, 0, 2, 1, 1, 1, 1, 2,
 	3, 1, 1, 1, 2, 0, 1, 1, 2, 5, 1, 1, 5, 5, 7)
@@ -28,54 +27,49 @@ airexp = c(91.5, 84, 76.5, 69, 61.5, 80, 72.5, 65, 57.5, 50,
 	 103, 95.5, 88, 80.5, 73, 116.1, 100.6, 85, 69.4, 53.9,
 	 112.3, 96.7, 81.1, 65.6, 50, 120, 104.4, 88.9, 73.7, 57.8)
 
-df = data.frame(damage, type, bombload, airexp)
+df = data.frame(int = 1, damage, type, bombload, airexp)
+
+# use the + int - 1 specification to avoid
+# automatically rescaling the intercept
 
 # compile and sample each model
-mod_t = stan_glm(damage ~ type, family = poisson(),
+mod_t = stan_glm(damage ~ int - 1 + type, family = poisson(link = "log"),
                  data = df,
                  prior = normal(0, sqrt(1000)),
-                 prior_intercept = normal(0, sqrt(1000)),
                  iter = 10000, chains = 2)
 
-mod_b = stan_glm(damage ~ bombload, family = poisson(),
+# init_r sets initial values to be generated uniformly
+# between -0.5 and 0.5 (on the internal transformed scale)
+mod_b = stan_glm(damage ~ int - 1 + bombload, family = poisson(),
                  data = df,
                  prior = normal(0, sqrt(1000)),
                  prior_intercept = normal(0, sqrt(1000)),
                  iter = 10000, chains = 2, init_r = 0.5)
 
+# let stan automatically set default priors
 mod_a = stan_glm(damage ~ airexp, family = poisson(),
                  data = df,
-                 prior = normal(0, sqrt(1000)),
-                 prior_intercept = normal(0, sqrt(1000)),
                  iter = 10000, chains = 2, init_r = 0.5)
 
 mod_tb = stan_glm(damage ~ type + bombload,
                   family = poisson(),
                   data = df,
-                  prior = normal(0, sqrt(1000)),
-                  prior_intercept = normal(0, sqrt(1000)),
-                  iter = 10000, chains = 2, init_r = 0.5)
+                  iter = 10000, chains = 2)
 
 mod_ta = stan_glm(damage ~ type + airexp,
                   family = poisson(),
                   data = df,
-                  prior = normal(0, sqrt(1000)),
-                  prior_intercept = normal(0, sqrt(1000)),
-                  iter = 10000, chains = 2, init_r = 0.5)
+                  iter = 10000, chains = 2)
 
 mod_ba = stan_glm(damage ~ bombload + airexp,
                   family = poisson(),
                   data = df,
-                  prior = normal(0, sqrt(1000)),
-                  prior_intercept = normal(0, sqrt(1000)),
-                  iter = 10000, chains = 2, init_r = 0.5)
+                  iter = 10000, chains = 2)
 
 mod_tba = stan_glm(damage ~ type + bombload + airexp,
                   family = poisson(),
                   data = df,
-                  prior = normal(0, sqrt(1000)),
-                  prior_intercept = normal(0, sqrt(1000)),
-                  iter = 10000, chains = 2, init_r = 0.5)
+                  iter = 10000, chains = 2)
 
 # compute and waic and looic
 waic_t = waic(mod_t)
