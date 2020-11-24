@@ -1,5 +1,5 @@
 # Model checking for Newcomb light data
-# Data distribution: y_i | mu, sigma^2 ~ N(mu, sigma^2)
+# Data distribution: y_1, y_2, ..., y_n | mu, sigma^2 ~ iid N(mu, sigma^2)
 # Prior distribution: p(mu, log(sigma)) propto 1
 
 # load additional Bayesian distributions

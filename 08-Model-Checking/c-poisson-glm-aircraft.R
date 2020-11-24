@@ -94,6 +94,7 @@ stan_dens(fit_aircraft_check, par = c("beta0", "beta1", "beta2", "beta3"),
 
 chains = as.data.frame(fit_aircraft_check)
 
+# get lambda values for each observation
 lambda = exp(chains[,5:34])
 # 30 x nsim yrep
 yrep = apply(lambda, 1, function(x) rpois(n = 30, x))
