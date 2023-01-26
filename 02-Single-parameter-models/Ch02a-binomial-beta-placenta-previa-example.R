@@ -103,3 +103,4 @@ lines(theta, prior7, col = "blue")
 title(paste("alpha =", alpha[7], "beta =", beta[7]))
 legend("topright", legend = c("posterior", "prior"),
        col = c("orange", "blue"), lwd = c(1, 1))
+par(mfrow = c(1, 1))

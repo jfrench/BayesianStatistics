@@ -42,7 +42,8 @@ dcustom <- custom.prior(theta)
 par(mfrow = c(1, 1))
 plot(theta, dcustom, type = "l",
      main = "nonconjugate prior density",
-     xlab = "density")
+     xlab = "density",
+     ylim = c(0, max(dcustom)))
 
 #make sure prior integrates to 1
 integrate(custom.prior, 0, 1, subdivisions = 1000)
