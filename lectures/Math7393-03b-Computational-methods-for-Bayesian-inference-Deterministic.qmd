@@ -2,7 +2,7 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
-format: html
+format: ipynb
 self-contained: true
 title-block-banner: true
 ---
