@@ -1,2 +1,2 @@
 # BayesianStatistics
-Code associated with my course on Bayesian Statistics
+Code and notes associated with my course on Bayesian Statistics
