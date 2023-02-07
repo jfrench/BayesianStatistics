@@ -5,5 +5,8 @@
 *.rda
 *.docx
 *.pdf
-*/lectures/old
-*/lectures/media
+*.html
+/lectures/old
+/lectures/old/*
+/lectures/media/
+/lectures/media/*
