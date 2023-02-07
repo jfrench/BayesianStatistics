@@ -1,0 +1,81 @@
+---
+title: "Computational methods for Bayesian inference"
+author: "Joshua French"
+date: ""
+format: html
+self-contained: true
+---
+
+# Introduction
+
+## Summary of computational methods
+
+-   Bayesian statistics focuses on determining or summarizing the posterior distribution, $p(\theta | y).$
+-   When this cannot be done with a closed-form expression, we must rely on numerical approximations.
+-   Some common deterministic methods for approximating the posterior distribution include:
+    -   maximum a posteriori estimation
+    -   cubature-type integration approaches
+    -   distributional approximations
+-   The most common stochastic methods for approximating the posterior distribution are:
+    -   direct (Monte Carlo) simulation
+    -   Markov chain Monte Carlo (MCMC) simulation
+
+## Maximum a posteriori estimation
+
+-   The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \ln p(y | \theta ) + \ln p(\theta).$$
+-   In practice, you can find this numerically using optimization functions built-in to your software of choice.
+
+## Cubature integration
+
+-   The quantities of interest can often be written as an integral, in which case we may be able to use fast deterministic methods for evaluating the integral.
+    -   E.g., quadrature rule, Simpson's rule, etc.
+-   The integral can be approximated by evaluating the function at a finite number of points and aggregating the results.
+-   The posterior expectation of any function $h(\theta)$ is defined as $$E\left( h(\theta) | y \right) = \int {h(\theta) p(\theta | y)} d\theta.$$
+    -   Note: $p\left( \tilde{y} | y \right) = E_{\theta|y}\left\lbrack p\left( \tilde{y} | \theta,y \right) \right\rbrack.$
+
+## Distributional approximations
+
+-   The posterior distribution can be approximated by another known distribution.
+-   The most common approximation is to approximate the posterior by $$\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}),$$ which is sometimes called the Bayesian Central Limit Theorem.
+    -   $\hat{\theta}$ is an estimate of $\theta$ such as the MLE or MAP.
+    -   $I(\hat{\theta})$ is the *observed information matrix*.
+-   The observed information matrix is $$I(\hat{\theta}) = -{\mathbf{H}(\theta)} |_{\theta = \hat{\theta}},$$ where $$\mathbf{H}_{i,j} = \frac{\partial^2}{\partial \theta_i \partial \theta_j} \ln p(y | \theta).$$
+-   $\hat{\theta}$ is chosen to be the MLE of $\theta$ from the data or the MAP estimate from the posterior.
+-   The Integrated nested Laplace approximation (INLA) is a more advanced normal-based approximation to the posterior that has gained popularity.
+-   Variational Bayes methods postulate a possibly non-Gaussian parametric distribution for the posterior and then solve for the parameter estimates that make the distributions most similar.
+
+## Stochastic methods
+
+-   Stochastic methods for approximating the posterior essentially rely on the law of large numbers (LLN).
+-   The LLN says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta|y)$, then for (almost) any function $h\left( \theta \right)$, as $B\rightarrow \infty$, we have $$\frac{1}{B}\sum_{j = 1}^{B}{h(\theta^{\left( j \right)})} \rightarrow E\left\lbrack h\left( \theta \middle| y \right) \right\rbrack = \int_{}^{}{h(\theta) p(\theta | y) d\theta}.$$
+-   The LLN (generally) applies to simulated data that has a Markov structure, i.e., each simulated value only relies on knowing the previous simulated value.
+
+The LLN implies that:
+
+-   $\bar{\theta} = \frac{\sum\theta^{\left( j \right)}}{B} \rightarrow E\left( \theta \middle| y \right)$
+-   $\frac{1}{B - 1}\sum\left( \theta^{\left( j \right)} - \ \bar{\theta} \right)^{2} \rightarrow \text{var}\left( \theta \middle| y \right)$
+-   $\frac{\# \{ \theta^{\left( j \right)} \leq c \}}{B} \rightarrow P(\theta \leq c|y)$
+-   The empirical distribution of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\} \rightarrow p(\theta|y)$
+-   The $\alpha$-quantile of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\}$ converges to the $\alpha$-quantile of $p(\theta|y)$
+
+## Direct (Monte Carlo) simulation
+
+-   Direct simulation approximates the posterior by drawing i.i.d. samples from the posterior.
+-   In simple contexts, this can be done using *rejection sampling* (also known as *acceptance-rejection sampling*).
+    -   This tends to not scale very well to high-dimensional contexts.
+-   *Approximate Bayesian computation* (ABC) attempts to perform rejection sampling without evaluating the likelihood function.
+    -   In principle, this will be MUCH faster.
+    -   Possibly erroneous assumptions must be made.
+
+## MCMC simulation
+
+-   MCMC methods produce correlated samples from the posterior.
+-   The Gibbs sampler is the often the preferred MCMC method.
+    -   Samples are drawn from the full conditional distributions of each parameter.
+    -   E.g., Samples are drawn for $p(\theta_1, \theta_2 | y)$ by drawing a sample from $p(\theta_1 | y, \theta_2)$, then from $p(\theta_2 | y, \theta_1)$, and repeating this process.
+-   The Metropolis-Hastings algorithm is a more general MCMC method.
+    -   A sample is drawn from a proposal distribution for the parameter.
+    -   The sample is retained with some probability determined by an acceptance ratio.
+    -   This process is repeated iteratively for all parameters.
+-   More advanced Monte Carlo approaches, such as Hamiltonian Monte Carlo, are more efficient, but are also more complex.
+-   In practice, people use flexible, efficient software such as the JAGS, Stan, or Nimble to approximate the posterior.

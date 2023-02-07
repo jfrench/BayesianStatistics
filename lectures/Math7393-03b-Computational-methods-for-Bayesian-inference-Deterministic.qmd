@@ -1,0 +1,777 @@
+---
+title: Computational methods for Bayesian inference
+author: Joshua French
+date: ''
+format: html
+self-contained: true
+title-block-banner: true
+---
+
+# Want to use Colab? 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://githubtocolab.com/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03b-Computational-methods-for-Bayesian-inference-Deterministic.ipynb)
+
+---
+
+We start by installing needed packages, if necessary, and then loading them.
+
+```{r}
+if(!require(mvtnorm, quietly = TRUE)) {
+  install.packages("mvtnorm", repos = "https://cran.rstudio.com/")
+}
+if(!require(cubature, quietly = TRUE)) {
+  install.packages("cubature", repos = "https://cran.rstudio.com/")
+}
+library(mvtnorm)
+library(cubature)
+```
+
+# Deterministic methods
+
+## MAP estimation
+
+The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \ln p(y | \theta ) + \ln p(\theta).$$
+
+**MAP Example 1**
+
+*Data distribution*
+
+$y_1, \ldots, y_n \mid \theta \stackrel{i.i.d.}{\sim} \text{Poisson}(\theta)$
+
+pdf:
+
+<br>\
+<br>
+
+*Prior distribution*
+
+$\theta \sim \text{Exp}(1)$
+
+pdf:
+
+<br>\
+<br>
+
+*Posterior distribution*
+
+pdf:
+
+<br>\
+<br>
+
+$\ln p(\theta \mid y) \propto \text{const} - (n - 1) \theta + \sum y_i \ln(\theta)$
+
+Let's start by generating some data.
+
+```{r}
+# Generate some synthetic data from a Poisson(0.5)
+set.seed(8)
+y <- rpois(10, lambda = 0.5)
+```
+
+Now, we create a function to compute the log of the unnormalized
+posterior.
+
+```{r}
+# create function for log unnormalized posterior
+# theta = estimand
+# sumy = sum(y)
+# n = sample size
+lup <- function(theta, sumy, n) {
+  -(n + 1) * theta + sumy * log(theta)
+}
+```
+
+We now use the `optimize` function to optimize the objective function, `lup`, between
+0 and 1.
+
+- We start our search `interval` just above 0 to avoid numerical issues.
+- We set `maximum` to `TRUE` to find the parameter that maximizes the objection function, `lup`.
+
+```{r}
+(map <- optimize(
+  f = lup, interval = c(0.0001, 10),
+  maximum = TRUE,
+  sumy = sum(y), n = length(y)
+))
+# maximum occurs at theta = 0.64
+```
+
+We plot our results to double-check accuracy.
+
+```{r}
+# domain of plot
+mytheta <- seq(0.0001, 1, length = 1000)
+# plot function
+plot(mytheta, lup(mytheta, sumy = sum(y), n = length(y)),
+  type = "l",
+  xlab = "theta", ylab = "propto log posterior"
+)
+# show maximum
+abline(v = map$maximum)
+```
+
+We now use a different approach that doesn't simplify ahead
+of time. Note that
+
+$$
+\begin{aligned}
+\ln [p(y\mid \theta)p(\theta)] &= \ln p(y\mid \theta) + \ln p(\theta) \\
+&= \ln \left(\prod_{i=1}^n p(y_i\mid\theta)\right) + \ln p(\theta) \\
+&= \sum_{i=1}^n \ln p(y_i\mid\theta) + \ln p(\theta).
+\end{aligned}
+$$
+
+```{r}
+# second version of log unnormalized posterior
+lup2 <- function(theta, y) {
+  sum(dpois(y, lambda = theta, log = TRUE)) +
+    dexp(theta, rate = 1, log = TRUE)
+}
+
+# same results!
+optimize(
+  f = lup2, interval = c(0.0001, 10), maximum = TRUE,
+  y = y
+)
+```
+
+**MAP Example 2 (2 parameter)**
+
+*Data distribution*
+
+$y_1, ..., y_n \mid \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu, \sigma^2)$
+
+pdf:
+
+<br>\
+<br>
+
+*Prior distribution*
+
+$\mu \sim U(10, 15)$
+
+pdf:
+
+<br>\
+<br>
+
+$\sigma^2 \sim N(0.5, 0.25) I_{(0,\infty)}(\sigma^2)$
+
+pdf:
+
+<br>\
+<br>
+
+This is essentially a truncated normal with a different scaling constant.
+
+We start by generating some fake data.
+
+```{r}
+# Generate some synthetic data
+# Normal with mean 11 and sd = 0.47
+set.seed(7)
+y <- rnorm(10, mean = 11, sd = 0.47)
+```
+
+We program the negative log of the unnormalized posterior density.
+
+- The function takes $\theta = (\mu, \sigma^2)$.
+- We *don't* constrain $\mu$ to be between 10 and 15 and $\sigma^2$ to be positive only because we will do this constraint in our optimization.
+- We multiply the log posterior by -1 so that instead of trying to maximize the log unnormalized posterior, we minimize the negative log unnormalized posterior.
+
+```{r}
+nlup <- function(theta, y) {
+  mu <- theta[1]
+  sigma <- sqrt(theta[2])
+  obj <- sum(dnorm(y, mean = mu, sd = sigma, log = TRUE)) +
+    dunif(mu, 10, 15, log = TRUE) +
+    dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
+  -obj
+}
+```
+
+We now use the `optim` function to perform multi-dimensional optimization.
+
+- `par`: vector of starting values
+- `f`: function to MINIMIZE. The first argument must be the argument you want to optimize over.
+- `lower`: the constraints on the lower bound
+- `upper`: the constraints on the upper bound
+- `method`: the optimization method. `"L-BFGS-B"` allows use to specify constraints.
+- `control`: list of optional tuning parameters.
+- The remaining arguments are the arguments that must be supplied to `f`.
+
+```{r}
+optim(
+  par = c(12.5, 1),
+  f = nlup,
+  lower = c(10.0001, 0.05),
+  upper = c(14.9999, 2),
+  method = "L-BFGS-B",
+  y = y
+)
+```
+
+`nlminb` is an alternative optimizer that is more robust (from my personal experience.)
+
+- The arguments are self-explanatory.
+
+```{r}
+(map <- nlminb(
+  start = c(12.5, 1),
+  objective = nlup,
+  lower = c(10.0001, 0.0001),
+  upper = c(14.9999, 2),
+  y = y
+))
+```
+
+Let's plot our results.
+
+```{r}
+# create sequence of values for mu and sigmasq
+mymu <- seq(10.8, 11.2, length = 200)
+mysigmasq <- seq(0.15, 0.45, length = 200)
+# create grid
+mytheta <- expand.grid(mymu, mysigmasq)
+# for each row of mytheta, plug it into nlup function
+z <- apply(mytheta, 1, function(theta) {
+  nlup(theta, y = y)
+})
+# convert z to matrix for plotting
+zmat <- matrix(z, nrow = length(mymu))
+# create heat map of objective surface
+image(mymu, mysigmasq, zmat,
+  col = hcl.colors(64, rev = TRUE),
+  xlab = expression(mu), ylab = expression(sigma^2)
+)
+# add contours
+contour(mymu, mysigmasq, zmat, add = TRUE)
+# place point for posterior mode
+points(map$par[1], map$par[2], pch = 20)
+title("log posterior density (unnormalized)")
+```
+
+## Cubature methods
+
+Cubature methods approximate an integral by evaluating a function at a finite number of points and aggregating the results. (We won't discuss specifics.)
+
+**Cubature method example (Beta-Binomial)**
+
+*Data distribution*
+
+$y \mid \theta \sim \text{Bin}(n, \theta)$.
+
+Let's assume $n=980$ and $y=437$.
+
+*Prior distribution*
+
+$\theta \sim \text{Beta}(\alpha, \beta)$.
+
+Let's assume $\alpha=\beta=1$.
+
+*Posterior distribution*
+
+$\theta \mid y \sim \text{Beta}(y + \alpha, n - y + \beta)$.
+
+This has posterior mean $\frac{y + \alpha}{n + \alpha + \beta}$.
+
+Based on our assumptions above, $\theta \mid y \sim \text{Beta}(438, 544)$.
+
+*Posterior predictive distribution*
+
+$P(\tilde{y} = 1 \mid y) = \frac{y + \alpha}{n + \alpha + \beta}$.
+
+Based on previous assumptions, $P(\tilde{y} = 1 \mid y) = 448/(438 + 544) \approx 0.446$.
+
+Let's use the cubature method to approximate some of these.
+
+We start by defining the posterior density with a generic normalizing constant.
+
+```{r}
+# unnormalized posterior
+dpost <- function(theta, const = 1) {
+  dbinom(x = 437, size = 980, prob = theta) *
+    dbeta(theta, shape1 = 1, shape2 = 1) /
+    const
+}
+```
+
+We determine the normalizing constant.
+
+```{r}
+(nconst <- integrate(dpost, lower = 0, upper = 1)$value)
+```
+
+Now, we define the function $\theta p(\theta \mid y)$.
+
+```{r}
+# theta * posterior
+mean_target <- function(theta, const) {
+  theta * dpost(theta, const)
+}
+```
+
+We integrate $\theta p(\theta \mid y)$ for $\theta \in [0, 1]$.
+
+```{r}
+# compute posterior mean using cubature
+integrate(mean_target, lower = 0, upper = 1, const = nconst)
+```
+Next, we define the function that evaluates $P(\tilde{y} = 1 \mid \theta) p(\theta \mid y)$.
+
+```{r}
+# pytilde * ptarget
+pytilde_target <- function(theta, const) {
+  dbinom(x = 1, size = 1, prob = theta) *
+    dpost(theta, const)
+}
+```
+
+Lastly, we integrate that function to compute $P(\tilde{y} = 1 \mid \theta)$.
+
+```{r}
+# posterior predictive probability
+integrate(pytilde_target, lower = 0, upper = 1, const = nconst)
+```
+
+## Bayesian CLT for $N(\mu,\sigma^2)$
+
+**Example 1**
+
+*Data distribution*
+
+$y_1, ..., y_n \mid \theta \stackrel{i.i.d}{\sim} \text{Poisson}(\theta)$
+
+*Prior distribution*
+
+$\theta \sim \text{Exp}(1)$
+
+*Negative Hessian,* $-H(\theta)$
+
+$-\frac{d^2}{d\theta^2} \ln p(y \mid \theta) = \frac{\sum y_i}{\theta^2}$.
+
+*Approximate posterior distribution*
+
+For a large sample of data, $p(\theta \mid y) \approx N(\hat{\theta}, \hat{\theta}^2/\sum y_i)$.
+
+We start be generating a small data set.
+
+```{r}
+# Generate some synthetic data
+# Poisson with mean of 0.5
+set.seed(3) # for reproducibility
+y <- rpois(10, lambda = 0.5)
+```
+
+We now define the posterior density with a generic normalizing constant.
+
+```{r}
+dpost <- function(theta, y, const = 1) {
+  log_pdata <- sum(dpois(y, lambda = theta, log = TRUE))
+  log_pprior <- dexp(theta, rate = 1, log = TRUE)
+  exp(log_pdata + log_pprior - log(const))
+}
+```
+
+Let's try plotting this function to help us determine what
+we should be maximizing over.
+
+```{r}
+# plot dpost to determine what to maximize over
+x <- seq(0.001, 10, len = 1000)
+plot(x, dpost(theta = x, y = y), type = "l", )
+```
+
+We're getting weird results because `dpost` is trying to evaluate `dpois` with a vector `y` and a vector `theta` whose dimensions are incompatible. 
+
+We want to evaluate `dpois(y, ...)` for *each* value of `theta`.
+
+We can use the `Vectorize` function to vectorize a function with respect to a certain argument.
+
+```{r}
+vdpost <- Vectorize(dpost, vectorize.args = "theta")
+```
+
+Now, we try our plot again.
+
+```{r}
+# plot vectorized dpost to determine what to maximize over
+plot(x, vdpost(theta = x, y = y), type = "l",
+     ylab = "unnormalized density")
+```
+
+We can determine $\hat{\theta}_{\text{MAP}}$ over the interval $[0, 2]$.
+
+```{r}
+# determine MAP
+(map <- optimize(vdpost, interval = c(0, 2), y = y, maximum = TRUE)$maximum)
+```
+
+$\hat{\theta}_{MAP}\approx 0.18$. Thus, our posterior approximation is $N(0.18, 0.18^2/\sum y_i)$.
+
+Let's plot the "truth" versus the approximation. In order to do that, we need to figure out the "true" distribution. We do this to illustrate the effectiveness of the approximation. We wouldn't normally do this.
+
+We find our normalizing constant.
+
+```{r}
+# determine normalizing constant
+(nconst <- integrate(f = vdpost, lower = 0, upper = 10, y = y)$value)
+```
+
+We double-check that the posterior is proper!
+
+```{r}
+integrate(vdpost, lower = 0, upper = 10, y = y, const = nconst)
+```
+
+We define a function to evaluate our approximate posterior distribution.
+
+```{r}
+# normal approximation posterior
+dpapprox <- function(theta, y, thetahat) {
+  dnorm(theta, mean = thetahat, sd = sqrt(thetahat^2 / sum(y)))
+}
+```
+
+Now, we plot the "true" posterior density versus the approximate posterior density.
+
+```{r}
+# range of theta values
+theta <- seq(0, 2, length = 1000)
+# plot true density
+plot(theta, vdpost(theta, y, nconst),
+     ylab = "density", type = "l", col = "orange")
+# plot normal approximation
+lines(theta, dpapprox(theta, y, thetahat = map),
+      col = "blue")
+legend("topright",
+  legend = c("truth", "approximation"),
+  col = c("orange", "blue"), lty = 1
+)
+```
+
+Our approximation isn't great because our sample size is small. Let's perform the same approximation with a larger sample size.
+
+We generate 100 i.i.d. observations from a Poisson(0.5) distribution.
+
+```{r}
+set.seed(3) # for reproducibility
+y100 <- rpois(100, lambda = 0.5)
+```
+
+We once again plot the unnormalized posterior to determine
+the range of `theta` to optimize over.
+
+```{r}
+plot(x, vdpost(theta = x, y = y100),
+  type = "l",
+  xlab = "theta", ylab = "unnormalized density"
+)
+```
+
+We determine $\hat{\theta}_{\text{MAP}}$.
+
+```{r}
+(map100 <- optimize(vdpost, interval = c(0, 2),
+                    y = y100, maximum = TRUE)$maximum)
+```
+
+$\hat{\theta}_{\text{MAP}}\approx 0.42$. Thus, our posterior approximation is $N(0.42, 0.42^2/\sum y_i)$.
+
+Let's plot the "truth" versus the approximation.
+
+We compute the normalizing constant for our posterior.
+
+```{r}
+# determine normalizing constant
+(nconst100 <- integrate(f = vdpost, lower = 0, upper = 10, y = y100)$value)
+```
+
+We double-check that posterior is proper.
+
+```{r}
+integrate(vdpost, lower = 0, upper = 10, y = y100, const = nconst100)
+```
+
+We have a big issue! Our (numerical) integral is no longer integrating to 1. Why? Computational underflow!
+
+When we evaluate our unnormalized posterior, all of the values are close to zero.
+
+We need to shift the unnormalized posterior vertically so that some of the values are higher. I choose to make the largest value 1 by using the trick below.
+
+-   Evaluate the log unnormalized density over the range of the $\theta$.
+-   Subtract the LARGEST number you get from the log unnormalized density.
+-   Convert back to the original scale using $\exp$.
+
+```{r}
+lqpost <- function(theta, y) {
+  log_pdata <- sum(dpois(y, lambda = theta, log = TRUE))
+  log_pprior <- dexp(theta, rate = 1, log = TRUE)
+  log_pdata + log_pprior
+}
+vlqpost <- Vectorize(lqpost, vectorize.args = "theta")
+range(vlqpost(x, y = y100))
+```
+
+We create a "robust" version of the unnormalized density.
+
+```{r}
+qpost_robust <- function(theta, y) {
+  log_pdata <- sum(dpois(y, lambda = theta, log = TRUE))
+  log_pprior <- dexp(theta, rate = 1, log = TRUE)
+  exp(log_pdata + log_pprior + 84.11288)
+}
+# vectorize
+vqpost_robust <- Vectorize(qpost_robust,
+  vectorize.args = "theta"
+)
+```
+
+The new unnormalized density has a maximum of 1.
+
+```{r}
+plot(x, vqpost_robust(x, y = y100),
+  xlab = "theta", ylab = "unnormalized density",
+  type = "l"
+)
+```
+
+Now, we determine the normalizing constant of our robust unnormalized density.
+
+```{r}
+# determine normalizing constant
+(nconst100 <- integrate(f = vqpost_robust, lower = 0, upper = 10, y = y100)$value)
+```
+
+We now create a robust version of our posterior density.
+
+```{r}
+# posterior density function
+dpost_robust <- function(theta, y, const) {
+  qpost_robust(theta, y) / const
+}
+# vectorized version of dpost_robust for integrate function
+vdpost_robust <- Vectorize(dpost_robust,
+  vectorize.args = "theta"
+)
+```
+
+We double-check that our robust posterior density is proper.
+
+```{r}
+integrate(vdpost_robust,
+  lower = 0, upper = 10,
+  y = y100, const = nconst100
+)
+```
+
+Finally, we create a plots to compare our true density versus our normal approximation.
+
+```{r}
+# plot true density
+plot(theta, vdpost_robust(theta, y100, nconst100),
+     ylab = "density", type = "l", col = "orange")
+# plot normal approximation
+lines(theta, dpapprox(theta, y100, thetahat = map100), col = "blue")
+legend("topright",
+  legend = c("truth", "approximation"),
+  col = c("orange", "blue"), lty = 1
+)
+```
+
+**Bayesian CLT Example (Two parameter)**
+
+*Data distribution*
+
+$y_1, y_2, \ldots, y_n | \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu, \sigma^2)$
+
+*Prior distribution*
+
+$\mu \sim U(10, 15)$, $p(\sigma^2) \propto N(0.5, 0.5^2) I_{(0, \infty)}(\sigma^2)$
+
+*Posterior distribution (Bayesian CLT)*
+
+Assuming $n$ is large, $\theta = (\mu, \sigma^2)$, and $\hat{\theta} = \hat{\theta}_{MAP}$, $\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$
+
+The data density is
+
+$$
+\begin{aligned}
+p(y|\theta) &= \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
+ &= (2\pi)^{-n/2}\left(\sigma^2\right)^{-n/2}\exp\left(-\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2\right)
+\end{aligned}
+$$
+and
+$$
+\ln p(y|\theta) = \mathrm{const} - \frac{n}{2} \ln \left(\sigma^2\right) -\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
+$$
+
+The first partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y|\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y|\theta) = -\frac{n}{2\sigma^2} +\frac{1}{\left(2\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
+
+The second partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial^2}{\partial \mu^2} \ln p(y|\theta) = -\frac{n}{\sigma^2}$$ and $$\frac{\partial^2}{\partial \left(\sigma^2\right)^2} \ln p(y|\theta) = \frac{n}{2\left(\sigma^2\right)^2} -\frac{1}{\left(\sigma^2\right)^3}\sum_{i=1}^n(y_i-\mu)^2$$ and
+
+$$\frac{\partial^2}{\partial \mu \partial \sigma^2} \ln p(y|\theta) = -\frac{1}{\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)$$
+
+Thus, if $\hat{\theta} = (\hat{\mu}, \hat{\sigma}^2)$ is the MAP estimate of $\theta = (\mu, \sigma^2)$, then the Bayesian CLT approximation of the posterior is $\theta | y \approx N(\hat{\theta}, I(\hat{\theta})^{-1})$, where
+
+$$
+I(\hat{\theta})^{-1} = \begin{bmatrix}
+\frac{n}{\hat{\sigma}^2} & \frac{1}{\left(\hat{\sigma}^2\right)^2}\sum_{i=1}^n(y_i-\hat{\mu})\\
+\frac{1}{\left(\hat{\sigma}^2\right)^2}\sum_{i=1}^n(y_i-\hat{\mu}) & -\frac{n}{2\left(\hat{\sigma}^2\right)^2} +\frac{1}{\left(\hat{\sigma}^2\right)^3}\sum_{i=1}^n(y_i-\hat{\mu})^2
+\end{bmatrix}^{-1}.
+$$
+
+Let's generate some data.
+
+```{r}
+# Generate some synthetic data
+# in practice, we just have some data
+set.seed(7)
+y <- rnorm(100, mean = 11, sd = 0.47)
+```
+
+Now we create functions related to the true posterior density. This wouldn't normally be needed, but we want to assess how good our approximation is.
+
+We create a density function with a built-in correction to address the numerical underflow issue. The function takes:
+
+- `theta`: a vector parameterized as $\theta = (\mu, \sigma^2)$.
+- `y`: data vector.
+- `const`: the normalizing constant, which we don't yet know. We use 1.
+
+```{r}
+dpost <- function(theta, y, const = 1) {
+  mu <- theta[1]
+  sigma <- sqrt(theta[2])
+  log_pdata <- sum(dnorm(y, mean = mu, sd = sigma, log = TRUE))
+  log_pmu <- dunif(mu, 10, 15, log = TRUE)
+  log_psigmasq <- dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
+  log_qtheta <- log_pdata + log_pmu + log_psigmasq
+  exp(log_qtheta + 70)/const
+}
+```
+
+We determine the normalizing constant over the interval $\mu \in [10, 15]$ and $\sigma^2\in[0, 2]$.
+
+```{r}
+(const <- cubintegrate(
+  f = dpost,
+  lower = c(10, 0),
+  upper = c(15, 2),
+  y = y
+)$integral)
+```
+
+Now, let's determine our MAP estimate.
+
+We first define a function to evaluate the log unnormalized posterior.
+
+```{r}
+log_qtheta <- function(theta, y) {
+  mu <- theta[1]
+  sigma <- sqrt(theta[2])
+  log_pdata <- sum(dnorm(y, mean = mu, sd = sigma, log = TRUE))
+  log_pmu <- dunif(mu, 10, 15, log = TRUE)
+  log_psigmasq <- dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
+  log_pdata + log_pmu + log_psigmasq
+}
+```
+
+We now use the `optim` function to maximize the objective function.
+
+- We use `fnscale = -1` to make `optim` perform maximization instead of minimization
+
+```{r}
+(map <- optim(
+  par = c(12.5, 1),
+  f = log_qtheta,
+  lower = c(10.0001, 0.05),
+  upper = c(14.9999, 2),
+  method = "L-BFGS-B",
+  y = y,
+  control = list(fnscale = -1)
+))
+```
+
+Now, we build a function that returns the inverse of the observation information matrix.
+
+```{r}
+# return the observed information matrix
+inv_ihat <- function(thetahat, n) {
+  mu <- thetahat[1]
+  sigma <- sqrt(thetahat[2])
+  # 2nd derivative of log likelihood w/r to mu
+  d2dmu2 <- -n / sigma^2
+  # derivative of log likelihood w/r to mu and sigmasq
+  d2dmudsigmasq <- -sum((y - mu)) / sigma^4
+  # 2nd derivative of log likelihood w/r to sigmasq
+  d2dsigmasq2 <- n / (2 * sigma^4) - 1 / sigma^6 * sum((y - mu)^2)
+  #
+  H <- cbind(c(d2dmu2, d2dmudsigmasq), c(d2dmudsigmasq, d2dsigmasq2))
+  solve(-H)
+}
+```
+
+Now, we create a function that evaluates the bivariate normal approximation of the true density with respect to $\theta$.
+
+```{r}
+# posterior approximation
+dpapprox <- function(theta, thetahat, vhat) {
+  mvtnorm::dmvnorm(x = theta, mean = thetahat, sigma = vhat)
+}
+```
+
+Finally, we visually compare the results.
+
+```{r}
+# create sequence of values for mu and sigmasq
+mymu <- seq(10.95, 11.2, length = 200)
+mysigmasq <- seq(0.14, 0.29, length = 200)
+# create grid
+mytheta <- expand.grid(mymu, mysigmasq)
+
+# for each row of mytheta, plug it into dpost function
+z <- apply(mytheta, 1, function(theta) {
+  dpost(theta, y = y, const = const)
+})
+
+# convert z to matrix for plotting
+zmat <- matrix(z, nrow = length(mymu))
+
+# compute observed Information outside of loop
+vhat <- inv_ihat(map$par, length(y))
+zhat <- mvtnorm::dmvnorm(
+  x = mytheta,
+  mean = map$par,
+  sigma = vhat
+)
+# convert z to matrix for plotting
+zhatmat <- matrix(zhat, nrow = length(mymu))
+
+# side-by-side results
+par(mfrow = c(1, 2))
+
+# create heat map of objective surface
+image(mymu, mysigmasq, zmat,
+  col = hcl.colors(64, rev = TRUE),
+  xlab = expression(mu),
+  ylab = expression(sigma^2),
+  zlim = range(c(z, zhat))
+)
+# add contours
+contour(mymu, mysigmasq, zmat,
+  add = TRUE
+)
+title("true posterior")
+
+# create heat map of approximation surface
+image(mymu, mysigmasq, zhatmat,
+  col = hcl.colors(64, rev = TRUE),
+  xlab = expression(mu),
+  ylab = expression(sigma^2),
+  zlim = c(range(c(z, zhat)))
+)
+# add contours
+contour(mymu, mysigmasq, zhatmat, add = TRUE)
+title("normal approximation")
+par(mfrow = c(1, 1))
+```
