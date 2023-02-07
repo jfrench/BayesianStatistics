@@ -7,8 +7,11 @@ self-contained: true
 title-block-banner: true
 ---
 
-# Want to use Colab? 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)]( https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03b-Computational-methods-for-Bayesian-inference-Deterministic.ipynb)
+To open this information in an interactive Colab notebook, click the Colab graphic below.
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03b-Computational-methods-for-Bayesian-inference-Deterministic.ipynb">
+   <img src="https://colab.research.google.com/assets/colab-badge.svg">
+</a>
 
 ---
 
