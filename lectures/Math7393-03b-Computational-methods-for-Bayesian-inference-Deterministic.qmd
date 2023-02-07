@@ -3,6 +3,7 @@ title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
 format: ipynb
+jupyter: ir
 self-contained: true
 title-block-banner: true
 ---
@@ -15,17 +16,17 @@ To open this information in an interactive Colab notebook, click the Colab graph
 
 ---
 
-We start by installing needed packages, if necessary, and then loading them.
-
 ```{r}
+# check to see if necessary packages are installed
 if(!require(mvtnorm, quietly = TRUE)) {
+  # install and load packages if necessary
   install.packages("mvtnorm", repos = "https://cran.rstudio.com/")
+  library(mvtnorm)
 }
 if(!require(cubature, quietly = TRUE)) {
   install.packages("cubature", repos = "https://cran.rstudio.com/")
+  library(cubature)
 }
-library(mvtnorm)
-library(cubature)
 ```
 
 # Deterministic methods
