@@ -2,12 +2,12 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
-# format: html
-format: ipynb
-jupyter: ir
-execute:
-  enabled: false
-  output: false
+format: html
+# format: ipynb
+# jupyter: ir
+# execute:
+#   enabled: false
+#   output: false
 self-contained: true
 title-block-banner: true
 ---
@@ -24,7 +24,7 @@ To open this information in an interactive Colab notebook, click the Open in Col
 
 ## Rejection sampling
 
-Rejection sampling can be used to samples from a target density $p(\theta | y)$ or its unnormalized version $q(\theta | y)$.
+Rejection sampling can be used to draw samples from a target density $p(\theta | y)$ or its unnormalized version $q(\theta | y)$.
 
 Rejection sampling assumes there exists a *proposal distribution* $G$ with density function $g(\theta)$ such that:
 
@@ -90,14 +90,15 @@ Consider drawing a sample from $p(\theta | y)$:
     -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
     -   Note that $q(0.6 | y) = 0.6(1-0.6) = 0.24$.
 -   Draw $u$ from $U(0, 0.25)$.
-    -   We accept $\theta^* = 0.6$ as a sample from $p(\theta | y)$ if $u\leq 0.24$.
-    -   If we don't accept, then we draw a new value of $\theta^*$ from $g(\theta)$ and repeat the process until we accept a $\theta^*$.
+    - Let's say $u^* = 0.066$.
+    - Since $u^*<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
 
 ```{r}
 #| echo: false
+#| eval: true
 set.seed(1)
 thetastar1 = 0.6
-u1 = runif(1, 0, gM(thetastar1))
+u1 = 0.066
 accept1 = (u1 <= qtarget(thetastar1))
 
 # plot q and bounding function
@@ -118,6 +119,7 @@ Consider drawing another sample from $p(\theta \mid y)$:
 
 ```{r}
 #| echo: false
+#| eval: true
 set.seed(2)
 thetastar2 = 0.185
 # u2 = runif(1, 0, gM(thetastar2))
@@ -149,6 +151,8 @@ thetastar1 = 0.6
 thetastar2 = 0.185
 u1 = 0.066
 u2 = 0.176
+accept1 = TRUE
+accept2 = FALSE
 points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
 points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
 for(i in 1:98) {
@@ -176,7 +180,7 @@ Since $q(\theta)$ has finite support, our proposal distribution can be $G\sim U(
 
 We simply need to choose an appropriate bounding constant $M$ for our bounding function.
 
-Taking the derivative of $q(theta)$ with respect to $\theta$,
+Taking the derivative of $q(\theta)$ with respect to $\theta$,
 we can determine that the function has a maximum at $\theta = 1/2$.
 
 The maximum is $q(1/2) = 0.0625$.

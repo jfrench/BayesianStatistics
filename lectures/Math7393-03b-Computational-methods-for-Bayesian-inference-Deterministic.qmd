@@ -640,7 +640,7 @@ $$
 \ln p(y|\theta) = \mathrm{const} - \frac{n}{2} \ln \left(\sigma^2\right) -\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
 $$
 
-The first partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y|\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y|\theta) = -\frac{n}{2\sigma^2} +\frac{1}{\left(2\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
+The first partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y|\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y|\theta) = -\frac{n}{2\sigma^2} +\frac{1}{2\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
 
 The second partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial^2}{\partial \mu^2} \ln p(y|\theta) = -\frac{n}{\sigma^2}$$ and $$\frac{\partial^2}{\partial \left(\sigma^2\right)^2} \ln p(y|\theta) = \frac{n}{2\left(\sigma^2\right)^2} -\frac{1}{\left(\sigma^2\right)^3}\sum_{i=1}^n(y_i-\mu)^2$$ and
 
@@ -730,7 +730,7 @@ We now use the `optim` function to maximize the objective function.
 Now, we build a function that returns the inverse of the observation information matrix.
 
 ```{r}
-# return the observed information matrix
+# return the inverse of the observed information matrix
 inv_ihat <- function(thetahat, n) {
   mu <- thetahat[1]
   sigma <- sqrt(thetahat[2])
