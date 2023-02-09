@@ -2,13 +2,16 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
+# format: pdf
 format: ipynb
 jupyter: ir
+execute:
+  enabled: false
 self-contained: true
 title-block-banner: true
 ---
 
-To open this information in an interactive Colab notebook, click the Colab graphic below.
+To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
 
 <a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03b-Computational-methods-for-Bayesian-inference-Deterministic.ipynb">
    <img src="https://colab.research.google.com/assets/colab-badge.svg">
@@ -159,7 +162,7 @@ pdf:
 <br>\
 <br>
 
-$\sigma^2 \sim N(0.5, 0.25) I_{(0,\infty)}(\sigma^2)$
+$p(\sigma^2) \propto N(0.5, 0.5^2) I_{(0,\infty)}(\sigma^2)$
 
 pdf:
 
@@ -597,6 +600,32 @@ $\mu \sim U(10, 15)$, $p(\sigma^2) \propto N(0.5, 0.5^2) I_{(0, \infty)}(\sigma^
 
 Assuming $n$ is large, $\theta = (\mu, \sigma^2)$, and $\hat{\theta} = \hat{\theta}_{MAP}$, $\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$
 
+Let's determine $I(\hat{\theta})^{-1}$.
+
+::: {.content-visible unless-format="pdf"}
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+</br>  
+:::
+::: {.content-hidden unless-format="pdf"}
 The data density is
 
 $$
@@ -624,6 +653,7 @@ I(\hat{\theta})^{-1} = \begin{bmatrix}
 \frac{1}{\left(\hat{\sigma}^2\right)^2}\sum_{i=1}^n(y_i-\hat{\mu}) & -\frac{n}{2\left(\hat{\sigma}^2\right)^2} +\frac{1}{\left(\hat{\sigma}^2\right)^3}\sum_{i=1}^n(y_i-\hat{\mu})^2
 \end{bmatrix}^{-1}.
 $$
+:::
 
 Let's generate some data.
 
