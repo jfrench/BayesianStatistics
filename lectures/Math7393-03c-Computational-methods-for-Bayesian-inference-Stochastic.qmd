@@ -1,714 +1,24 @@
 ---
-title: "Computational methods for Bayesian inference"
-author: "Joshua French"
-date: ""
-format: html
+title: Computational methods for Bayesian inference
+author: Joshua French
+date: ''
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  enabled: false
+  output: false
+self-contained: true
+title-block-banner: true
 ---
 
-```{r}
-#| include: FALSE
-knitr::opts_chunk$set(echo = FALSE)
-```
+To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
 
-# Introduction
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03c-Computational-methods-for-Bayesian-inference-Stochastic.ipynb">
+   <img src="https://colab.research.google.com/assets/colab-badge.svg">
+</a>
 
-## Summary of computational methods
-
--   Bayesian statistics focuses on determining or summarizing the posterior distribution, $p(\theta | y).$
--   When this cannot be done with a closed-form expression, we must rely on numerical approximations.
--   Some common deterministic methods for approximating the posterior distribution include:
-    -   maximum a posteriori estimation
-    -   cubature-type integration approaches
-    -   distributional approximations
--   The most common stochastic methods for approximating the posterior distribution are:
-    -   direct (Monte Carlo) simulation
-    -   Markov chain Monte Carlo (MCMC) simulation
-
-## Maximum a posteriori estimation
-
--   The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \ln p(y | \theta ) + \ln p(\theta).$$
--   In practice, you can find this numerically using optimization functions built-in to your software of choice.
-
-## Cubature integration
-
--   The quantities of interest can often be written as an integral, in which case we may be able to use fast deterministic methods for evaluating the integral.
-    -   E.g., quadrature rule, Simpson's rule, etc.
--   The integral can be approximated by evaluating the function at a finite number of points and aggregating the results.
--   The posterior expectation of any function $h(\theta)$ is defined as $$E\left( h(\theta) | y \right) = \int {h(\theta) p(\theta | y)} d\theta.$$
-    -   Note: $p\left( \tilde{y} | y \right) = E_{\theta|y}\left\lbrack p\left( \tilde{y} | \theta,y \right) \right\rbrack.$
-
-## Distributional approximations
-
--   The posterior distribution can be approximated by another known distribution.
--   The most common approximation is to approximate the posterior by $$\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}),$$ which is sometimes called the Bayesian Central Limit Theorem.
-    -   $\hat{\theta}$ is an estimate of $\theta$ such as the MLE or MAP.
-    -   $I(\hat{\theta})$ is the *observed information matrix*.
--   The observed information matrix is $$I(\hat{\theta}) = -{\mathbf{H}(\theta)} |_{\theta = \hat{\theta}},$$ where $$\mathbf{H}_{i,j} = \frac{\partial^2}{\partial \theta_i \partial \theta_j} \ln p(y | \theta).$$
--   $\hat{\theta}$ is chosen to be the MLE of $\theta$ from the data or the MAP estimate from the posterior.
--   The Integrated nested Laplace approximation (INLA) is a more advanced normal-based approximation to the posterior that has gained popularity.
--   Variational Bayes methods postulate a possibly non-Gaussian parametric distribution for the posterior and then solve for the parameter estimates that make the distributions most similar.
-
-## Stochastic methods
-
--   Stochastic methods for approximating the posterior essentially rely on the law of large numbers (LLN).
--   The LLN says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta|y)$, then for (almost) any function $h\left( \theta \right)$, as $B\rightarrow \infty$, we have $$\frac{1}{B}\sum_{j = 1}^{B}{h(\theta^{\left( j \right)})} \rightarrow E\left\lbrack h\left( \theta \middle| y \right) \right\rbrack = \int_{}^{}{h(\theta) p(\theta | y) d\theta}.$$
--   The LLN (generally) applies to simulated data that has a Markov structure, i.e., each simulated value only relies on knowing the previous simulated value.
-
-The LLN implies that:
-
--   $\bar{\theta} = \frac{\sum\theta^{\left( j \right)}}{B} \rightarrow E\left( \theta \middle| y \right)$
--   $\frac{1}{B - 1}\sum\left( \theta^{\left( j \right)} - \ \bar{\theta} \right)^{2} \rightarrow \text{var}\left( \theta \middle| y \right)$
--   $\frac{\# \{ \theta^{\left( j \right)} \leq c \}}{B} \rightarrow P(\theta \leq c|y)$
--   The empirical distribution of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\} \rightarrow p(\theta|y)$
--   The $\alpha$-quantile of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\}$ converges to the $\alpha$-quantile of $p(\theta|y)$
-
-## Direct (Monte Carlo) simulation
-
--   Direct simulation approximates the posterior by drawing i.i.d. samples from the posterior.
--   In simple contexts, this can be done using *rejection sampling* (also known as *acceptance-rejection sampling*).
-    -   This tends to not scale very well to high-dimensional contexts.
--   *Approximate Bayesian computation* (ABC) attempts to perform rejection sampling without evaluating the likelihood function.
-    -   In principle, this will be MUCH faster.
-    -   Possibly erroneous assumptions must be made.
-
-## MCMC simulation
-
--   MCMC methods produce correlated samples from the posterior.
--   The Gibbs sampler is the often the preferred MCMC method.
-    -   Samples are drawn from the full conditional distributions of each parameter.
-    -   E.g., Samples are drawn for $p(\theta_1, \theta_2 | y)$ by drawing a sample from $p(\theta_1 | y, \theta_2)$, then from $p(\theta_2 | y, \theta_1)$, and repeating this process.
--   The Metropolis-Hastings algorithm is a more general MCMC method.
-    -   A sample is drawn from a proposal distribution for the parameter.
-    -   The sample is retained with some probability determined by an acceptance ratio.
-    -   This process is repeated iteratively for all parameters.
--   More advanced Monte Carlo approaches, such as Hamiltonian Monte Carlo, are more efficient, but are also more complex.
--   In practice, people use flexible, efficient software such as the JAGS, Stan, or Nimble to approximate the posterior.
-
-# Deterministic methods
-
-## MAP estimation
-
-The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \ln p(y | \theta ) + \ln p(\theta).$$
-
-**MAP Example 1**
-
-*Data distribution*
-
-$y_1, \ldots, y_n \mid \theta \stackrel{i.i.d.}{\sim} \text{Poisson}(\theta)$
-
-pdf:
-
-&nbsp;  
-&nbsp;
-
-*Prior distribution* $\theta \sim \text{Exp}(1)$
-
-pdf:
-
-&nbsp;  
-&nbsp;
-
-*Posterior distribution* 
-
-pdf:
-
-&nbsp;  
-&nbsp;
-
-$\ln p(\theta \mid y) \propto \text{const} - (n - 1) \theta + \sum y_i \ln(\theta)$
-
-```{r}
-#| echo: TRUE
-# The log posterior is proportional to
-# const - (n + 1) * theta + sum(y) * log(theta)
-
-# Generate some synthetic data
-# poisson with mean of 0.5
-# in practice, we just have some data
-set.seed(8)
-y = rpois(10, lambda = 0.5)
-
-# create function for log unnormalized posterior
-# theta = estimand
-# sumy = sum(y)
-# n = sample size
-lup = function(theta, sumy, n) {
-  -(n + 1) * theta + sumy * log(theta)
-}
-
-# Use optimize function to optimize lup between 0 and 1.
-# Start interval just above 0 to avoid numerical issues.
-# Set maximum to TRUE.
-# sumy and n must be passed as arguments
-(map = optimize(f = lup, interval = c(0.0001, 10),
-                maximum = TRUE,
-                sumy = sum(y), n = length(y)))
-# maximum occurs at theta = 0.64
-
-# plot results to double-check accuracy
-mytheta = seq(0.0001, 1, length = 1000)
-
-# The Vectorize function "vectorizes" a function
-# that normally only takes a single value for
-# an argument.
-#
-# We will Vectorize lup so that we can evaluate
-# a sequence of theta values
-vlup = Vectorize(lup, vectorize.args = "theta")
-eval_lup = vlup(mytheta, sumy = sum(y), n = length(y))
-
-# plot function
-plot(mytheta, eval_lup, type = "l",
-     xlab = "theta", ylab = "propto log posterior")
-# show maximum
-abline(v = map$maximum)
-
-# A second approach without the simplification
-# since log (p(y|theta) * p(theta))
-# = log(p(y|theta)) + log(p(theta))
-# = log(prod(p(yi | theta))) + log(p(theta))
-# = sum(log(p(yi | theta))) + log(p(theta))
-lup2 = function(theta, y) {
-  sum(dpois(y, lambda = theta, log = TRUE)) +
-    dexp(theta, rate = 1, log = TRUE)
-}
-
-# same results!
-optimize(f = lup2, interval = c(0.0001, 10), maximum = TRUE,
-         y = y)
-```
-
-**MAP Example 2 (2 parameter)**
-
-*Data distribution*
-
-$y_1, ..., y_n \mid \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(mu, sigma^2)$
-
-pdf:
-
-&nbsp;  
-&nbsp;  
-
-*Prior distribution*
-
-$\mu \sim U(10, 15)$
-
-pdf:
-
-&nbsp;  
-&nbsp;  
-
-$\sigma^2 \sim N(0.5, 0.25) I_{(0,\infty)}(\sigma^2)$
-
-pdf:
-
-&nbsp;  
-&nbsp; 
-
-This is essentially a truncated normal with a different scaling constant.
-
-```{r}
-#| echo: TRUE
-# Generate some synthetic data
-# Normal with mean 11 and sd = 0.47
-set.seed(7)
-y = rnorm(10, mean = 11, sd = 0.47)
-
-# create function for negative log unnormalized posterior
-# takes the vector theta = (mu, sigma^2)
-# and y = data.
-# Note that because of the priors, mu must
-# be between 10 and 15 and sigma^2 > 0.
-# This isn't explicitly captured in the function
-# We multiply the log posterior by -1 so that instead of
-# trying to maximize the log unnormalized posterior, we minimize
-# the negative log unnormalized posterior
-nlup = function(theta, y) {
-  mu = theta[1]
-  sigma = sqrt(theta[2])
-  obj = sum(dnorm(y, mean = mu, sd = sigma, log = TRUE)) +
-    dunif(mu, 10, 15, log = TRUE) +
-    dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
-  -obj
-}
-
-# optim performs multi-dimensional optimization
-# par - vector of starting values
-# f - function to MINIMIZE. The first argument
-# must be the argument you want to optimize over
-# lower - the constraints on the lower bound
-# upper - the constraints on the upper bound
-# method - the optimization method. "L-BFGS-B"
-# allows you to specify constraints
-# control - a list of optional tuning parameters.
-# The remaining arguments are the arguments that
-# must be supplied to f.
-optim(par = c(12.5, 1),
-      f = nlup,
-      lower = c(10.0001, 0.05),
-      upper = c(14.9999, 2),
-      method = "L-BFGS-B",
-      y = y)
-
-# nlminb is an alternative optimizer
-# the purpose of each argument should be
-# straightforward
-(map = nlminb(start = c(12.5, 1),
-              objective = nlup,
-              lower = c(10.0001, 0.0001),
-              upper = c(14.9999, 10),
-              y = y))
-
-# create sequence of values for mu and sigmasq
-mymu = seq(10.8, 11.2, length = 200)
-mysigmasq = seq(0.15, 0.45, length = 200)
-# create grid
-mytheta = expand.grid(mymu, mysigmasq)
-# for each row of mytheta, plug it into nlup function
-z = apply(mytheta, 1, function(theta) {
-  nlup(theta, y = y)
-})
-# convert z to matrix for plotting
-zmat = matrix(z, nrow = length(mymu))
-
-# create heat map of objective surface
-image(mymu, mysigmasq, zmat,
-      col = hcl.colors(64, "YlOrRd", rev = TRUE),
-      xlab = expression(mu), ylab = expression(sigma^2))
-# add contours
-contour(mymu, mysigmasq, zmat, add = TRUE)
-# place point for posterior mode
-points(map$par[1], map$par[2], pch = 20)
-title("log posterior density (unnormalized)")
-```
-
-## Cubature methods
-
-Cubature methods approximate an integral by evaluating a function at a finite number of points and aggregating the results. (We won't discuss specifics.)
-
-**Cubature method example (Beta-Binomial)**
-
-*Data distribution*
-
-$y \mid \theta \sim \text{Bin}(n, \theta)$.
-
-Let's assume $n=980$ and $y=437$.
-
-*Prior distribution*
-
-$\theta \sim \text{Beta}(\alpha, \beta)$.
-
-Let's assume $\alpha=\beta=1$.
-
-*Posterior distribution*
-
-$\theta \mid y \sim \text{Beta}(y + \alpha, n - y + \beta)$.
-
-This has posterior mean $\frac{y + \alpha}{n + \alpha + \beta}$.
-
-Based on our assumptions above, $\theta \mid y \sim \text{Beta}(438, 544)$.
-
-*Posterior predictive distribution*
-
-$P(\tilde{y} = 1 \mid y) = \frac{y + \alpha}{n + \alpha + \beta}$.
-
-Based on previous assumptions, $P(\tilde{y} = 1 \mid y) = 448/(438 + 544) \approx 0.446$.
-
-Let's use the cubature method to approximate some of these.
-
-```{r}
-#| echo: TRUE
-# unnormalized posterior
-qtarget <- function(theta) {
-  dbinom(x = 437, size = 980, prob = theta) * 
-    dbeta(theta, shape1 = 1, shape2 =1)
-}
-
-# integrate qtarget over support of theta
-(nconst <- integrate(qtarget, lower = 0, upper = 1)$value)
-
-# normalized posterior
-ptarget <- function(theta) {
-  qtarget(theta) / nconst
-}
-
-# theta * posterior
-mean_target <- function(theta) {
-  theta * ptarget(theta)
-}
-
-# compute posterior mean using cubature
-integrate(mean_target, lower = 0, upper = 1)
-
-# pytilde * ptarget
-pytilde_target <- function(theta) {
-  dbinom(x = 1, size = 1, prob = theta) * 
-    ptarget(theta)
-}
-
-# posterior predictive probability
-integrate(pytilde_target, lower = 0, upper = 1)
-```
-
-## Bayesian CLT for $N(\mu,\sigma^2)$
-
-**Example 1**
-
-*Data distribution*
-
-$y_1, ..., y_n \mid \theta \stackrel{i.i.d}{\sim} \text{Poisson}(theta)$
-
-*Prior distribution*
-
-$\theta \sim \text{Exp}(1)$
-
-*Negative Hessian, $-H(\theta)$*
-
-$-\frac{d^2}{d\theta^2} \ln p(y \mid \theta)
-= \frac{\sum y_i}{\theta^2}$.
-
-**Approximate posterior distribution**
-
-For a large sample of data, $p(\theta \mid y) \approx N(\hat{\theta}, \hat{\theta}^2/\sum y_i)$.
-
-```{r}
-#| echo: TRUE
-# Generate some synthetic data
-# Poisson with mean of 0.5
-set.seed(3) # for reproducibility
-y <- rpois(10, lambda = 0.5)
-
-# unnormalized posterior
-qpost = function(theta, y) {
-  log_pdata = sum(dpois(y, lambda = theta, log = TRUE))
-  log_pprior = dexp(theta, rate = 1, log = TRUE)
-  exp(log_pdata + log_pprior)
-}
-
-# vectorize qtheta
-# necessary because we have multiple values in y
-vqpost <- Vectorize(qpost, vectorize.args = "theta")
-
-# plot vlqtheta to determine what to maximize over
-x <- seq(0.001, 10, len = 1000)
-plot(x, vqpost(theta = x, y = y), type = "l")
-
-# determine MAP
-(map <- optimize(vqpost, interval = c(0, 2), y = y, maximum = TRUE)$maximum)
-```
-
-$\hat{\theta}_{MAP}\approx 0.18$. Thus, our posterior
-approximation is $N(0.18, 0.18^2/\sum y_i)$.
-
-Let's plot the "truth" versus the approximation. In order to do that, we need to figure out the "true" distribution. We do this to illustrate the effectiveness of the approximation. We wouldn't normally do this.
-
-```{r}
-#| echo: TRUE
-# determine normalizing constant
-(nconst <- integrate(f = vqpost, lower = 0, upper = 10, y = y)$value)
-
-# posterior density function
-dpost <- function(theta, y, const) {
-  qpost(theta, y)/const
-}
-
-# vectorized version of dpost for integrate function
-vdpost = Vectorize(dpost, vectorize.args = "theta")
-
-# double-check that posterior is proper!
-integrate(vdpost, lower = 0, upper = 10, y = y, const = nconst)
-
-# normal approximation posterior
-dpapprox = function(theta, y, thetahat) {
-  dnorm(theta, mean = thetahat, sd = sqrt(thetahat^2/sum(y)))
-}
-
-# vectorize over theta
-vdapprox = Vectorize(dpapprox, vectorize.args = "theta")
-
-# range of theta values
-theta = seq(0, 2, length = 1000)
-# plot true density
-plot(theta, vdpost(theta, y, nconst), ylab = "density", type = "l", col = "orange")
-# plot normal approximation
-lines(theta, vdapprox(theta, y, thetahat = map), col = "blue")
-legend("topright", legend = c("truth", "approximation"),
-       col = c("orange", "blue"), lty = 1)
-```
-
-Our approximation isn't great because our sample size is small. Let's perform the same approximation with a larger sample size.
-
-```{r}
-#| echo: TRUE
-# Generate some synthetic data
-set.seed(3) # for reproducibility
-y100 = rpois(100, lambda = 0.5)
-
-# plot vqpost to determine interval to maximize over
-plot(x, vqpost(theta = x, y = y100), type = "l",
-     xlab = "theta", ylab = "unnormalized density")
-
-# determine MAP
-(map100 <- optimize(vqpost, interval = c(0, 2), y = y100, maximum = TRUE)$maximum)
-```
-
-$\hat{\theta}_{MAP}\approx 0.42$. Thus, our posterior
-approximation is $N(0.42, 0.42^2/\sum y_i)$.
-
-Let's plot the "truth" versus the approximation.
-
-```{r}
-#| echo: TRUE
-# determine normalizing constant
-(nconst100 <- integrate(f = vqpost, lower = 0, upper = 10, y = y100)$value)
-
-# double-check that posterior is proper!
-integrate(vdpost, lower = 0, upper = 10, y = y100, const = nconst100)
-```
-
-We have a big issue! Our (numerical) integral is no longer integrating to 1. Why? Computational underflow! When we evaluate our unnormalized posterior, all of the values are close to zero. We need to shift the unnormalized posterior so that some of the values are higher. I choose to make the largest value 1 by using the trick below.
-
-- Evaluate the log unnormalized density over the range of the $\theta$.
-- Subtract the LARGEST number you get from the log unnormalized density.
-- Convert back to the original scale using $\exp$.
-
-```{r}
-#| echo: TRUE
-lqpost <- function(theta, y) {
-  log_pdata = sum(dpois(y, lambda = theta, log = TRUE))
-  log_pprior = dexp(theta, rate = 1, log = TRUE)
-  log_pdata + log_pprior
-}
-vlqpost <- Vectorize(lqpost, vectorize.args = "theta")
-range(vlqpost(x, y = y100))
-
-# create robust version of unnormalized density
-qpost_robust = function(theta, y) {
-  log_pdata = sum(dpois(y, lambda = theta, log = TRUE))
-  log_pprior = dexp(theta, rate = 1, log = TRUE)
-  exp(log_pdata + log_pprior + 84.11288)
-}
-
-# vectorize
-vqpost_robust <- Vectorize(qpost_robust,
-                           vectorize.args = "theta")
-
-# plot robust density
-plot(x, vqpost_robust(x, y = y100),
-     xlab = "theta", ylab = "unnormalized density",
-     type = "l")
-```
-
-Now, we renormalize our "robust" unnormalized density and continue with our example. We can reuse several of our previous functions.
-
-```{r}
-#| echo: TRUE
-# determine normalizing constant
-(nconst100 <- integrate(f = vqpost_robust, lower = 0, upper = 10, y = y100)$value)
-
-# posterior density function
-dpost_robust <- function(theta, y, const) {
-  qpost_robust(theta, y)/const
-}
-
-# vectorized version of dpost for integrate function
-vdpost_robust = Vectorize(dpost_robust,
-                         vectorize.args = "theta")
-
-# double-check that posterior is proper!
-integrate(vdpost_robust, lower = 0, upper = 10,
-          y = y100, const = nconst100)
-
-# plot true density
-plot(theta, vdpost_robust(theta, y100, nconst100), ylab = "density", type = "l", col = "orange")
-# plot normal approximation
-lines(theta, vdapprox(theta, y100, thetahat = map100), col = "blue")
-legend("topright", legend = c("truth", "approximation"),
-       col = c("orange", "blue"), lty = 1)
-```
-
-**Bayesian CLT Example (Two parameter)**
-
-*Data distribution* 
-
-$y_1, y_2, \ldots, y_n | \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu, \sigma^2)$
-
-*Prior distribution* 
-
-$\mu \sim U(10, 15)$, $p(\sigma^2) \propto N(0.5, 0.5^2) I_{(0, \infty)}(\sigma^2)$
-
-*Posterior distribution (Bayesian CLT)*
-
-Assuming $n$ is large, $\theta = (\mu, \sigma^2)$, and $\hat{\theta} = \hat{\theta}_{MAP}$, $\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$
-
-The data density is
-
-$$
-\begin{aligned}
-p(y|\theta) &= \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
- &= (2\pi)^{-n/2}\left(\sigma^2\right)^{-n/2}\exp\left(-\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2\right)
-\end{aligned}
-$$ and $$
-\ln p(y|\theta) = \mathrm{const} - \frac{n}{2} \ln \left(\sigma^2\right) -\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
-$$
-
-The first partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y|\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y|\theta) = -\frac{n}{2\sigma^2} +\frac{1}{\left(2\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
-
-The second partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial^2}{\partial \mu^2} \ln p(y|\theta) = -\frac{n}{\sigma^2}$$ and $$\frac{\partial^2}{\partial \left(\sigma^2\right)^2} \ln p(y|\theta) = \frac{n}{2\left(\sigma^2\right)^2} -\frac{1}{\left(\sigma^2\right)^3}\sum_{i=1}^n(y_i-\mu)^2$$ and
-
-$$\frac{\partial^2}{\partial \mu \partial \sigma^2} \ln p(y|\theta) = -\frac{1}{\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)$$
-
-Thus, if $\hat{\theta} = (\hat{\mu}, \hat{\sigma}^2)$ is the MAP estimate of $\theta = (\mu, \sigma^2)$, then the Bayesian CLT approximation of the posterior is $\theta | y \approx N(\hat{\theta}, I(\hat{\theta})^{-1})$, where
-
-$$
-I(\hat{\theta})^{-1} = \begin{bmatrix}
-\frac{n}{\hat{\sigma}^2} & \frac{1}{\left(\hat{\sigma}^2\right)^2}\sum_{i=1}^n(y_i-\hat{\mu})\\
-\frac{1}{\left(\hat{\sigma}^2\right)^2}\sum_{i=1}^n(y_i-\hat{\mu}) & -\frac{n}{2\left(\hat{\sigma}^2\right)^2} +\frac{1}{\left(\hat{\sigma}^2\right)^3}\sum_{i=1}^n(y_i-\hat{\mu})^2
-\end{bmatrix}^{-1}.
-$$
-
-Let's generate some data.
-
-```{r}
-#| echo: TRUE
-library(mvtnorm)
-library(cubature)
-
-# Generate some synthetic data
-# in practice, we just have some data
-set.seed(7)
-y = rnorm(100, mean = 11, sd = 0.47)
-```
-
-Now we create functions related to the true posterior density. This wouldn't normally be needed, but we want to assess how good our approximation is.
-
-```{r}
-#| echo: TRUE
-# create function for unnormalized posterior
-# takes the vector theta = (mu, sigma^2) and y = data.
-# add constant to handle numerical underflow
-qpost = function(theta, y) {
-  mu = theta[1]
-  sigma = sqrt(theta[2])
-  log_pdata = sum(dnorm(y, mean = mu, sd = sigma, log = TRUE))
-  log_pmu = dunif(mu, 10, 15, log = TRUE)
-  log_psigmasq = dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
-  log_qtheta = log_pdata + log_pmu + log_psigmasq
-  exp(log_qtheta + 70)
-}
-
-# determine normalizing constant of posterior
-(const = cubintegrate(f = qpost,
-                      lower = c(10, 0),
-                      upper = c(15, 2),
-                       y = y)$integral)
-
-# posterior distribution
-dpost = function(theta, y, const) {
-  qpost(theta, y)/const
-}
-```
-
-Now, let's determine our MAP estimate.
-
-```{r}
-#| echo: TRUE
-# determine map estimates
-# log of unnormalized density
-log_qtheta = function(theta, y) {
-  mu = theta[1]
-  sigma = sqrt(theta[2])
-  log_pdata = sum(dnorm(y, mean = mu, sd = sigma, log = TRUE))
-  log_pmu = dunif(mu, 10, 15, log = TRUE)
-  log_psigmasq = dnorm(sigma^2, mean = 0.5, sd = 0.5, log = TRUE)
-  log_pdata + log_pmu + log_psigmasq
-}
-
-# fnscale = -1 is to make optim perform maximization instead of minimization
-map = optim(par = c(12.5, 1),
-            f = log_qtheta,
-            lower = c(10.0001, 0.05),
-            upper = c(14.9999, 2),
-            method = "L-BFGS-B",
-            y = y,
-            control = list(fnscale = -1))
-```
-
-Now, we build a function that returns the inverse of the observation information matrix.
-
-```{r}
-#| echo: TRUE
-# return the observed information matrix
-inv_ihat = function(thetahat, n) {
-  mu = thetahat[1]
-  sigma = sqrt(thetahat[2])
-  # 2nd derivative of log likelihood w/r to mu
-  d2dmu2 = -n/sigma^2
-  # derivative of log likelihood w/r to mu and sigmasq
-  d2dmudsigmasq = -sum((y - mu))/sigma^4
-  # 2nd derivative of log likelihood w/r to sigmasq
-  d2dsigmasq2 = n/(2 * sigma^4) - 1/sigma^6 * sum((y-mu)^2)
-  #
-  H = cbind(c(d2dmu2, d2dmudsigmasq), c(d2dmudsigmasq, d2dsigmasq2))
-  solve(-H)
-}
-```
-
-Now, we create the bivariate normal approximation of the true density.
-
-```{r}
-#| echo: TRUE
-# posterior approximation
-dpapprox = function(theta, thetahat, Ihat) {
-  mvtnorm::dmvnorm(x = theta, mean = thetahat, sigma = Ihat)
-}
-```
-
-```{r}
-#| echo: TRUE
-
-# compare results
-# create sequence of values for mu and sigmasq
-mymu = seq(10.95, 11.2, length = 200)
-mysigmasq = seq(0.14, 0.29, length = 200)
-# create grid
-mytheta = expand.grid(mymu, mysigmasq)
-# for each row of mytheta, plug it into dpost function
-z = apply(mytheta, 1, function(theta) {
-  dpost(theta, y = y, const = const)
-})
-# convert z to matrix for plotting
-zmat = matrix(z, nrow = length(mymu))
-
-# compute observed Information outside of loop
-Ihat = obs_I(map$par, length(y))
-zhat = mvtnorm::dmvnorm(x = mytheta, mean = map$par, sigma = Ihat)
-# convert z to matrix for plotting
-zhatmat = matrix(zhat, nrow = length(mymu))
-
-# side-by-side results
-par(mfrow = c(1, 2))
-
-# create heat map of objective surface
-image(mymu, mysigmasq, zmat,
-      col = hcl.colors(64, "YlOrRd", rev = TRUE),
-      xlab = expression(mu), ylab = expression(sigma^2),
-      zlim = range(c(z, zhat)))
-# add contours
-contour(mymu, mysigmasq, zmat,
-        add = TRUE)
-title("true posterior")
-
-# create heat map of approximation surface
-image(mymu, mysigmasq, zhatmat,
-      col = hcl.colors(64, "YlOrRd", rev = TRUE),
-      xlab = expression(mu), ylab = expression(sigma^2),
-      zlim = c(range(c(z, zhat))))
-# add contours
-contour(mymu, mysigmasq, zhatmat, add = TRUE)
-title("normal approximation")
-par(mfrow = c(1, 1))
-```
+---
 
 # Stochastic methods
 
@@ -738,23 +48,33 @@ Comments about rejection sampling:
 -   $M$ should be chosen so that $M g(\theta | y)$ is as close as possible to $p(\theta | y)$.
 -   Conceptually, we retain a sample $\theta^*$ from $g(\theta)$ by drawing a value $u$ from a $U(0, M g(\theta^*))$ distribution and keeping $\theta^*$ if $u \leq p(\theta^* | y)$.
 
-## Rejection sampling example
+## Rejection sampling example 1
 
 -   Suppose the (unnormalized) target density is $q(\theta | y) = \theta(1-\theta)I_{(0,1)}(\theta).$
 -   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta | y)$.
 -   $\text{argmax}_{\theta}q(\theta | y) = 0.5$ with $q(0.5 | y) = 0.25.$
 -   Pick $M = 0.25$.
 
-```{r, fig.height = 4, fig.width = 8, fig.align='center'}
+Let's define an unnormalized target density.
+
+```{r}
 qtarget = function(theta) {
   theta * (1 - theta)
 }
+```
 
+Let's define a bounding function, $g(\theta)M$.
+
+```{r}
 # define bounding function
 gM = function(theta) {
   rep(.25, length(theta))
 }
-# plot q and bounding function
+```
+
+Let's plot the target density and bounding function.
+
+```{r}
 theta = seq(0, 1, len = 1000)
 par(mar = c(4, 4, 0.4, 0.4))
 plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
@@ -762,18 +82,19 @@ plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
 lines(theta, gM(theta), col = "blue")
 ```
 
-To draw a sample from $p(\theta | y)$:
+Consider drawing a sample from $p(\theta | y)$:
 
 -   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
     -   Suppose this value is $\theta^*=0.6$.
 -   We need to decide whether we keep $\theta^*$.
     -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
     -   Note that $q(0.6 | y) = 0.6(1-0.6) = 0.24$.
-    -   Draw $u$ from $U(0, 0.25)$.
+-   Draw $u$ from $U(0, 0.25)$.
     -   We accept $\theta^* = 0.6$ as a sample from $p(\theta | y)$ if $u\leq 0.24$.
     -   If we don't accept, then we draw a new value of $\theta^*$ from $g(\theta)$ and repeat the process until we accept a $\theta^*$.
 
-```{r, fig.height = 3, fig.width = 6, fig.align='center'}
+```{r}
+#| echo: false
 set.seed(1)
 thetastar1 = 0.6
 u1 = runif(1, 0, gM(thetastar1))
@@ -788,14 +109,19 @@ abline(v = thetastar1, col = "grey")
 points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
 ```
 
--   We draw $\theta^*=0.266$ from $U(0,1) \equiv g(\theta)$.
--   We draw $u=0.093$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.266))=U(0, 0.25)$.
--   $u=0.093 \leq 0.195 = q(\theta^*|y) = q(0.266|y)$, so we accept the proposed value of $\theta^*$.
+Consider drawing another sample from $p(\theta \mid y)$:
 
-```{r, fig.height = 3, fig.width = 6, fig.align='center'}
+-   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
+    -   Suppose this value is $\theta^*=0.185$.
+-   We draw $u=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
+-   $u=0.176 > 0.151 = q(\theta^*|y) = q(0.185|y)$, so we reject the proposed value of $\theta^*$.
+
+```{r}
+#| echo: false
 set.seed(2)
-thetastar2 = runif(1)
-u2 = runif(1, 0, gM(thetastar2))
+thetastar2 = 0.185
+# u2 = runif(1, 0, gM(thetastar2))
+u2 = 0.176
 accept2 = (u2 <= qtarget(thetastar2))
 
 # plot q and bounding function
@@ -804,21 +130,25 @@ plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
      ylab = expression(q(theta*"|"*y)))
 lines(theta, gM(theta), col = "blue")
 abline(v = thetastar2, col = "grey")
-points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
 points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
 ```
 
--   We draw $\theta^*=0.185$ from $U(0,1) \equiv g(\theta)$.
--   We draw $u=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.266))=U(0, 0.25)$.
--   $u=0.176 > 0.151 = q(\theta^*|y) = q(0.185|y)$, so we reject the proposed value of $\theta^*$.
+Let's run a rejection sampling algorithim to draw samples
+from the target distribution. We plot closed circles for each
+$(\theta^*, u^*)$ that's accepted and a closed circle for each
+$(\theta^*, u^*)$ that's rejected.
 
-```{r, fig.width=8, fig.height=4, fig.align='center'}
-
-# plot q and bounding function
+```{r}
+# plot target density and bounding function
 theta = seq(0, 1, len = 1000)
 plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
      ylab = expression(q(theta*"|"*y)))
 lines(theta, gM(theta), col = "blue")
+# plot some earlier results
+thetastar1 = 0.6
+thetastar2 = 0.185
+u1 = 0.066
+u2 = 0.176
 points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
 points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
 for(i in 1:98) {
@@ -830,180 +160,290 @@ for(i in 1:98) {
 title("Accepted (black dot) vs Rejected (open circle) comparison")
 ```
 
-## Introduction to MCMC Methods
+## Rejection sampling example 2
 
--   A *stochastic process* is a family of random variables $\{\theta^{(t)}\}_{t\in T}$, where $T$ is a subset of $[0, \infty)$.
-    -   $\theta^{(t)}$ denotes the stochastic process at time $t$.
-    -   The value $\theta^{(t)}$ takes at time $t$ is known as the *state* of the process at time $t$.
-    -   We only consider discrete-time stochastic processes with $T=\{0,1,2,…\}$.
--   The *state space* of a stochastic process is the set of all possible values the process takes.
--   A *Markov chain* is a stochastic process $\{\theta^{(0)}, \theta^{(1)}, \ldots, \theta^{(B)}\}$ such that $$p(\theta^{(t+1)} | \theta^{(t)}, \theta^{(t-1)}, \ldots, \theta^{(0)}) = p(\theta^{(t+1)} | \theta^{(t)}).$$
-    -   $p(\theta^{(t+1)} | \theta^{(t)})$ is often called the *transition distribution*.
--   Markov chain Monte Carlo (MCMC) methods attempt to draw samples from a target distribution when sampling directly from the target distribution is impossible or computationally expensive.
-    -   The samples form a Markov chain.
--   MCMC methods are constructed so that the (limiting) distribution of the Markov chain converges to the target distribution.
-    -   The distribution producing the samples at each step of the Markov chain becomes more like the target distribution at each step of the chain.
--   A Markov chain converges to a *stationary distribution* when the Markov chain is irreducible, aperiodic, and positive recurrent.
-    -   In layman's terms, for any state $i$ and $j$, we can travel from $i$ to $j$ in a finite number of steps with probability 1, and then we will travel back to $i$, but not in a specific pattern or number of steps.
-    -   This ensures that we adequately explore the entire support of our target distribution
+We illustrate rejection sampling by drawing from an unnormalized Beta(3, 3). 
 
-An effective MCMC method has two main properties:
+We will compare our rejection sampling results with the truth.
 
-1.  It must be easy to draw from the $p(\theta^{(t+1)}|\theta^{(t)})$.
-2.  The stationary distribution of the Markov chain must match our target distribution.
+*Target density*
 
-To construct a Markov chain using an MCMC algorithm:
+$p(\theta | y) \propto \theta^2 * (1 - \theta)^2 = q(\theta).$
 
--   Specify an initial value, $\theta^{(0)}$, for the chain.
-    -   Often this is a "likely" value of $\theta$.
--   For $t = 1,2, \ldots, B$, draw samples from $p(\theta^{(t+1)}|\theta^{(t)})$ until $B$ is large enough that the stationary distribution is reached.
--   After the chain has been implemented, check the convergence of the simulated sequence.
-    -   This is VERY important.
+*Proposal distribution*
 
-Concluding thoughts:
+Since $q(\theta)$ has finite support, our proposal distribution can be $G\sim U(0,1)$. 
 
--   The *Gibbs* and *Metropolis-Hastings* algorithms are the most well-known MCMC algorithms.
-    -   They are designed so that the stationary distribution matches the target distribution.
--   MCMC methods are most popularly used in Bayesian statistics.
-    -   In Bayesian statistics, the target distribution is generally the posterior distribution, $p(\theta | y)$.
+We simply need to choose an appropriate bounding constant $M$ for our bounding function.
 
-## Gibbs sampling
+Taking the derivative of $q(theta)$ with respect to $\theta$,
+we can determine that the function has a maximum at $\theta = 1/2$.
 
--   The *Gibbs sampling* algorithm (or *Gibbs sampler*) is the most popular Markov chain Monte Carlo (MCMC) method.
--   The goal of the Gibbs sampler is to draw samples from a target distribution.
--   The Gibbs sampling algorithm produces samples from the target distribution by successively drawing samples from the full conditional distributions of the target distribution.
-    -   The *full conditional distribution* of a random vector is the distribution of the random vector conditional on all the other random variables in the joint (i.e., target) distribution.
+The maximum is $q(1/2) = 0.0625$.
 
-Some notation and terminology:
+Thus, $q(\theta) <= g(\theta)M$ with $M = 0.0625$.
 
--   Let $\theta$ be the vector of random variables comprising all variables of the target distribution, $p(\theta | y)$.
--   Partition $\theta$ into $d$ components, i.e., $\theta = (\theta_1, \theta_2, \ldots, \theta_d)$.
-    -   Each component could be a (single) random variable or a random vector.
--   $\theta_{-j}$ denotes the vector containing all components in $\theta$ except $\theta_j$, i.e., $$\theta_{-j} = (\theta_1, \theta_2, \ldots, \theta_{j-1}, \theta_{j+1}, \ldots, \theta_d).$$
--   The *full conditional distribution* of $\theta_j$, denoted $p(\theta_j | \theta_{-j}, y)$, is the distribution of component $\theta_j$ conditional on knowing the value of all other components, $\theta_{-j}$, and the data, $y$.
--   After we have drawn samples from the full conditional distribution of each component (i.e., drawn samples from $p(\theta_{j} | \theta_{-j}^{(t-1)}, y)$ for $j=1,2,\ldots,d$) we have completed a *cycle*.
-
-More notation:
-
--   $\theta_j^{(t)}$ denotes the sampled value of $\theta_j$ in cycle $t$ and $\theta^{(t)}$ the vector of all values sampled in cycle $t$.
--   $\theta_{-j}^{(t-1)}$ denotes the most current value of all $d$ components of $\theta$ **except** $\theta_j$, i.e., $$\theta_{-j}^{(t-1)} = (\theta_1^{t}, \theta_2^{t}, \ldots, \theta_{j-1}^{(t)}, \theta_{j+1}^{(t-1)}, \ldots, \theta_{d}^{(t-1)}).$$
--   $p(\theta_j | \theta_{-j}^{(t-1)}, y)$ denotes the full conditional distribution of $\theta_j$ conditional on $\theta_{-j}$ being fixed at $\theta_{-j}^{(t-1)}$ and the data being fixed at $y$.
-
-The basic Gibbs sampling algorithm is:
-
-1.  Choose starting values for all of your components, i.e., $\theta^{(0)} = (\theta^{(0)}_1, \theta^{(0)}_2, \ldots, \theta^{(0)}_d)$.
-2.  Set $t = 1$.
-3.  Draw $\theta_j^{(t)}$ from the full conditional distribution $p(\theta_j | \theta_{-j}^{(t-1)}, y)$ for $j = 1, 2, \ldots, d$.
-4.  Increment $t$.
-5.  Repeat steps 3 and 4 until convergence.
-
-## Example: Gibbs sampler (bivariate normal)
-
-This example appears in Bayesian Data Analysis, 3rd edition, by Gelman et al. (2013).
-
-**Data distribution** $y | \theta \sim N(\theta, \Sigma)$ is a bivariate normal distribution with unknown mean $\theta = (\theta_1, \theta_2)$ and known covariance matrix $$\Sigma = 
-\begin{bmatrix}
- 1 & \rho \\
-\rho & 1
-\end{bmatrix}.
-$$
-
-**Prior distribution** The prior for $\theta$ is an improper uniform over the real line, i.e., $p(\theta_1,\theta_2)\propto1$.
-
-**Posterior distribution** Assuming we observe a single observation $y=(y_1,y_2)$, $$\theta | y \sim N(y, \Sigma).$$ **Full conditional distributions** $\theta_1 | \theta_2, y \sim N(y_1 + \rho(\theta_2-y_2),1-\rho^2)$
-
-$\theta_2 | \theta_1, y \sim N(y_2 + \rho(\theta_1-y_1), 1-\rho^2)$
-
-Sample from the posterior distribution using a Gibbs sampler assuming $y=(0,0)$ and $\rho=0.8$.
+We define the unnormalized target density.
 
 ```{r}
-#| echo: TRUE
-# set parameters
-B = 1000
-rho = .8
-sigma = sqrt(1 - rho^2)
-#observed data
-y1 = 0
-y2 = 0
-```
-
-```{r}
-#| echo: TRUE
-gibbs = function(theta) {
-  #create matrix to store samples
-  theta_sims = matrix(0, nrow = B + 1, ncol = 2)
-  theta_sims[1,] = theta
-  # run gibbs sampler for B cycles
-  for (i in 2:(B+1)) {
-    # determine full conditional mean for theta1
-    m1 = y1 + rho * (theta[2] - y2)
-    # simulate from full conditional distribution for theta1
-    theta[1] = rnorm(1, m1, sigma)
-    # determine full conditional mean for theta2
-    m2 = y2 + rho * (theta[1] - y1)
-    # simulate from full conditional distribution for theta1
-    theta[2] = rnorm(1, m2, sigma)
-    # save sample
-    theta_sims[i, ] = theta
-  }
-  return(theta_sims)
+qtarget = function(theta) {
+	theta^2*(1 - theta)^2
 }
 ```
 
-```{r, echo = TRUE, fig.align='center', fig.height=4}
-chain1 = gibbs(c(-2.5, -2.5)) # run chain with an initial starting value
-#plot samples from chain
-plot(chain1, pch = ".", xlab = expression(theta[1]), ylab = expression(theta[2]))
-title("Samples from Gibbs sampler")
+We define the bounding function.
+
+```{r}
+gM = function(theta) {
+	rep(.0625, length(theta))
+}
 ```
 
-```{r, echo=TRUE, fig.show='hide'}
-# Create three more chains with different starting values
-chain2 = gibbs(c(-2.5, -2.5))
-chain3 = gibbs(c(2.5, -2.5))
-chain4 = gibbs(c(2.5, 2.5))
-#plot samples from each chain
-plot(chain1, pch = ".",
-     xlab = expression(theta[1]), ylab = expression(theta[2]))
-points(chain2, pch = ".", col = "orange")
-points(chain3, pch = ".", col = "blue")
-points(chain4, pch = ".", col = "grey")
-legend("topleft", col = c("black", "orange", "blue", "grey"),
-	pch = 20, legend = c("Chain 1", "Chain 2", "Chain 3", "Chain 4"))
-title("Samples from Gibbs sampler")
+We compare the target density and bounding function.
+
+```{r}
+theta = seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
 ```
 
-```{r, fig.align='center'}
-# Create three more chains with different starting values
-chain2 = gibbs(c(-2.5, 2.5))
-chain3 = gibbs(c(2.5, -2.5))
-chain4 = gibbs(c(2.5, 2.5))
-#plot samples from each chain
-plot(chain1, pch = ".",
-     xlab = expression(theta[1]), ylab = expression(theta[2]))
-points(chain2, pch = ".", col = "orange")
-points(chain3, pch = ".", col = "blue")
-points(chain4, pch = ".", col = "grey")
-legend("topleft", col = c("black", "orange", "blue", "grey"),
-	pch = 20, legend = c("Chain 1", "Chain 2", "Chain 3", "Chain 4"))
-title("Samples from Gibbs sampler")
+We now implement our rejection sampling algorithm.
+
+```{r}
+B = 1000 # number of samples to keep
+mytheta = numeric(B) # vector to store kept samples
+
+i = 0 # the samples accepted
+while (i < B) {
+  x = runif(1) # sample from g distribution
+
+  # accept x with probability q(x)/gM(x)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i = i + 1
+		mytheta[i] = x
+	}
+}
 ```
 
-```{r, echo=FALSE, fig.align='center'}
-#install bayestools
-# devtools::install_github("jfrench/bayesutils")
-# load useful distributions
-library(bayesutils) 
-# plot_mcmc_path takes
-# x A matrix with 2 columns or a list of 2 column matrices
-# ncycles The number of cycles to plot
-plot_mcmc_path(
-  list(chain1, chain2, chain3, chain4),
-  ncycles = 10,
-  xlim = c(-2.5, 2.5),
-  ylim = c(-2.5, 2.5),
-  xlab = expression(theta[1]),
-  ylab = expression(theta[2]),
-  main = "First 10 cycles of each chain"
-)
+Lastly, we compare our empirical density to the true density.
+
+```{r}
+dmytheta = density(mytheta)
+dtruth = dbeta(theta, 3, 3)
+
+plot(dmytheta, xlab = expression(theta), ylab = "density", main = "")
+lines(theta, dtruth, col = "orange")
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("black", "orange"), lwd = c(1, 1))
+```
+
+## Rejection sampling example 3
+
+We repeat the previous example with a more efficient proposal distribution.
+
+Since we know that our target density is symmetric around 0.5, we choose to bound it by a normal distribution centered around 0.5.
+
+*Proposal distribution*
+
+$G\sim N(0.5, 0.25^2)$.
+
+We choose $M=0.04$ for our bounding function (chosen by trial and error).
+
+We define bounding function.
+
+```{r}
+gM = function(theta) {
+	0.04 * dnorm(theta, mean = 0.5, sd = 0.25)
+}
+```
+
+We compare the target density to the bounding function.
+
+```{r}
+theta = seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
+```
+
+We now implement our rejection sampling algorithm.
+
+```{r}
+B = 100000
+mytheta = numeric(B)
+
+i = 0 # the samples accepted
+while (i < B) {
+  x = rnorm(1, mean = 0.5, sd = 0.25) # sample from g distribution
+
+  # accept x with probability q(x)/gM(x)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i = i + 1
+		mytheta[i] = x
+	}
+}
+```
+
+Lastly, we compare our empirical density to the true density.
+
+```{r}
+dmytheta = density(mytheta)
+dtruth = dbeta(theta, 3, 3)
+
+plot(theta, dtruth, col = "orange", type = "l")
+lines(dmytheta)
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("black", "orange"), lwd = c(1, 1))
+```
+
+## Rejection sampling example 4
+
+We want to sample from a folded $N(0,1)$ distribution.
+
+- If $y\sim N(0,1)$, then $|y|$ is a folded $N(0,1)$ distribution.
+
+*Target density*
+
+$q(\theta) = exp(-\theta^2/2)I_{[0,\infty)}(\theta)$.
+
+*Proposal distribution*
+
+$G\sim \mathrm{Exp}(1)$. 
+
+How do we choose a bounding constant?
+
+The optimal solution is find a single intersecting point between the folded normal and our envelope (at the inflection point of the folded normal), which is at $\theta = 1$.
+
+$\frac{dq(\theta)}{d\theta} = -\exp(-\theta^2/2)\theta$.
+
+$\frac{d^2q(\theta)}{d\theta^2} = \exp(-\theta^2/2)(\theta^2-1)$.
+
+Setting $g(\theta)M = q(\theta)$ and solving for $M$ when
+$\theta = 1$ results in the solution $M = \exp(1/2)$.
+
+We define the target density.
+
+```{r}
+qtarget = function(theta) {
+	exp(-theta^2/2)
+}
+```
+
+We define the bounding function.
+
+```{r}
+gM = function(theta) {
+	dexp(theta)*exp(1/2)
+}
+```
+
+We compare the target density to the bounding function.
+
+```{r}
+
+theta = seq(0, 5, len = 1000)
+plot(theta, qtarget(theta), ylim = c(0, qtarget(0.001)),
+     type = "l",
+     ylab = "qtarget", xlab = expression(theta))
+lines(theta, gM(theta), type = "l", col = "blue")
+legend("topright", legend = c("qtarget", "gM"),
+       lty = 1, col = c("black", "blue"))
+```
+
+We now implement our rejection sampling algorithm.
+
+```{r}
+B = 10000 # number of retained samples desired
+mytheta = numeric(B) # vector to store samples
+i = 0 # number of retained samples
+while (i < B) {
+	x = rexp(1) # draw a value from proposal distribution
+	# accept the value with probability based on the importance
+	# ratio
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i = i + 1 # increment i if sample retained
+		mytheta[i] = x # store sample
+	}
+}
+```
+
+Lastly, we compare our empirical density to the true density.
+
+```{r}
+#The true density
+dens = function(theta) {
+	sqrt(2/pi)*exp(-theta^2/2)
+}
+
+dmytheta = density(mytheta, from = 0, to = 5, cut = 0)
+plot(dmytheta, xlab = "theta", ylab = "density", main = "")
+lines(theta, dens(theta), col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("black", "blue"))
+```
+
+Why didn't that work properly?
+
+Let's try a different approach.
+
+```{r}
+# plot with a probability histogram instead to get a better comparison
+hist(mytheta, freq = FALSE, breaks = 100)
+lines(theta, dens(theta), col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("black", "blue"))
+```
+
+## Rejection sampling example 5
+
+The last example chose a proposal distribution analytically. We probability wouldn't do that unless we were forced to. Let's try something more realistic.
+
+*Proposal distribution*
+
+$G\sim \chi^2_2$ with bounding constant $M=2.4$ (chosen by trial and error).
+
+We create the bounding function.
+
+```{r}
+gM = function(theta) {
+	2.4 * dchisq(theta, df = 2)
+}
+```
+
+We compare the target density and bounding function.
+
+```{r}
+theta = seq(0, 5, len = 1000)
+plot(theta, gM(theta), type = "l", col = "blue",
+     xlab = expression(theta), ylab = "", ylim = c(0, 1.25))
+lines(theta, qtarget(theta))
+legend("topright", legend = c("q", "gM"), lty = 1,
+       col = c("black", "blue"))
+```
+
+We implement our rejection sampling algorithm.
+
+```{r}
+B = 10000
+mytheta = numeric(B)
+i = 0
+while (i < B) {
+	x = rchisq(1, df = 2)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i = i + 1
+		mytheta[i] = x
+	}
+}
+```
+
+Lastly, we compare our empirical density to the true density.
+
+```{r}
+hist(mytheta, freq = FALSE, breaks = 100)
+lines(theta, dens(theta), col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+       lwd = c(1, 1), col = c("black", "blue"))
 ```
