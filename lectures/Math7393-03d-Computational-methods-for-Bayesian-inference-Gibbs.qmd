@@ -1,0 +1,580 @@
+---
+title: Computational methods for Bayesian inference
+author: Joshua French
+date: ''
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  enabled: false
+  output: false
+self-contained: true
+title-block-banner: true
+---
+
+To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03d-Computational-methods-for-Bayesian-inference-Gibbs.ipynb">
+   <img src="https://colab.research.google.com/assets/colab-badge.svg">
+</a>
+
+We will need certain packages to be available for this notebook. The code below will check if they are installed and install them if necessary.
+
+We now plot the sample paths of our chains for the first ten cycles. We use a function, `plot_mcmc_path` from the **bayesutils** package on GitHub.
+
+```{r}
+# see if remotes package is available
+if (!require("remotes", quietly = TRUE)) {
+  # if not, then install package
+  install.packages(
+    "remotes",
+    repos = "https://cran.rstudio.com/"
+    )
+}
+# see if bayesutils package is available
+if (!require("bayesutils", quietly = TRUE)) {
+  # if not, then install package
+  remotes::install_github("jfrench/bayesutils")
+  library(bayesutils)
+}
+```
+
+# Introduction to MCMC Methods
+
+-   A *stochastic process* is a family of random variables $\{\theta^{(t)}\}_{t\in T}$, where $T$ is a subset of $[0, \infty)$.
+    -   $\theta^{(t)}$ denotes the stochastic process at time $t$.
+    -   The value $\theta^{(t)}$ takes at time $t$ is known as the *state* of the process at time $t$.
+    -   We only consider discrete-time stochastic processes with $T=\{0,1,2,…\}$.
+-   The *state space* of a stochastic process is the set of all possible values the process takes.
+-   A *Markov chain* is a stochastic process $\{\theta^{(0)}, \theta^{(1)}, \ldots, \theta^{(B)}\}$ such that $$p(\theta^{(t+1)} | \theta^{(t)}, \theta^{(t-1)}, \ldots, \theta^{(0)}) = p(\theta^{(t+1)} | \theta^{(t)}).$$
+    -   $p(\theta^{(t+1)} | \theta^{(t)})$ is often called the *transition distribution*.
+-   Markov chain Monte Carlo (MCMC) methods attempt to draw samples from a target distribution when sampling directly from the target distribution is impossible or computationally expensive.
+    -   The samples form a Markov chain.
+-   MCMC methods are constructed so that the (limiting) distribution of the Markov chain converges to the target distribution.
+    -   The distribution producing the samples at each step of the Markov chain becomes more like the target distribution at each step of the chain.
+-   A Markov chain converges to a *stationary distribution* when the Markov chain is irreducible, aperiodic, and positive recurrent.
+    -   In layman's terms, for any state $i$ and $j$, we can travel from $i$ to $j$ in a finite number of steps with probability 1, and then we will travel back to $i$, but not in a specific pattern or number of steps.
+    -   This ensures that we adequately explore the entire support of our target distribution
+
+An effective MCMC method has two main properties:
+
+1.  It must be easy to draw from the $p(\theta^{(t+1)}|\theta^{(t)})$.
+2.  The stationary distribution of the Markov chain must match our target distribution.
+
+To construct a Markov chain using an MCMC algorithm:
+
+-   Specify an initial value, $\theta^{(0)}$, for the chain.
+    -   Often this is a "likely" value of $\theta$.
+-   For $t = 1,2, \ldots, B$, draw samples from $p(\theta^{(t+1)}|\theta^{(t)})$ until $B$ is large enough that the stationary distribution is reached.
+-   After the chain has been implemented, check the convergence of the simulated sequence (or at least verify that there isn't clear evidence that the chain hasn't converged).
+    -   This is VERY important.
+
+Concluding thoughts:
+
+-   The *Gibbs* and *Metropolis-Hastings* algorithms are the most well-known MCMC algorithms.
+    -   They are designed so that the stationary distribution matches the target distribution.
+-   MCMC methods are most popularly used in Bayesian statistics.
+    -   In Bayesian statistics, the target distribution is generally the posterior distribution, $p(\theta | y)$.
+
+# Gibbs sampling
+
+-   The *Gibbs sampling* algorithm (or *Gibbs sampler*) is the most popular Markov chain Monte Carlo (MCMC) method.
+-   The goal of the Gibbs sampler is to draw samples from a target distribution.
+-   The Gibbs sampling algorithm produces samples from the target distribution by successively drawing samples from the full conditional distributions of the target distribution.
+    -   The *full conditional distribution* of a random vector is the distribution of the random vector conditional on all the other random variables in the joint (i.e., target) distribution.
+
+Some notation and terminology:
+
+-   Let $\theta$ be the vector of random variables comprising all variables of the target distribution, $p(\theta | y)$.
+-   Partition $\theta$ into $d$ components, i.e., $\theta = (\theta_1, \theta_2, \ldots, \theta_d)$.
+    -   Each component could be a (single) random variable or a random vector.
+-   $\theta_{-j}$ denotes the vector containing all components in $\theta$ except $\theta_j$, i.e., $$\theta_{-j} = (\theta_1, \theta_2, \ldots, \theta_{j-1}, \theta_{j+1}, \ldots, \theta_d).$$
+-   The *full conditional distribution* of $\theta_j$, denoted $p(\theta_j | \theta_{-j}, y)$, is the distribution of component $\theta_j$ conditional on knowing the value of all other components, $\theta_{-j}$, and the data, $y$.
+-   After we have drawn samples from the full conditional distribution of each component (i.e., drawn samples from $p(\theta_{j} | \theta_{-j}^{(t-1)}, y)$ for $j=1,2,\ldots,d$) we have completed a *cycle*.
+
+More notation:
+
+-   $\theta_j^{(t)}$ denotes the sampled value of $\theta_j$ in cycle $t$ and $\theta^{(t)}$ the vector of all values sampled in cycle $t$.
+-   $\theta_{-j}^{(t-1)}$ denotes the most current value of all $d$ components of $\theta$ **except** $\theta_j$, i.e., $$\theta_{-j}^{(t-1)} = (\theta_1^{t}, \theta_2^{t}, \ldots, \theta_{j-1}^{(t)}, \theta_{j+1}^{(t-1)}, \ldots, \theta_{d}^{(t-1)}).$$
+-   $p(\theta_j | \theta_{-j}^{(t-1)}, y)$ denotes the full conditional distribution of $\theta_j$ conditional on $\theta_{-j}$ being fixed at $\theta_{-j}^{(t-1)}$ and the data being fixed at $y$.
+
+The basic Gibbs sampling algorithm is:
+
+1.  Choose starting values for all of your components, i.e., $\theta^{(0)} = (\theta^{(0)}_1, \theta^{(0)}_2, \ldots, \theta^{(0)}_d)$.
+2.  Set $t = 1$.
+3.  Draw $\theta_j^{(t)}$ from the full conditional distribution $p(\theta_j | \theta_{-j}^{(t-1)}, y)$ for $j = 1, 2, \ldots, d$.
+4.  Increment $t$.
+5.  Repeat steps 3 and 4 until convergence.
+
+# Example: Gibbs sampler (bivariate normal)
+
+This example appears in Bayesian Data Analysis, 3rd edition, by Gelman et al. (2013).
+
+*Data distribution* 
+
+$y | \theta \sim N(\theta, \Sigma)$ is a bivariate normal distribution with unknown mean 
+$\theta = (\theta_1, \theta_2)$ and known covariance matrix 
+
+$$
+\Sigma =
+\begin{bmatrix}
+ 1 & \rho \\
+\rho & 1
+\end{bmatrix}.
+$$
+
+*Prior distribution* 
+
+The prior for $\theta$ is an improper uniform over the real line, i.e., $p(\theta_1,\theta_2)\propto1$.
+
+(Why? Because it makes the example easier!)
+
+*Posterior distribution* 
+
+Assuming we observe a single observation $y=(y_1,y_2)$, $$\theta | y \sim N(y, \Sigma).$$
+
+Let's derive the full conditional distributions for $\theta_1$ and $\theta_2$.
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+*Full conditional distributions*
+
+$\theta_1 | \theta_2, y \sim N(y_1 + \rho(\theta_2-y_2),1-\rho^2)$
+
+$\theta_2 | \theta_1, y \sim N(y_2 + \rho(\theta_1-y_1), 1-\rho^2)$
+
+Let's sample from the posterior distribution using a Gibbs sampler assuming $y=(0,0)$ and $\rho=0.8$.
+
+First, we set some of the needed parameters.
+
+```{r}
+# set parameters
+rho = .8
+sigma = sqrt(1 - rho^2)
+#observed data
+y1 = 0
+y2 = 0
+```
+
+Let's create a function, `gibbs`, to do the sampling. The function takes:
+
+- `B`: the number of cycles to run.
+- `theta`: the vector of initial values.
+
+```{r}
+gibbs = function(B, theta) {
+  #create matrix to store samples
+  theta_sims = matrix(0, nrow = B + 1, ncol = 2)
+  theta_sims[1,] = theta
+  # run gibbs sampler for B cycles
+  for (i in 2:(B+1)) {
+    # determine full conditional mean for theta1
+    m1 = y1 + rho * (theta[2] - y2)
+    # simulate from full conditional distribution for theta1
+    theta[1] = rnorm(1, m1, sigma)
+    # determine full conditional mean for theta2
+    m2 = y2 + rho * (theta[1] - y1)
+    # simulate from full conditional distribution for theta1
+    theta[2] = rnorm(1, m2, sigma)
+    # save sample
+    theta_sims[i, ] = theta
+  }
+  return(theta_sims)
+}
+```
+
+Let's run an initial chain of 1000 cycles with a starting value $\theta=(-2.5, -2.5)$.
+
+```{r}
+# run initial chain
+chain1 = gibbs(B = 1000, theta = c(-2.5, -2.5))
+```
+
+Let's draw a "sand" plot of our first chain.
+
+```{r}
+plot(chain1, pch = ".",
+     xlab = expression(theta[1]),
+     ylab = expression(theta[2]))
+title("Samples from Gibbs sampler")
+```
+
+We now run 3 more chains with different starting values.
+
+```{r, echo=TRUE, fig.show='hide'}
+chain2 = gibbs(B = 1000, c(-2.5, -2.5))
+chain3 = gibbs(B = 1000, c(2.5, -2.5))
+chain4 = gibbs(B = 1000, c(2.5, 2.5))
+```
+
+We now plot the samples from all 4 chains in one graphic.
+
+```{r}
+# chain 1
+plot(chain1, pch = ".",
+     xlab = expression(theta[1]),
+     ylab = expression(theta[2]))
+# chains 2-4
+points(chain2, pch = ".", col = "orange")
+points(chain3, pch = ".", col = "blue")
+points(chain4, pch = ".", col = "grey")
+# add legend
+legend("topleft", pch = 20,
+       col = c("black", "orange", "blue", "grey"),
+       legend = c("Chain 1", "Chain 2", "Chain 3", "Chain 4"))
+title("Samples from Gibbs sampler")
+```
+
+We now plot the first 10 cycles of the 4 chains using the `plot_mcmc_path` function from the **bayesutils** package.
+
+`plot_mcmc_path` takes:
+
+- `x`: a matrix with 2 columns or a list of 2 column matrices.
+- `ncycles`: the number of cycles to plot.
+
+```{r}
+plot_mcmc_path(
+  list(chain1, chain2, chain3, chain4),
+  ncycles = 10,
+  xlim = c(-2.5, 2.5),
+  ylim = c(-2.5, 2.5),
+  xlab = expression(theta[1]),
+  ylab = expression(theta[2]),
+  main = "First 10 cycles of each chain"
+)
+```
+
+# Example Normal distribution with $\mu$ and $\sigma^2$ unknown and conjugate prior
+
+*Data distribution*
+
+$y_1,\ldots,y_n \mid \mu,\sigma^2 \stackrel{i.i.d.}{\sim} N(\mu,\sigma^2)$. 
+
+
+*Prior distribution*
+
+$\mu \mid \sigma^2 \sim N(\mu_0, \sigma^2/\kappa_0)$
+
+$\sigma^2 \sim \text{Inv-}\chi^2_(\nu_0)(\sigma_0^2)$
+
+where 
+
+$p(\sigma^2) \propto (\sigma^2)^{-\left(\frac{\nu_0}{2} + 1\right)} \exp\left(-\frac{\nu_0 \sigma_0^2}{2\sigma^2}\right)$.
+
+
+*Data density*
+
+$p(y \mid \mu,\sigma^2) \propto$
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+
+$p(\mu,\sigma^2\mid y) \propto$
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+Derive the full conditional distributions
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+
+*Full conditional distributions*
+
+$\mu \mid \sigma^2, y \sim N(\mu_n, \tau_n^2)$ with
+
+$$
+\mu_n = \frac{\kappa_0}
+{\sigma^2}\mu_0 + \frac{n}{\sigma^2}\bar{y}
+$$
+
+and
+
+$$
+\tau_n^2=\frac{1}{\frac{\kappa_0}{\sigma^2}+\frac{n}{\sigma^2}}=\frac{\sigma^2}{\kappa_0+n}.
+$$
+$\sigma^2 \mid \mu, y \sim \text{Inv-}\chi^2_{\nu_n}(s_n^2)$
+
+with 
+
+$$
+\nu_n = \nu_0 + n + 1
+$$
+
+and
+
+$$
+s_n^2=\frac{\mu_0 \sigma_0^2+\kappa_0 (\mu-\mu_0 )^2+(n-1) s^2+n(\bar{y}-\mu)^2}{\nu_n}.
+$$
+
+# Example:  Midge Data 
+
+Grogan and Wirth (1981) provide data on the wing length in millimeters of nine members of a species of midge (small, two-winged flies).  From these nine measurements, we wish to make inference on the population mean $\mu$ and population variance $\sigma^2$.  Create a Gibbs sampler for the parameters $\mu$ and $\sigma^2$.
+
+Studies of other populations suggest that the true mean should be around 1.9 mm with a standard deviation of 0.1.  However, this
+population may be different from the others, so we choose $\kappa_0 = \nu_0 = 1$ so that the prior distributions are only weakly centered around these estimates from other populations.
+
+*Data distribution*
+
+$y_1,\ldots,y_n \mid \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu,\sigma^2)$
+
+*Prior distributions*
+
+$\mu \mid \sigma^2 N(\mu_0, \sigma^2/\kappa_0)$ with $\mu_0=1.9$ and $\kappa_0=1$.
+
+$\sigma^2 \sim  \text{Inv-}\chi^2_{\nu_0}(\sigma_0^2)$
+with $\nu_0=1$ and $\sigma_0^2=(0.1)^2$.
+
+We set our seed for reproducible results
+```{r}
+set.seed(90)
+```
+
+We set the parameters of our prior distributions
+
+```{r}
+mu0 = 1.9
+k0 = 1 #kappa0
+nu0 = 1
+sigma0 = 0.1
+```
+
+We define the number of cycles, the data, the sample size, the sample mean, and the sample standard deviation
+
+```{r}
+B = 500000 # number of cycles
+# data
+y = c(1.64, 1.70, 1.72, 1.74, 1.82, 1.82, 1.82, 1.90, 2.08)
+# number of observations
+n = length(y)
+# sample mean
+ybar = mean(y)
+# sample standard deviation
+s = sd(y)
+```
+
+We use the sample mean and standard deviation for our initial values.
+
+```{r}
+#Initial value for mu
+mu = mean(y)
+#Initial value for sigma
+sigma = sd(y)
+```
+
+We compute the parameters of our full conditional distributions.
+
+```{r}
+kn = k0 + n
+mun = (k0 * mu0 + n * ybar) / kn
+nun = nu0 + n + 1
+```
+
+We now implement our Gibbs sampler.
+
+```{r}
+sigmasqpost = numeric(B)
+mupost = numeric(B)
+for (i in 1:B) {
+	mu = rnorm(1, mun, sigma/sqrt(kn))
+
+	#parameter for full conditional posterior of sigma^2
+	ssqn = (nu0 * sigma0^2 + k0 * (mu - mu0)^2 + (n - 1) * s^2 + n * (ybar - mu)^2)/nun
+
+	# draw from full conditional of sigmasq
+	sigmasq = rinvchisq(1, df = nun, scale = ssqn)
+	sigma = sqrt(sigmasq)
+
+	# draw from full conditional of mu
+	mupost[i] = mu
+	sigmasqpost[i] = sigmasq
+}
+```
+
+In *Bayesian Data Analysis, 3rd edition*, Gelman et al. provide the exact marginal posterior distributions for $mu$ and $\sigma^2$.
+
+$\mu \mid y \sim t_{\nu_n}(\mu_n, \tau^2_n/\kappa_n)$
+
+and 
+
+$\sigma^2\mid y \sim \text{Inv-}\chi^2_{\nu_n}(\tau_n^2).$
+
+Let's compare the results from our Gibbs sampler with the true marginal posterior distributions.
+
+```{r}
+# define nun and taunsq
+vn = nu0 + n
+taunsq = (nu0*sigma0^2 + (n - 1) * s^2 + k0 * n/kn * (ybar - mu0)^2)/vn
+
+# plot approximate posterior density for mu
+plot(density(mupost), main = "",
+     xlab = "mu", xlim = c(1.6, 2))
+# plot true posterior density for mu
+x = seq(-1, 3, len = 1001)
+lines(x, dst(x, df = nun, mean = mun, sigma = sqrt(taunsq/kn)),
+      col = "orange")
+title("Posterior Density for mu")
+legend("topright", legend = c("Gibbs", "true"), col = c("black", "orange"),
+	lwd = 1)
+```
+
+```{r}
+# plot marginal posterior for sigmasq
+plot(density(sigmasqpost), main = "",
+     xlab = "sigmasq", xlim = c(0, 0.1))
+x = seq(0, 0.1, len = 1001)
+lines(x, dinvchisq(x, df = vn, scale = taunsq), col = "orange")
+title("Posterior Density for sigmasq")
+legend("topright",
+       legend = c("Gibbs", "True"),
+       col = c("black", "orange"),
+       lwd = 1)
+```
+
+```{r}
+#posterior quantiles for mu
+p = c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99)
+quantile(mupost, prob = p)
+qst(p, df = nun, mean = mun, sigma = sqrt(taunsq/kn))
+```
+
+```{r}
+#posterior quantiles for sigmasq
+quantile(sigmasqpost, prob = p)
+qinvchisq(p, df = vn, scale = taunsq)
+```
+
+```{r}
+#95% central credible interval for mu
+quantile(mupost, c(.025, .975))
+qst(c(0.025, 0.975), df = nun, mean = mun, sigma = sqrt(taunsq/kn))
+```
+
+```{r}
+#95% central credible interval for sigmasq
+quantile(sigmasqpost, c(.025, .975))
+qinvchisq(c(0.025, 0.975), df = vn, scale = taunsq)
+```
+
+```{r}
+#plot steps of gibbs sampler for 100 iterations
+plot_mcmc_path(cbind(mupost, sigmasqpost), ncycles = 100,
+               xlab = expression(mu), ylab = expression(sigma^2))
+```
+
+```{r}
+#plot cycles of gibbs sampler for 100 iterations
+plot_mcmc_path(cbind(mupost, sigmasqpost), ncycles = 100, type = "cycle",
+               xlab = expression(mu), ylab = expression(sigma^2))
+```
+
+<!-- Example:  Multivariate normal with semi-conjugate prior -->
+
+<!-- Data distribution:  y_1,y_2,…,y_n |μ,Σ∼┴(i.i.d.) N(μ,Σ) with each vector having length d. -->
+
+<!-- Prior distributions:  -->
+<!-- μ∼N(μ_0,Λ_0) and Σ∼ Inv-Wishart_(ν_0 ) ( Κ_0^(-1)), with  -->
+
+<!-- p(Σ)∝|Σ|^(-(ν_0+d+1)/2)  exp⁡(-1/2 tr(Κ_0 Σ^(-1) )). -->
+
+<!--   -->
+<!-- p(μ,Σ│y)∝ -->
+
+<!--   -->
+<!-- Derive the full conditional distributions:  -->
+<!--   -->
+<!-- Full conditional distributions: -->
+
+<!-- μ|Σ,y∼N(μ_n,Λ_n), where -->
+<!-- μ_n=Λ_n (Λ_0^(-1) μ_0+nΣ^(-1) y ̅ )   -->
+<!-- and -->
+<!--  Λ_n^(-1)=Λ_0^(-1)+nΣ^(-1). -->
+
+<!-- Σ|μ,y∼  Inv-Wishart_(ν_n ) (K_n^(-1 ))with ν_n=ν_0+n, -->
+<!-- K_n=K_0+S_μ, -->
+<!-- and -->
+<!-- S_μ=∑_(i=1)^n▒〖(y_i-μ) (y_i-μ)^T.〗 -->
+
+
+<!-- A result from linear algebra says that -->
+<!-- ∑_(i=1)^n▒〖(y_i-μ) Σ^(-1) (y_i-μ)^T 〗=tr(S_μ Σ^(-1)), -->
+<!-- where  -->
+<!-- S_μ=∑_(i=1)^n▒〖(y_i-μ) (y_i-μ)^T.〗 -->
+
+<!-- S_μ is the residual sum of squares matrix for the vectors y_1,y_2,…,y_n if the population mean is presumed to be μ.   -->
+
+
+<!--   -->
+<!-- Example: Reading Scores -->
+
+<!-- A sample of 22 children are given reading comprehension tests before and after receiving a particular instructional method.  Each student will then have two scores denoting the pre- and post-instructional scores. -->
+
+<!-- Each row of the data set is a two-dimensional vector representing a single case, distributed N(μ,Σ). -->
+
+<!--   -->
+<!-- The exam was designed to give an average score around 50 out of 100, so set μ_0=(50,50).  -->
+
+<!-- Since the true mean cannot be below 0 or above 100, we want the prior variances to keep μ inside this range [0, 100] with high probability. -->
+
+<!-- Thus, we want Λ_0≈[■(625&312.5@312.5&625)], which would mean that the prior probability that the marginal mean is outside [0, 100] is only 0.05.  This also accounts for the fact that the two exams measure similar things, so we think the correlation between the means is around 0.5.  -->
+
+<!-- Since E(Inv-Wishart_(ν_0 ) (K_0^(-1)))=K_0/(ν_0-d-1)), ν_0=4 will loosely center Σ around K_0. -->
+
+<!--   -->
+<!-- What is the probability that the post-instruction mean is greater than the pre-instruction mean?   -->
+
+<!-- What is the probability that the post-instruction test score is greater than the pre-instruction test score for a new student? -->
+
+<!-- Construct a Gibbs sampler to sample from the posterior distribution for μ and Σ. -->
+
+<!--   -->
+<!-- Data distribution: y|μ,Σ∼┴(i.i.d.) N(μ,Σ). -->
+
+<!-- Prior distributions:   -->
+<!-- μ∼N(μ_0,Λ_0) with μ_0=(50,50) and Λ_0=[■(625&312.5@312.5&625)]. -->
+<!-- Σ∼ Inv-Wishart_(ν_0 ) (K_0^(-1)) with ν_0=4 and K_0=[■(625&312.5@312.5&625)]. -->
+
+
