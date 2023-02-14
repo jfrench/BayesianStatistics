@@ -35,7 +35,7 @@ Rejection sampling assumes there exists a *proposal distribution* $G$ with densi
 Rejection sampling draws $B$ samples from $p(\theta \mid y)$ using the following algorithm:
 
 1.  Sample $\theta^{*}$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^{*}$ as a sample from $p(\theta \mid y)$ with probability $p(\theta^{*} \mid y) / (M g(\theta^{*} ))$.
+2.  Accept $\theta^{*}$ as a sample from $p(\theta | y)$ with probability $p(\theta^{*} \mid y) / (M g(\theta^{*} ))$.
     -   If $\theta^{*}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
