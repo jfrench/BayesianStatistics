@@ -2,12 +2,12 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
-format: html
-# format: ipynb
-# jupyter: ir
-# execute:
-#   enabled: false
-#   output: false
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  enabled: false
+  output: false
 self-contained: true
 title-block-banner: true
 ---
@@ -46,7 +46,11 @@ Comments about rejection sampling:
 -   The unnormalized density, $q(\theta | y)$, is almost always used instead of the true density, $p(\theta | y)$
 -   $p(\theta | y) \leq M g(\theta | y)$ ensures the acceptance probability is no larger than 1.
 -   $M$ should be chosen so that $M g(\theta | y)$ is as close as possible to $p(\theta | y)$.
--   Conceptually, we retain a sample $\theta^*$ from $g(\theta)$ by drawing a value $u$ from a $U(0, M g(\theta^*))$ distribution and keeping $\theta^*$ if $u \leq p(\theta^* | y)$.
+-   Conceptually, we retain a sample $\theta^{*}$ from $g(\theta)$ by drawing a value 
+$u$ from a 
+$U(0, M g(\theta^{*}))$ distribution and keeping $\theta^{*}$ 
+if 
+$u \leq p(\theta^{*} | y)$.
 
 ## Rejection sampling example 1
 
