@@ -6,7 +6,6 @@ date: ''
 format: ipynb
 jupyter: ir
 execute:
-  enabled: false
   output: false
 self-contained: true
 title-block-banner: true
@@ -24,7 +23,7 @@ To open this information in an interactive Colab notebook, click the Open in Col
 
 ## Rejection sampling
 
-Rejection sampling can be used to draw samples from a target density $p(\theta | y)$ or its unnormalized version $q(\theta | y)$.
+Rejection sampling can be used to draw samples from a target density $p(\theta \mid y)$ or its unnormalized version $q(\theta \mid y)$.
 
 Rejection sampling assumes there exists a *proposal distribution* $G$ with density function $g(\theta)$ such that:
 
@@ -36,28 +35,28 @@ Rejection sampling assumes there exists a *proposal distribution* $G$ with densi
 Rejection sampling draws $B$ samples from $p(\theta \mid y)$ using the following algorithm:
 
 1.  Sample $\theta^{*}$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^{*}$ as a sample from $p(\theta | y)$ with probability $p(\theta^{*} | y) / (M g(\theta^{*}))$.
+2.  Accept $\theta^{*}$ as a sample from $p(\theta \mid y)$ with probability $p(\theta^{*} \mid y) / (M g(\theta^{*}))$.
     -   If $\theta^{*}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
 
 Comments about rejection sampling:
 
--   The unnormalized density, $q(\theta | y)$, is almost always used instead of the true density, $p(\theta | y)$
--   $p(\theta | y) \leq M g(\theta | y)$ ensures the acceptance probability is no larger than 1.
--   $M$ should be chosen so that $M g(\theta | y)$ is as close as possible to $p(\theta | y)$.
+-   The unnormalized density, $q(\theta \mid y)$, is almost always used instead of the true density, $p(\theta \mid y)$
+-   $p(\theta \mid y) \leq M g(\theta \mid y)$ ensures the acceptance probability is no larger than 1.
+-   $M$ should be chosen so that $M g(\theta \mid y)$ is as close as possible to $p(\theta \mid y)$.
 -   Conceptually, we retain a sample $\theta^{*}$ from $g(\theta)$ by drawing a value 
-$u$
+$u^{*}$
 from a 
 $U(0, M g(\theta^{*}))$ distribution and keeping $\theta^{*}$ 
 if 
-$u \leq p(\theta^{*} | y)$.
+$u^{*} \leq p(\theta^{*} \mid y)$.
 
 ## Rejection sampling example 1
 
 -   Suppose the (unnormalized) target density is $q(\theta | y) = \theta(1-\theta)I_{(0,1)}(\theta).$
--   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta | y)$.
--   $\text{argmax}_{\theta}q(\theta | y) = 0.5$ with $q(0.5 | y) = 0.25.$
+-   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta \mid y)$.
+-   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5 | y) = 0.25.$
 -   Pick $M = 0.25$.
 
 Let's define an unnormalized target density.
@@ -87,20 +86,23 @@ plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
 lines(theta, gM(theta), col = "blue")
 ```
 
-Consider drawing a sample from $p(\theta | y)$:
+Consider drawing a sample from $p(\theta \mid y)$:
 
 -   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
     -   Suppose this value is $\theta^*=0.6$.
 -   We need to decide whether we keep $\theta^*$.
     -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
-    -   Note that $q(0.6 | y) = 0.6(1-0.6) = 0.24$.
--   Draw $u$ from $U(0, 0.25)$.
-    - Let's say $u^* = 0.066$.
-    - Since $u^*<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
+    -   Note that $q(0.6 \mid y) = 0.6(1-0.6) = 0.24$.
+-   Draw $u^{*}$ from $U(0, 0.25)$.
+    - Let's say $u^{*} = 0.066$.
+    - Since $u^{*}<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
+
+Let's visualize this.
 
 ```{r}
 #| echo: false
 #| eval: true
+#| output: true
 set.seed(1)
 thetastar1 = 0.6
 u1 = 0.066
@@ -119,12 +121,15 @@ Consider drawing another sample from $p(\theta \mid y)$:
 
 -   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
     -   Suppose this value is $\theta^*=0.185$.
--   We draw $u=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
--   $u=0.176 > 0.151 = q(\theta^*|y) = q(0.185|y)$, so we reject the proposed value of $\theta^*$.
+-   We draw $u^{*}=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
+-   $u^{*}=0.176 > 0.151 = q(\theta^{*}|y) = q(0.185|y)$, so we reject the proposed value of $\theta^{*}$.
+
+Let's visualize this.
 
 ```{r}
 #| echo: false
 #| eval: true
+#| output: true
 set.seed(2)
 thetastar2 = 0.185
 # u2 = runif(1, 0, gM(thetastar2))
