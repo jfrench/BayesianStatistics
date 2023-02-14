@@ -29,15 +29,15 @@ Rejection sampling can be used to draw samples from a target density $p(\theta |
 Rejection sampling assumes there exists a *proposal distribution* $G$ with density function $g(\theta)$ such that:
 
 -   We can easily draw a realization from $G$, i.e., the distribution $g$ defines.
--   If $p(\theta = \theta^*| y) > 0$, then $g(\theta = \theta^*) > 0$.
+-   If $p(\theta = \theta^{\ast| y) > 0$, then $g(\theta = \theta^{\ast}) > 0$.
 -   The *importance ratio* $p(\theta | y) / g(\theta)$ must have a known bound.
     -   i.e., there exists $M$ such that for all $\theta$, $p(\theta | y) / g(\theta) \leq M$.
 
 Rejection sampling draws $B$ samples from $p(\theta |y)$ using the following algorithm:
 
-1.  Sample $\theta^*$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^*$ as a sample from $p(\theta | y)$ with probability $p(\theta^* | y) / (M g(\theta^*))$.
-    -   If $\theta^*$ is accepted, continue to step 3.
+1.  Sample $\theta^{\ast$ from the distribution defined by $g(\theta)$.
+2.  Accept $\theta^{\ast$ as a sample from $p(\theta | y)$ with probability $p(\theta^* | y) / (M g(\theta^{\ast}))$.
+    -   If $\theta^{\ast$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
 
@@ -46,11 +46,12 @@ Comments about rejection sampling:
 -   The unnormalized density, $q(\theta | y)$, is almost always used instead of the true density, $p(\theta | y)$
 -   $p(\theta | y) \leq M g(\theta | y)$ ensures the acceptance probability is no larger than 1.
 -   $M$ should be chosen so that $M g(\theta | y)$ is as close as possible to $p(\theta | y)$.
--   Conceptually, we retain a sample $\theta^{*}$ from $g(\theta)$ by drawing a value 
-$u$ from a 
-$U(0, M g(\theta^{*}))$ distribution and keeping $\theta^{*}$ 
+-   Conceptually, we retain a sample $\theta^{\ast}$ from $g(\theta)$ by drawing a value 
+$u$
+from a 
+$U(0, M g(\theta^{\ast}))$ distribution and keeping $\theta^{*}$ 
 if 
-$u \leq p(\theta^{*} | y)$.
+$u \leq p(\theta^{\ast} | y)$.
 
 ## Rejection sampling example 1
 
@@ -176,7 +177,7 @@ We will compare our rejection sampling results with the truth.
 
 *Target density*
 
-$p(\theta | y) \propto \theta^2 * (1 - \theta)^2 = q(\theta).$
+$p(\theta | y) \propto \theta^2  (1 - \theta)^2 = q(\theta).$
 
 *Proposal distribution*
 
@@ -315,7 +316,7 @@ We want to sample from a folded $N(0,1)$ distribution.
 
 *Target density*
 
-$q(\theta) = exp(-\theta^2/2)I_{[0,\infty)}(\theta)$.
+$q(\theta) = \exp(-\theta^2/2)I_{[0,\infty)}(\theta)$.
 
 *Proposal distribution*
 
