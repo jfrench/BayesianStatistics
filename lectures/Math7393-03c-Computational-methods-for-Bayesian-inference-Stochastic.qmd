@@ -28,22 +28,22 @@ Rejection sampling can be used to draw samples from a target density $p(\theta \
 Rejection sampling assumes there exists a *proposal distribution* $G$ with density function $g(\theta)$ such that:
 
 -   We can easily draw a realization from $G$, i.e., the distribution defined by $g(\theta)$.
--   If $p(\theta = \theta^{*} \mid y) > 0$, then $g(\theta = \theta^{*} ) > 0$.
+-   If $p(\theta = \theta^{\star} \mid y) > 0$, then $g(\theta = \theta^{\star} ) > 0$.
 -   The *importance ratio* $p(\theta \mid y) / g(\theta)$ must have a known bound.
     -   i.e., there exists $M$ such that for all $\theta$, $p(\theta\mid y) / g(\theta) \leq M$.
 
 Rejection sampling draws $B$ samples from $p(\theta\mid y)$ using the following algorithm:
 
-1.  Sample $\theta^{*}$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^{*}$ as a sample from $p(\theta\mid y)$ with probability $\frac{p(\theta^{*}\mid y)}{M g(\theta^{*})}.$
-    -   If $\theta^{*}$ is accepted, continue to step 3.
+1.  Sample $\theta^{\star}$ from the distribution defined by $g(\theta)$.
+2.  Accept $\theta^{\star}$ as a sample from $p(\theta\mid y)$ with probability $\frac{p(\theta^{\star}\mid y)}{M g(\theta^{\star})}.$
+    -   If $\theta^{\star}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
 
-An alternative approach to decide whether we accept the proposed value, $\theta^{*}$,  from $g(\theta)$ is:
+An alternative approach to decide whether we accept the proposed value, $\theta^{\star}$,  from $g(\theta)$ is:
 
-- Draw $u^{*}$ from a $U(0, M g(\theta^{*} ) )$ distribution.
-- Keep $\theta^{*}$ if $u^{*} \leq p(\theta^{*} \mid y)$.
+- Draw $u^{\star}$ from a $U(0, M g(\theta^{\star} ) )$ distribution.
+- Keep $\theta^{\star}$ if $u^{\star} \leq p(\theta^{\star} \mid y)$.
 
 Comments about rejection sampling:
 
@@ -92,9 +92,9 @@ Consider drawing a sample from $p(\theta \mid y)$:
 -   We need to decide whether we keep $\theta^*$.
     -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
     -   Note that $q(0.6 \mid y) = 0.6(1-0.6) = 0.24$.
--   Draw $u^{*}$ from $U(0, 0.25)$.
-    - Let's say $u^{*} = 0.066$.
-    - Since $u^{*}<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
+-   Draw $u^{\star}$ from $U(0, 0.25)$.
+    - Let's say $u^{\star} = 0.066$.
+    - Since $u^{\star}<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
 
 Let's visualize this.
 
@@ -120,8 +120,8 @@ Consider drawing another sample from $p(\theta \mid y)$:
 
 -   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
     -   Suppose this value is $\theta^*=0.185$.
--   We draw $u^{*}=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
--   $u^{*}=0.176 > 0.151 = q(\theta^{*}|y) = q(0.185|y)$, so we reject the proposed value of $\theta^{*}$.
+-   We draw $u^{\star}=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
+-   $u^{\star}=0.176 > 0.151 = q(\theta^{\star}|y) = q(0.185|y)$, so we reject the proposed value of $\theta^{\star}$.
 
 Let's visualize this.
 
