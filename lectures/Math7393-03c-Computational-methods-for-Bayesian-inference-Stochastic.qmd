@@ -35,28 +35,30 @@ Rejection sampling assumes there exists a *proposal distribution* $G$ with densi
 Rejection sampling draws $B$ samples from $p(\theta \mid y)$ using the following algorithm:
 
 1.  Sample $\theta^{*}$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^{*}$ as a sample from $p(\theta | y)$ with probability $p(\theta^{*} \mid y) / (M g(\theta^{*} ))$.
+2.  Accept $\theta^{*}$ as a sample from $p(\theta \mid y)$ with probability 
+
+$$p(\theta^{*} \mid y) / (M g(\theta^{*} )).$$
+
     -   If $\theta^{*}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
+
+An alternative approach to decide whether we accept the proposed value, $\theta^{*}$,  from $g(\theta)$ is:
+
+- Draw $u^{*}$ from a $U(0, M g(\theta^{*} ) )$ distribution.
+- Keep $\theta^{*}$ if $u^{*} \leq p(\theta^{*} \mid y)$.
 
 Comments about rejection sampling:
 
 -   The unnormalized density, $q(\theta \mid y)$, is almost always used instead of the true density, $p(\theta \mid y)$
 -   $p(\theta \mid y) \leq M g(\theta \mid y)$ ensures the acceptance probability is no larger than 1.
 -   $M$ should be chosen so that $M g(\theta \mid y)$ is as close as possible to $p(\theta \mid y)$.
--   Conceptually, we retain a sample $\theta^{*}$ from $g(\theta)$ by drawing a value 
-$u^{*}$
-from a 
-$U(0, M g(\theta^{*} ))$ distribution and keeping $\theta^{*}$ 
-if 
-$u^{*} \leq p(\theta^{*} \mid y)$.
 
 ## Rejection sampling example 1
 
 -   Suppose the (unnormalized) target density is $q(\theta | y) = \theta(1-\theta)I_{(0,1)}(\theta).$
--   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta \mid y)$.
--   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5 | y) = 0.25.$
+-   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $ q(\theta \mid y) $.
+-   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $ q(0.5 \mid y) = 0.25 $.
 -   Pick $M = 0.25$.
 
 Let's define an unnormalized target density.
