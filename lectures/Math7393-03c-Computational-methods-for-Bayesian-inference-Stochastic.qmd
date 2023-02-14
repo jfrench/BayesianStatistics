@@ -30,12 +30,12 @@ Rejection sampling assumes there exists a *proposal distribution* $G$ with densi
 -   We can easily draw a realization from $G$, i.e., the distribution defined by $g(\theta)$.
 -   If $p(\theta = \theta^{*} \mid y) > 0$, then $g(\theta = \theta^{*} ) > 0$.
 -   The *importance ratio* $p(\theta \mid y) / g(\theta)$ must have a known bound.
-    -   i.e., there exists $M$ such that for all $\theta$, $p(\theta \mid y) / g(\theta) \leq M$.
+    -   i.e., there exists $M$ such that for all $\theta$, $p(\theta\mid y) / g(\theta) \leq M$.
 
-Rejection sampling draws $B$ samples from $p(\theta \mid y)$ using the following algorithm:
+Rejection sampling draws $B$ samples from $p(\theta\mid y)$ using the following algorithm:
 
 1.  Sample $\theta^{*}$ from the distribution defined by $g(\theta)$.
-2.  Accept $\theta^{*}$ as a sample from $p(\theta \mid y)$ with probability $\frac{p(\theta^{*} \mid y)}{M g(\theta^{*} )}.$
+2.  Accept $\theta^{*}$ as a sample from $p(\theta\mid y)$ with probability $\frac{p(\theta^{*}\mid y)}{M g(\theta^{*})}.$
     -   If $\theta^{*}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
 3.  Return to step 1 until $B$ draws from $g(\theta)$ have been accepted.
@@ -49,13 +49,13 @@ Comments about rejection sampling:
 
 -   The unnormalized density, $q(\theta \mid y)$, is almost always used instead of the true density, $p(\theta \mid y)$
 -   $p(\theta \mid y) \leq M g(\theta \mid y)$ ensures the acceptance probability is no larger than 1.
--   $M$ should be chosen so that $M g(\theta \mid y)$ is as close as possible to $p(\theta \mid y)$.
+-   $M$ should be chosen so that $M g(\theta \mid y)$ is as close as possible to $p(\theta\mid y)$.
 
 ## Rejection sampling example 1
 
 -   Suppose the (unnormalized) target density is $q(\theta | y) = \theta(1-\theta)I_{(0,1)}(\theta).$
--   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $ q(\theta \mid y) $.
--   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $ q(0.5 \mid y) = 0.25 $.
+-   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta\mid y) $.
+-   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5\mid y) = 0.25$.
 -   Pick $M = 0.25$.
 
 Let's define an unnormalized target density.
