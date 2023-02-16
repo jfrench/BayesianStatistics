@@ -6,10 +6,10 @@ format: html
 # format: ipynb
 # jupyter: ir
 # execute:
-#   enabled: false
 #   output: false
 self-contained: true
 title-block-banner: true
+wrap: 'none'
 ---
 
 To open this information in an interactive Colab notebook, click the Open in Colab graphic below.

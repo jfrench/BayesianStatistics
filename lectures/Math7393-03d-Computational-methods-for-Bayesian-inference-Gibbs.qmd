@@ -6,10 +6,10 @@ date: ''
 format: ipynb
 jupyter: ir
 execute:
-  enabled: false
   output: false
 self-contained: true
 title-block-banner: true
+wrap: 'none'
 ---
 
 To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
@@ -36,6 +36,12 @@ if (!require("bayesutils", quietly = TRUE)) {
   # if not, then install package
   remotes::install_github("jfrench/bayesutils")
   library(bayesutils)
+}
+# see if autoimage package is available
+if (!require("autoimage", quietly = TRUE)) {
+  # if not, then install package
+  install.package("autoimage")
+  library(autoimage)
 }
 ```
 
@@ -95,7 +101,7 @@ Some notation and terminology:
 More notation:
 
 -   $\theta_j^{(t)}$ denotes the sampled value of $\theta_j$ in cycle $t$ and $\theta^{(t)}$ the vector of all values sampled in cycle $t$.
--   $\theta_{-j}^{(t-1)}$ denotes the most current value of all $d$ components of $\theta$ **except** $\theta_j$, i.e., $$\theta_{-j}^{(t-1)} = (\theta_1^{t}, \theta_2^{t}, \ldots, \theta_{j-1}^{(t)}, \theta_{j+1}^{(t-1)}, \ldots, \theta_{d}^{(t-1)}).$$
+-   $\theta_{-j}^{(t-1)}$ denotes the most current value of all $d$ components of $\theta$ **except** $\theta_j$, i.e., $$\theta_{-j}^{(t-1)} = (\theta_1^{(t)}, \theta_2^{(t)}, \ldots, \theta_{j-1}^{(t)}, \theta_{j+1}^{(t-1)}, \ldots, \theta_{d}^{(t-1)}).$$
 -   $p(\theta_j | \theta_{-j}^{(t-1)}, y)$ denotes the full conditional distribution of $\theta_j$ conditional on $\theta_{-j}$ being fixed at $\theta_{-j}^{(t-1)}$ and the data being fixed at $y$.
 
 The basic Gibbs sampling algorithm is:
@@ -259,7 +265,7 @@ plot_mcmc_path(
 )
 ```
 
-# Example Normal distribution with $\mu$ and $\sigma^2$ unknown and conjugate prior
+# Example: Normal distribution with $\mu$ and $\sigma^2$ unknown and conjugate prior
 
 *Data distribution*
 
@@ -270,7 +276,7 @@ $y_1,\ldots,y_n \mid \mu,\sigma^2 \stackrel{i.i.d.}{\sim} N(\mu,\sigma^2)$.
 
 $\mu \mid \sigma^2 \sim N(\mu_0, \sigma^2/\kappa_0)$
 
-$\sigma^2 \sim \text{Inv-}\chi^2_(\nu_0)(\sigma_0^2)$
+$\sigma^2 \sim \text{Inv-}\chi^2_{\nu_0}(\sigma_0^2)$
 
 where 
 
@@ -285,11 +291,6 @@ $p(y \mid \mu,\sigma^2) \propto$
 <br>  
 <br>  
 <br>  
-<br>  
-<br>  
-<br>  
-<br>  
-
 
 $p(\mu,\sigma^2\mid y) \propto$
 
@@ -350,7 +351,8 @@ $$
 s_n^2=\frac{\mu_0 \sigma_0^2+\kappa_0 (\mu-\mu_0 )^2+(n-1) s^2+n(\bar{y}-\mu)^2}{\nu_n}.
 $$
 
-# Example:  Midge Data 
+**Example:  Midge Data**
+---
 
 Grogan and Wirth (1981) provide data on the wing length in millimeters of nine members of a species of midge (small, two-winged flies).  From these nine measurements, we wish to make inference on the population mean $\mu$ and population variance $\sigma^2$.  Create a Gibbs sampler for the parameters $\mu$ and $\sigma^2$.
 
@@ -369,6 +371,7 @@ $\sigma^2 \sim  \text{Inv-}\chi^2_{\nu_0}(\sigma_0^2)$
 with $\nu_0=1$ and $\sigma_0^2=(0.1)^2$.
 
 We set our seed for reproducible results
+
 ```{r}
 set.seed(90)
 ```
@@ -434,15 +437,27 @@ for (i in 1:B) {
 }
 ```
 
-In *Bayesian Data Analysis, 3rd edition*, Gelman et al. provide the exact marginal posterior distributions for $mu$ and $\sigma^2$.
+In *Bayesian Data Analysis, 3rd edition*, Gelman et al. provide the exact marginal posterior distributions for $\mu$ and $\sigma^2$:
 
 $\mu \mid y \sim t_{\nu_n}(\mu_n, \tau^2_n/\kappa_n)$
 
 and 
 
-$\sigma^2\mid y \sim \text{Inv-}\chi^2_{\nu_n}(\tau_n^2).$
+$\sigma^2\mid y \sim \text{Inv-}\chi^2_{\nu_n}(\tau_n^2)$,
+
+where
+
+$\nu_n = \nu_0 + n$
+
+and
+
+$\tau_n^2 = (\nu_0\sigma_0^2 + (n - 1)s^2 + \kappa_0 n/\kappa_n  (\bar{y} - \mu_0)^2)/\nu_n$.
+
+Note that this $\nu_n$ and $\tau_n^2$ differ from the $\nu_n$ and $\tau_n^2$ defined for the full conditional distributions.
 
 Let's compare the results from our Gibbs sampler with the true marginal posterior distributions.
+
+We plot the true and approximate marginal posterior density of $\mu$.
 
 ```{r}
 # define nun and taunsq
@@ -461,6 +476,8 @@ legend("topright", legend = c("Gibbs", "true"), col = c("black", "orange"),
 	lwd = 1)
 ```
 
+We plot the true and approximate marginal posterior density of $\sigma^2$.
+
 ```{r}
 # plot marginal posterior for sigmasq
 plot(density(sigmasqpost), main = "",
@@ -474,107 +491,371 @@ legend("topright",
        lwd = 1)
 ```
 
+We compute the empirical posterior quantiles for $\mu$.
+
 ```{r}
 #posterior quantiles for mu
 p = c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99)
 quantile(mupost, prob = p)
+```
+
+We compute the true posterior quantiles for $\mu$.
+
+```{r}
 qst(p, df = nun, mean = mun, sigma = sqrt(taunsq/kn))
 ```
 
+We compute the empirical posterior quantiles for $\sigma^2$.
+
 ```{r}
-#posterior quantiles for sigmasq
 quantile(sigmasqpost, prob = p)
+```
+
+We compute the true posterior quantiles for $\sigma^2$.
+
+```{r}
 qinvchisq(p, df = vn, scale = taunsq)
 ```
 
-```{r}
-#95% central credible interval for mu
-quantile(mupost, c(.025, .975))
-qst(c(0.025, 0.975), df = nun, mean = mun, sigma = sqrt(taunsq/kn))
-```
+We compute the empirical 95% central posterior interval for $\mu$.
 
 ```{r}
-#95% central credible interval for sigmasq
+quantile(mupost, c(.025, .975))
+```
+
+We compute the true 95% central posterior interval for $\mu$.
+
+```{r}
+qst(c(0.025, 0.975), df = nun, mean = mun,
+    sigma = sqrt(taunsq/kn))
+```
+
+We compute the empirical 95% central posterior interval for $\sigma^2$.
+
+```{r}
 quantile(sigmasqpost, c(.025, .975))
+```
+
+We compute the true 95% central posterior interval for $\sigma^2$.
+
+```{r}
 qinvchisq(c(0.025, 0.975), df = vn, scale = taunsq)
 ```
 
+Lastly, we plot the first 100 cycles of our Gibbs sampler.
+
 ```{r}
-#plot steps of gibbs sampler for 100 iterations
 plot_mcmc_path(cbind(mupost, sigmasqpost), ncycles = 100,
                xlab = expression(mu), ylab = expression(sigma^2))
 ```
 
 ```{r}
 #plot cycles of gibbs sampler for 100 iterations
-plot_mcmc_path(cbind(mupost, sigmasqpost), ncycles = 100, type = "cycle",
+plot_mcmc_path(cbind(mupost, sigmasqpost),
+               ncycles = 100, type = "cycle",
                xlab = expression(mu), ylab = expression(sigma^2))
 ```
 
-<!-- Example:  Multivariate normal with semi-conjugate prior -->
+# Example:  Multivariate normal with semi-conjugate prior
 
-<!-- Data distribution:  y_1,y_2,…,y_n |μ,Σ∼┴(i.i.d.) N(μ,Σ) with each vector having length d. -->
+*Data distribution*
 
-<!-- Prior distributions:  -->
-<!-- μ∼N(μ_0,Λ_0) and Σ∼ Inv-Wishart_(ν_0 ) ( Κ_0^(-1)), with  -->
+$\mathbf{y}_1,\mathbf{y}_2,…,\mathbf{y}_n \mid \boldsymbol{\mu},\boldsymbol{\Sigma} \stackrel{i.i.d.}{\sim} N(\boldsymbol{\mu},\boldsymbol{\Sigma})$ with each vector having length $d$.
 
-<!-- p(Σ)∝|Σ|^(-(ν_0+d+1)/2)  exp⁡(-1/2 tr(Κ_0 Σ^(-1) )). -->
+*Prior distributions*
 
-<!--   -->
-<!-- p(μ,Σ│y)∝ -->
+$\boldsymbol{\mu} \sim N(\boldsymbol{\mu}_0, \boldsymbol{\Lambda}_0)$.
 
-<!--   -->
-<!-- Derive the full conditional distributions:  -->
-<!--   -->
-<!-- Full conditional distributions: -->
+$\boldsymbol{\Sigma} \sim \text{Inv-Wishart}_{\nu_0} ( \mathbf{Κ}_0^{-1})$.
 
-<!-- μ|Σ,y∼N(μ_n,Λ_n), where -->
-<!-- μ_n=Λ_n (Λ_0^(-1) μ_0+nΣ^(-1) y ̅ )   -->
-<!-- and -->
-<!--  Λ_n^(-1)=Λ_0^(-1)+nΣ^(-1). -->
+$p(\boldsymbol{\Sigma}) \propto |\boldsymbol{\Sigma}|^{-(\nu_0+d+1)/2} \exp\left(-\frac{1}{2} \text{tr}(\mathbf{K}_0 \boldsymbol{\Sigma}^{-1})\right).$
 
-<!-- Σ|μ,y∼  Inv-Wishart_(ν_n ) (K_n^(-1 ))with ν_n=ν_0+n, -->
-<!-- K_n=K_0+S_μ, -->
-<!-- and -->
-<!-- S_μ=∑_(i=1)^n▒〖(y_i-μ) (y_i-μ)^T.〗 -->
+$p(\boldsymbol{\mu}, \boldsymbol{\Sigma} \mid y) \propto$
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+Derive the full conditional distributions:
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+*Full conditional distributions*
+
+$\boldsymbol{\mu} \mid \boldsymbol{\Sigma}, y \sim N(\boldsymbol{\mu}_n,\boldsymbol{\Lambda}_n)$, where
+
+$$\boldsymbol{\mu}_n=\boldsymbol{\Lambda_n} (\boldsymbol{\Lambda}_0^{-1} \boldsymbol{\mu}_0+n \boldsymbol{\Sigma}^{-1} \bar{y})$$
+
+and
+
+$$\boldsymbol{\Lambda}_n^{-1}=\boldsymbol{\Lambda}_0^{-1}+n\boldsymbol{\Sigma}^{-1}.$$
+
+$\boldsymbol{\Sigma}\mid \boldsymbol{\mu},y \sim   \text{Inv-Wishart}_{\nu_n} (\mathbf{K}_n^{-1 })$, where
+
+$$\nu_n=\mu_0+n,$$
+
+$$\mathbf{K}_n=\mathbf{K}_0+\mathbf{S}_\mu,$$
+
+and
+
+$$
+\mathbf{S}_\mu=\sum_{i=1}^n (\mathbf{y}_i-\boldsymbol{\mu}) (\mathbf{y}_i-\boldsymbol{\mu})^T.
+$$
+
+A result from linear algebra says that
+
+$$\sum_{i=1}^n (\mathbf{y}_i-\boldsymbol{\mu})\boldsymbol{\Sigma}^{-1} (\mathbf{y}_i-\boldsymbol{\mu})^T = \text{tr}(\mathbf{S}_\mu \boldsymbol{\Sigma^{-1}})$$
+
+where
+
+$$\mathbf{S}_\mu=\sum_{i=1}^n (\mathbf{y}_i-\boldsymbol{\mu}) (\mathbf{y}_i-\boldsymbol{\mu})^T.$$
+
+$\mathbf{S}_\mu$ is the residual sum of squares matrix for the vectors $\mathbf{y}_1,\mathbf{y}_2,\ldots,\mathbf{y}_n$ if the population mean is presumed to be $\boldsymbol{\mu}$.
 
 
-<!-- A result from linear algebra says that -->
-<!-- ∑_(i=1)^n▒〖(y_i-μ) Σ^(-1) (y_i-μ)^T 〗=tr(S_μ Σ^(-1)), -->
-<!-- where  -->
-<!-- S_μ=∑_(i=1)^n▒〖(y_i-μ) (y_i-μ)^T.〗 -->
 
-<!-- S_μ is the residual sum of squares matrix for the vectors y_1,y_2,…,y_n if the population mean is presumed to be μ.   -->
+**Example: Reading Scores**
+---
+
+A sample of 22 children are given reading comprehension tests before and after receiving a particular instructional method.  Each student will then have two scores denoting the pre- and post-instructional scores.
+
+Each row of the data set is a two-dimensional vector representing a single case, distributed $N(\boldsymbol{\mu},\boldsymbol{\Sigma})$.
 
 
-<!--   -->
-<!-- Example: Reading Scores -->
+The exam was designed to give an average score around 50 out of 100, so set $\boldsymbol{μ}_0=(50,50)$.
 
-<!-- A sample of 22 children are given reading comprehension tests before and after receiving a particular instructional method.  Each student will then have two scores denoting the pre- and post-instructional scores. -->
+Since the true mean cannot be below 0 or above 100, we want the prior variances to keep $\boldsymbol{\mu}$ inside this range $[0, 100]^2$ with high probability.
 
-<!-- Each row of the data set is a two-dimensional vector representing a single case, distributed N(μ,Σ). -->
+We can use
 
-<!--   -->
-<!-- The exam was designed to give an average score around 50 out of 100, so set μ_0=(50,50).  -->
+$$
+\boldsymbol{\Sigma} =
+\begin{bmatrix}
+ 625 & 312.5 \\
+312.5 & 625
+\end{bmatrix},
+$$
 
-<!-- Since the true mean cannot be below 0 or above 100, we want the prior variances to keep μ inside this range [0, 100] with high probability. -->
+which would mean that the prior probability that the marginal mean is outside $[0, 100]^2$ is only 0.05.
 
-<!-- Thus, we want Λ_0≈[■(625&312.5@312.5&625)], which would mean that the prior probability that the marginal mean is outside [0, 100] is only 0.05.  This also accounts for the fact that the two exams measure similar things, so we think the correlation between the means is around 0.5.  -->
+This also accounts for the fact that the two exams measure similar things, so we think the correlation between the means is around 0.5.
 
-<!-- Since E(Inv-Wishart_(ν_0 ) (K_0^(-1)))=K_0/(ν_0-d-1)), ν_0=4 will loosely center Σ around K_0. -->
+Since $E(\text{Inv-Wishart}_{\nu_0} (\mathbf{K}_0^{-1}))=\mathbf{K}_0/(\nu_0-d-1)$, $\nu_0=4$ will loosely center $\mathbf{\Sigma}$ around $\mathbf{K}_0$.
 
-<!--   -->
-<!-- What is the probability that the post-instruction mean is greater than the pre-instruction mean?   -->
+What is the probability that the post-instruction mean is greater than the pre-instruction mean?
 
-<!-- What is the probability that the post-instruction test score is greater than the pre-instruction test score for a new student? -->
+What is the probability that the post-instruction test score is greater than the pre-instruction test score for a new student?
 
-<!-- Construct a Gibbs sampler to sample from the posterior distribution for μ and Σ. -->
+Construct a Gibbs sampler to sample from the posterior distribution for $\boldsymbol{\mu}$ and $\boldsymbol{\Sigma}$.
 
-<!--   -->
-<!-- Data distribution: y|μ,Σ∼┴(i.i.d.) N(μ,Σ). -->
 
-<!-- Prior distributions:   -->
-<!-- μ∼N(μ_0,Λ_0) with μ_0=(50,50) and Λ_0=[■(625&312.5@312.5&625)]. -->
-<!-- Σ∼ Inv-Wishart_(ν_0 ) (K_0^(-1)) with ν_0=4 and K_0=[■(625&312.5@312.5&625)]. -->
+*Data distribution*
+
+$y \mid \boldsymbol{\mu},\boldsymbol{\Sigma}\stackrel{i.i.d.}{\sim} N(\boldsymbol{\mu},\boldsymbol{\Sigma})$.
+
+*Prior distributions*
+
+$\boldsymbol{\mu}\sim N(\boldsymbol{\mu}_0,\boldsymbol{\Lambda}_0)$ with 
+
+$\boldsymbol{\mu}_0=(50,50)$
+
+and
+
+$$
+\boldsymbol{\Lambda}_0 =
+\begin{bmatrix}
+ 625 & 312.5 \\
+312.5 & 625
+\end{bmatrix}.
+$$
+
+$\boldsymbol{\Sigma} \sim \text{Inv-Wishart}_{\nu_0} (\mathbf{K}_0^{-1})$ with
+
+$\nu_0=4$
+
+and
+
+$$\mathbf{K}_0=
+\begin{bmatrix}
+ 625 & 312.5 \\
+312.5 & 625
+\end{bmatrix}.$$
+
+We begin by loading the data.
+
+```{r}
+# load data
+y = matrix(c(
+59, 77, 43, 39, 34, 46, 32, 26, 42, 38, 38, 43, 55, 68,
+67, 86, 64, 77, 45, 60, 49, 50, 72, 59, 34, 38, 70, 48,
+34, 55, 50, 58, 41, 54, 52, 60, 60, 75, 34, 47, 28, 48,
+35, 33), ncol = 2, byrow = TRUE)
+# reformat
+y = data.frame(pretest = y[,1], posttest = y[,2])
+```
+
+We set some generic parameters.
+
+```{r}
+n = nrow(y)
+d = ncol(y)
+```
+
+We set the prior parameters.
+
+```{r}
+mu0 = c(50, 50)
+nu0 = 4
+L0 = K0 = 25^2 * matrix(c(1, .5, .5, 1), nrow = 2)
+```
+
+We calculate necessary summary quantities
+
+```{r}
+ybar = colMeans(y)
+```
+
+We determine some posterior parameters
+
+```{r}
+nun = nu0 + n
+```
+
+We set the number of cycles.
+
+```{r}
+B = 10000
+```
+
+We create initial guesses for $\boldsymbol{\mu}$, $\boldsymbol{\Sigma}$, and $\mathbf{S}_\mu$.
+
+```{r}
+mu = ybar
+Sigma = cov(y)
+# initial guess for Smu
+Smu = (n - 1) * var(y)
+```
+
+We create some matrices/arrays to store our results.
+
+```{r}
+mupost = matrix(0, nrow = B, ncol = d)
+Sigmapost = array(0, dim = c(d, d, B))
+ytildepost = matrix(0, nrow = B, ncol = d)
+```
+
+Finally, we execute our Gibbs sampler.
+
+```{r}
+for (i in 1:B) {
+	#determine full conditional distribution of mean,
+	#simulate from distribution
+	Ln = solve(solve(L0) + n * solve(Sigma))
+	mun = Ln %*% (solve(L0) %*% mu0 + n * solve(Sigma) %*% ybar)
+	mu = c((rmvnorm(1, mu = mun, v = Ln)))
+
+	#determine full conditional distribution of Sigma,
+	#simulate from distribution
+	Smu = (t(y) - mu) %*% t(t(y) - mu)
+	Kn = K0 + Smu
+
+	Sigma = rinvwish(1, df = nun, v = Kn)[,,1]
+
+	mupost[i, ] = mu
+	Sigmapost[,,i] = Sigma
+
+	ytildepost[i, ] = rmvnorm(1, mu = mu, v = Sigma)
+}
+```
+
+We estimate the posterior mean of $\boldsymbol{\mu}$.
+
+```{r}
+(mean.mupost = apply(mupost, 2, mean))
+```
+
+We estimate the posterior variance of $\boldsymbol{\mu}$.
+
+```{r}
+(var.mupost = apply(mupost, 2, var))
+```
+
+
+We estimate the posterior mean of $\boldsymbol{\Sigma}$.
+
+```{r}
+(mean.Sigmapost = apply(Sigmapost, c(1, 2), mean))
+```
+
+We estimate the posterior variance of $\boldsymbol{\Sigma}$.
+
+```{r}
+(var.Sigmapost = apply(Sigmapost, c(1, 2), var))
+```
+
+We compute some posterior quantiles for $\boldsymbol{\mu}$.
+
+```{r}
+apply(mupost, 2, quantile, prob = c(.01, .25, .5, .75, .99))
+```
+
+
+We plot the posterior densities of the pre- and post-test means.
+
+```{r}
+dpretest = density(mupost[,1])
+dposttest = density(mupost[,2])
+plot(dpretest, type = "l", xlim = range(c(dpretest$x, dposttest$x)),
+	ylim = range(c(dpretest$y, dposttest$y)), main = "")
+lines(dposttest, col = "orange")
+legend("topleft", legend = c("mu pretest", "mu postest"),
+	col = c("black", "orange"), lwd = c(1, 1))
+```
+
+We estimate $P(\mu_{\text{post}} > \mu_{\text{pre}})$.
+
+```{r}
+mean(mupost[,2] > mupost[,1])
+```
+
+We estimate $P(\tilde{y}_{\text{post}} > \tilde{y}_{\text{pre}})$.
+
+```{r}
+mean(ytildepost[,2] > ytildepost[,1])
+```
+
+We visualize the joint posterior density of $\boldsymbol{\mu}$.
+
+```{r}
+# estimate bivariate density
+d2d = MASS::kde2d(mupost[,1], mupost[,2], n = 50)
+# plot results
+autoimage::pimage(d2d, col = hcl.colors(64),
+                  xlab = "mu pretest", ylab = "mu posttest")
+contour(d2d, add = TRUE)
+points(mupost[1:100,], pch = 20)
+```
 
 
