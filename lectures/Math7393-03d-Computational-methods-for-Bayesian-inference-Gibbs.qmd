@@ -24,8 +24,6 @@ To open this information in an interactive Colab notebook, click the Open in Col
 
 We will need certain packages to be available for this notebook. The code below will check if they are installed and install them if necessary.
 
-We now plot the sample paths of our chains for the first ten cycles. We use a function, `plot_mcmc_path` from the **bayesutils** package on GitHub.
-
 ```{r}
 # see if remotes package is available
 if (!require("remotes", quietly = TRUE)) {
@@ -35,12 +33,18 @@ if (!require("remotes", quietly = TRUE)) {
     repos = "https://cran.rstudio.com/"
     )
 }
+```
+
+```{r}
 # see if bayesutils package is available
 if (!require("bayesutils", quietly = TRUE)) {
   # if not, then install package
   remotes::install_github("jfrench/bayesutils")
   library(bayesutils)
 }
+```
+
+```{r}
 # see if autoimage package is available
 if (!require("autoimage", quietly = TRUE)) {
   # if not, then install package
