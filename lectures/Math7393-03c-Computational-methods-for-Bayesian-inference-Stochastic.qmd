@@ -4,7 +4,11 @@ author: Joshua French
 date: ''
 # format: html
 format: ipynb
-jupyter: ir
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
 execute:
   output: false
 self-contained: true
