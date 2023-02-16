@@ -44,7 +44,7 @@ if (!require("bayesutils", quietly = TRUE)) {
 # see if autoimage package is available
 if (!require("autoimage", quietly = TRUE)) {
   # if not, then install package
-  install.package("autoimage")
+  install.packages("autoimage")
   library(autoimage,
           repos = "https://cran.rstudio.com/",
           quietly = TRUE)
