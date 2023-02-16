@@ -7,7 +7,6 @@ format: ipynb
 jupyter: ir
 execute:
   output: false
-  enable: false
 self-contained: true
 title-block-banner: true
 wrap: 'none'
@@ -42,7 +41,9 @@ if (!require("bayesutils", quietly = TRUE)) {
 if (!require("autoimage", quietly = TRUE)) {
   # if not, then install package
   install.package("autoimage")
-  library(autoimage)
+  library(autoimage,
+          repos = "https://cran.rstudio.com/",
+          quietly = TRUE)
 }
 ```
 
@@ -224,7 +225,7 @@ title("Samples from Gibbs sampler")
 We now run 3 more chains with different starting values.
 
 ```{r, echo=TRUE, fig.show='hide'}
-chain2 = gibbs(B = 1000, c(-2.5, -2.5))
+chain2 = gibbs(B = 1000, c(-2.5, 2.5))
 chain3 = gibbs(B = 1000, c(2.5, -2.5))
 chain4 = gibbs(B = 1000, c(2.5, 2.5))
 ```
