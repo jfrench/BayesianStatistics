@@ -7,6 +7,7 @@ format: ipynb
 jupyter: ir
 execute:
   output: false
+  enable: false
 self-contained: true
 title-block-banner: true
 wrap: 'none'
