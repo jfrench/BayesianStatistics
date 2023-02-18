@@ -1,0 +1,31 @@
+---
+title: Computational methods for Bayesian inference
+author: Joshua French
+date: ''
+# format: html
+format: ipynb
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+execute:
+  output: false
+self-contained: true
+title-block-banner: true
+wrap: 'none'
+---
+
+To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/tests.ipynb">
+   <img src="https://colab.research.google.com/assets/colab-badge.svg">
+</a>
+
+---
+
+## Quarto
+
+```{r}
+1 + 1
+```
