@@ -29,3 +29,7 @@ To open this information in an interactive Colab notebook, click the Open in Col
 ```{r}
 library(MASS)
 ```
+
+```{r}
+1 + 1
+```
