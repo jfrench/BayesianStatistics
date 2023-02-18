@@ -18,7 +18,7 @@ wrap: 'none'
 
 To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
 
-<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/tests.ipynb">
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/test.ipynb">
    <img src="https://colab.research.google.com/assets/colab-badge.svg">
 </a>
 
@@ -27,5 +27,5 @@ To open this information in an interactive Colab notebook, click the Open in Col
 ## Quarto
 
 ```{r}
-1 + 1
+library(MASS)
 ```
