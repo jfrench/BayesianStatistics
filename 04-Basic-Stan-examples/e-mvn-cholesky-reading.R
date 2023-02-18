@@ -84,13 +84,15 @@ L0 = matrix(c(625, 312.5, 312.5, 625), nrow = 2)
 stan_dat = list(n = 22, y = y,
                  mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
-# # reading_chol_fit model
-# reading_chol_fit = stan(model_code = stanmod, data = stan_dat,
-#             iter = 1000)
+if (!file.exists("reading_chol_mod.rda")) {
+# reading_chol_fit model
+reading_chol_fit = stan(model_code = stanmod, data = stan_dat,
+            iter = 1000)
 # compile model
-# reading_chol_mod = stan_model(model_code = stanmod)
-# # save model
-# save(reading_chol_mod, file = "reading_chol_mod.rda", compress = "xz")
+reading_chol_mod = stan_model(model_code = stanmod)
+# save model
+save(reading_chol_mod, file = "reading_chol_mod.rda", compress = "xz")
+}
 # load compiled model
 load(file = "reading_chol_mod.rda")
 # draw samples from the model

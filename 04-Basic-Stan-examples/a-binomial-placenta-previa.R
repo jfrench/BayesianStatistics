@@ -44,11 +44,13 @@ generated quantities{
 stan_dat = list(n = 980, y = 437, alpha = 1, beta = 1)
 
 # compile the model, sample from model, returns object of class stanplacenta_previa_fit
-# placenta_previa_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
-# # alternatively
-# # describe model
-# placenta_previa_mod = stan_model(model_code = stanmod)
-# save(placenta_previa_mod, file = "placenta_previa_mod.rda", compress = "xz")
+if (!file.exists("placenta_previa_mod.rda")) {
+  placenta_previa_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
+  # alternatively
+  # describe model
+  placenta_previa_mod = stan_model(model_code = stanmod)
+  save(placenta_previa_mod, file = "placenta_previa_mod.rda", compress = "xz")
+}
 load(file = "placenta_previa_mod.rda")
 # draw samples from the model
 placenta_previa_fit = sampling(placenta_previa_mod, data = stan_dat, iter = 1000, chains = 4)
