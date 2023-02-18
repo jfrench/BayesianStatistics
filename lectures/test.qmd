@@ -27,6 +27,10 @@ To open this information in an interactive Colab notebook, click the Open in Col
 ## Quarto
 
 ```{r}
+library(smerc)
+```
+
+```{r}
 library(MASS)
 ```
 
