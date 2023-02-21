@@ -338,8 +338,9 @@ Derive the full conditional distributions
 $\mu \mid \sigma^2, y \sim N(\mu_n, \tau_n^2)$ with
 
 $$
-\mu_n = \frac{\kappa_0}
-{\sigma^2}\mu_0 + \frac{n}{\sigma^2}\bar{y}
+\mu_n = \frac{\frac{\kappa_0}
+{\sigma^2}\mu_0 + \frac{n}{\sigma^2}\bar{y}}{\frac{\kappa_0}
+{\sigma^2} + \frac{n}{\sigma^2}}
 $$
 
 and
@@ -375,7 +376,7 @@ $y_1,\ldots,y_n \mid \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu,\sigma^2)$
 
 *Prior distributions*
 
-$\mu \mid \sigma^2 N(\mu_0, \sigma^2/\kappa_0)$ with $\mu_0=1.9$ and $\kappa_0=1$.
+$\mu \mid \sigma^2 \sim N(\mu_0, \sigma^2/\kappa_0)$ with $\mu_0=1.9$ and $\kappa_0=1$.
 
 $\sigma^2 \sim  \text{Inv-}\chi^2_{\nu_0}(\sigma_0^2)$
 with $\nu_0=1$ and $\sigma_0^2=(0.1)^2$.
@@ -580,7 +581,36 @@ $\boldsymbol{\Sigma} \sim \text{Inv-Wishart}_{\nu_0} ( \mathbf{Κ}_0^{-1})$.
 
 $p(\boldsymbol{\Sigma}) \propto |\boldsymbol{\Sigma}|^{-(\nu_0+d+1)/2} \exp\left(-\frac{1}{2} \text{tr}(\mathbf{K}_0 \boldsymbol{\Sigma}^{-1})\right).$
 
-$p(\boldsymbol{\mu}, \boldsymbol{\Sigma} \mid y) \propto$
+*Data distribution density*
+
+$p(\mathbf{y} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma}) \propto$
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+*Prior density for $\boldsymbol{\mu}$*
+
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
+
+$p(\boldsymbol{\mu}, \boldsymbol{\Sigma} \mid \mathbf{y}) \propto$
 
 <br>  
 <br>  
@@ -611,18 +641,35 @@ Derive the full conditional distributions:
 <br>  
 <br>  
 <br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+<br>  
+
 
 *Full conditional distributions*
 
-$\boldsymbol{\mu} \mid \boldsymbol{\Sigma}, y \sim N(\boldsymbol{\mu}_n,\boldsymbol{\Lambda}_n)$, where
+$\boldsymbol{\mu} \mid \boldsymbol{\Sigma}, \mathbf{y} \sim N(\boldsymbol{\mu}_n,\boldsymbol{\Lambda}_n)$, where
 
-$$\boldsymbol{\mu}_n=\boldsymbol{\Lambda_n} (\boldsymbol{\Lambda}_0^{-1} \boldsymbol{\mu}_0+n \boldsymbol{\Sigma}^{-1} \bar{y})$$
+$$\boldsymbol{\mu}_n=\boldsymbol{\Lambda_n} (\boldsymbol{\Lambda}_0^{-1} \boldsymbol{\mu}_0+n \boldsymbol{\Sigma}^{-1} \bar{\mathbf{y}})$$
 
 and
 
 $$\boldsymbol{\Lambda}_n^{-1}=\boldsymbol{\Lambda}_0^{-1}+n\boldsymbol{\Sigma}^{-1}.$$
 
-$\boldsymbol{\Sigma}\mid \boldsymbol{\mu},y \sim   \text{Inv-Wishart}_{\nu_n} (\mathbf{K}_n^{-1 })$, where
+$\boldsymbol{\Sigma}\mid \boldsymbol{\mu}, \mathbf{y} \sim   \text{Inv-Wishart}_{\nu_n} (\mathbf{K}_n^{-1 })$, where
 
 $$\nu_n=\mu_0+n,$$
 
