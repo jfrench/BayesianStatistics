@@ -74,15 +74,24 @@ L0 = matrix(c(625, 312.5, 312.5, 625), nrow = 2)
 stan_dat = list(n = 22, y = y,
                 mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
-# # reading_fit model using stan with 4 chains
-# reading_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000)
-# reading_mod = stan_model(model_code = stanmod)
-# # save model
-# save(reading_mod, file = "reading_mod.rda", compress = "xz")
+# if compiled model doesn't already exist,
+# compile the model, sample from model,
+# returns object of class stan
+# save model
+if (!file.exists("reading_mod.rda")) {
+  # reading_fit model using stan with 4 chains
+  reading_fit = stan(model_code = stanmod,
+                     data = stan_dat,
+                     iter = 100)
+  reading_mod = stan_model(model_code = stanmod)
+  # save model
+  save(reading_mod, file = "reading_mod.rda", compress = "xz")
+}
 # load compiled model
 load(file = "reading_mod.rda")
 # draw samples from the model
-reading_fit = sampling(reading_mod, data = stan_dat, iter = 1000, chains = 4)
+reading_fit = sampling(reading_mod, data = stan_dat,
+                       iter = 10000, chains = 4)
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
@@ -90,7 +99,8 @@ reading_fit = sampling(reading_mod, data = stan_dat, iter = 1000, chains = 4)
 # mu2 45.90558 51.56652 53.72375 55.86592 61.38130
 
 # results should be similar
-summary(reading_fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
+summary(reading_fit, par = "mu",
+        probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
 
 # extract samples list from reading_fit
 samples = extract(reading_fit)

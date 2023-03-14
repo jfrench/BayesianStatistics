@@ -1,4 +1,5 @@
 library(rstan)
+library(ggplot2)
 library(bayesplot)
 library(mvtnorm)
 
@@ -85,18 +86,22 @@ stan_dat = list(n = 22, y = y,
                  mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
 if (!file.exists("reading_chol_mod.rda")) {
-# reading_chol_fit model
-reading_chol_fit = stan(model_code = stanmod, data = stan_dat,
-            iter = 1000)
-# compile model
-reading_chol_mod = stan_model(model_code = stanmod)
-# save model
-save(reading_chol_mod, file = "reading_chol_mod.rda", compress = "xz")
+  # reading_chol_fit model
+  reading_chol_fit = stan(model_code = stanmod,
+                          data = stan_dat, iter = 100)
+  # compile model
+  reading_chol_mod = stan_model(model_code = stanmod)
+  # save model
+  save(reading_chol_mod,
+       file = "reading_chol_mod.rda",
+       compress = "xz")
 }
 # load compiled model
 load(file = "reading_chol_mod.rda")
 # draw samples from the model
-reading_chol_fit = sampling(reading_chol_mod, data = stan_dat, iter = 1000, chains = 4)
+reading_chol_fit = sampling(reading_chol_mod,
+                            data = stan_dat,
+                            iter = 10000, chains = 4)
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
@@ -104,7 +109,8 @@ reading_chol_fit = sampling(reading_chol_mod, data = stan_dat, iter = 1000, chai
 # mu2 45.90558 51.56652 53.72375 55.86592 61.38130
 
 # results should be similar
-summary(reading_chol_fit, par = "mu", probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
+summary(reading_chol_fit, par = "mu",
+        probs = c(0.01, 0.25, 0.5, 0.75, 0.99))$summary[,4:8]
 
 # extract samples list from reading_chol_fit
 samples = extract(reading_chol_fit)
@@ -143,7 +149,9 @@ nrep = 50
 yrep = matrix(0, nrow = nrep, ncol = prod(dim(y)))
 for (i in seq_len(nrep)) {
   # generate multivariate normals from posterior predictive distribution
-  ysim = mvtnorm::rmvnorm(nrow(y), mean = samples$mu[i,], sigma = samples$Sigma[i,,])
+  ysim = mvtnorm::rmvnorm(nrow(y),
+                          mean = samples$mu[i,],
+                          sigma = samples$Sigma[i,,])
   yrep[i, ] = c(ysim)
 }
 

@@ -1,5 +1,6 @@
 library(rstan)
 library(coda)
+library(ggplot2)
 library(bayesplot)
 
 # Example taken from Bayesian Data Analysis, 3rd edition
@@ -52,15 +53,24 @@ generated quantities {
 data(newcomb, package = "MASS") # load data
 stan_dat = list(n = length(newcomb), y = newcomb)
 
-# # fit model using stan with 4 chains
-# sol_fit = stan(model_code = stanmod, data = stan_dat, iter = 100000, chains = 4)
-# # compile model
-# sol_mod = stan_model(model_code = stanmod)
-# # save model
-# save(sol_mod, file = "sol_mod.rda", compress = "xz")
+# if compiled model doesn't already exist,
+# compile the model, sample from model,
+# returns object of class stan
+# save model
+if (!file.exists("sol_mod.rda")) {
+  # fit model using stan with 4 chains
+  sol_fit = stan(model_code = stanmod,
+                 data = stan_dat,
+                 iter = 100)
+  # compile model
+  sol_mod = stan_model(model_code = stanmod)
+  # save model
+  save(sol_mod, file = "sol_mod.rda", compress = "xz")
+}
 load(file = "sol_mod.rda")
 # draw samples from the model
-sol_fit = sampling(sol_mod, data = stan_dat, iter = 1000, chains = 4)
+sol_fit = sampling(sol_mod, data = stan_dat,
+                   iter = 1000, chains = 4)
 
 # trace plots of results
 posterior = as.array(sol_fit)

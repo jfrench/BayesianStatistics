@@ -27,6 +27,7 @@
 # from other populations.
 
 library(rstan)
+library(ggplot2)
 library(bayesplot)
 
 # Create model.  Notice the quotes
@@ -64,17 +65,27 @@ y = c(1.64, 1.70, 1.72, 1.74, 1.82, 1.82, 1.82, 1.90, 2.08)
 stan_dat = list(n = length(y), y = y, mu0 = 1.9, k0 = 1,
                  nu0 = 1, sigma0 = 0.1)
 
-# # midge_fit model using stand with 4 chains
-# midge_fit = stan(model_code = stanmod, data = stan_dat, iter = 1e5)
-# # compile model
-# midge_mod = stan_model(model_code = stanmod)
-# # save model
-# save(midge_mod, file = "midge_mod.rda", compress = "xz")
+# if compiled model doesn't already exist,
+# compile the model, sample from model,
+# returns object of class stan
+# save model
+if (!file.exists("midge_mod.rda")) {
+  # midge_fit model using stand with 4 chains
+  midge_fit = stan(model_code = stanmod,
+                   data = stan_dat,
+                   iter = 100)
+  # compile model
+  midge_mod = stan_model(model_code = stanmod)
+  # save model
+  save(midge_mod, file = "midge_mod.rda", compress = "xz")
+}
 load(file = "midge_mod.rda")
 # draw samples from the model
-midge_fit = sampling(midge_mod, data = stan_dat, iter = 1000, chains = 4)
+midge_fit = sampling(midge_mod, data = stan_dat,
+                     iter = 1000, chains = 4)
 
-summary(midge_fit, par = c("mu", "sigmasq"), prob = c(0.025, 0.975))
+summary(midge_fit, par = c("mu", "sigmasq"),
+        prob = c(0.025, 0.975))$summary
 # Approximate posterior from previous analysis
 # > #95% central posterior interval for mu
 # > quantile(mu, c(.025, .975))

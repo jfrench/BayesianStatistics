@@ -2,6 +2,7 @@
 # and bayesplot for cool plots
 library(rstan)
 library(coda)
+library(ggplot2)
 library(bayesplot)
 
 ### Example from Bayesian Data Analysis, 3rd edition
@@ -43,20 +44,33 @@ generated quantities{
 # Specify the data in R, using a list format compatible with STAN:
 stan_dat = list(n = 980, y = 437, alpha = 1, beta = 1)
 
-# compile the model, sample from model, returns object of class stanplacenta_previa_fit
+# if compiled model doesn't already exist,
+# compile the model, sample from model,
+# returns object of class stan
+# save model
 if (!file.exists("placenta_previa_mod.rda")) {
-  placenta_previa_fit = stan(model_code = stanmod, data = stan_dat, iter = 1000, chains = 4)
-  # alternatively
-  # describe model
+  # compile and sample from model
+  placenta_previa_fit = stan(model_code = stanmod,
+                             data = stan_dat,
+                             iter = 100,
+                             chains = 4)
+  # alternatively, describe model
   placenta_previa_mod = stan_model(model_code = stanmod)
-  save(placenta_previa_mod, file = "placenta_previa_mod.rda", compress = "xz")
+  save(placenta_previa_mod,
+       file = "placenta_previa_mod.rda",
+       compress = "xz")
 }
 load(file = "placenta_previa_mod.rda")
 # draw samples from the model
-placenta_previa_fit = sampling(placenta_previa_mod, data = stan_dat, iter = 1000, chains = 4)
+placenta_previa_fit = sampling(placenta_previa_mod,
+                               data = stan_dat,
+                               iter = 1000,
+                               chains = 4)
 
-# summary of stanplacenta_previa_fit object
-summary(placenta_previa_fit, pars = c("theta", "ytilde"), probs = c(0.025, 0.975))
+# summary of placenta_previa_fit object (all_chains)
+summary(placenta_previa_fit,
+        pars = c("theta", "ytilde"),
+        probs = c(0.025, 0.975))$summary
 
 # rstan plotting functions
 # posterior intervals and point estimates
@@ -67,7 +81,7 @@ stan_dens(placenta_previa_fit, "theta")
 # histogram of ytilde
 stan_hist(placenta_previa_fit, "ytilde")
 # ACF plot of chain
-stan_ac(placenta_previa_fit, "theta")
+stan_ac(placenta_previa_fit, "theta", lags = 10, fun = "se_mean")
 
 # coda plots
 # convert samples to coda object

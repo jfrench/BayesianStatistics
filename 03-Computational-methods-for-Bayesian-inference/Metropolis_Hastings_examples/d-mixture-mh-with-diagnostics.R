@@ -89,10 +89,12 @@ independence_chain = function(B, start, jump_parm) {
 
   for (i in 2:length(theta)) {
     theta_star = rbeta(1, alpha, beta)
-    log_numr = log_jlik(y, theta_star) + dbeta(theta_star, 1, 1, log = TRUE) -
-               dbeta(theta_star, alpha, beta, log = TRUE)
-    log_denr = log_jlik(y, theta[i - 1]) + dbeta(theta[i - 1], 1, 1, log = TRUE) -
-               dbeta(theta[i - 1], alpha, beta, log = TRUE)
+    log_numr = log_jlik(y, theta_star) +
+      dbeta(theta_star, 1, 1, log = TRUE) -
+      dbeta(theta_star, alpha, beta, log = TRUE)
+    log_denr = log_jlik(y, theta[i - 1]) +
+      dbeta(theta[i - 1], 1, 1, log = TRUE) -
+      dbeta(theta[i - 1], alpha, beta, log = TRUE)
     logr = log_numr - log_denr
 
     if (log(runif(1)) <= min(logr, 0)) {

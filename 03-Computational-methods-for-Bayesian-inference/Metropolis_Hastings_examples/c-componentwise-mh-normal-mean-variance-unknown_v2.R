@@ -89,7 +89,9 @@ cmh = function(B, start, jump_parm1, jump_parm2) {
     # use mu for current iteration
     # change value of sigmasq in numerator and denominator
 
-    sigmasq_star = bayesutils::rinvchisq(1, df = df_sigmasqstar, scale = scale_sigmasqstar)
+    sigmasq_star = bayesutils::rinvchisq(1,
+                                         df = df_sigmasqstar,
+                                         scale = scale_sigmasqstar)
     # print(sigmasq_star) used for debugging
     # what are the current values during a crash?
 
