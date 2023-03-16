@@ -74,15 +74,19 @@ model {
 "
 
 stan_dat = list(n = length(grades), y = grades,
-                tutor2 = tutor2, tutor3 = tutor3, tutor4 = tutor4)
+                tutor2 = tutor2, tutor3 = tutor3,
+                tutor4 = tutor4)
 
-# # tutor_fit = stan(model_code = stanmod, data = stan_dat, iter = 10000)
-# tutor_mod = stan_model(model_code = stanmod)
-# # save model
-# save(tutor_mod, file = "tutor_mod.rda", compress = "xz")
+if (!file.exists("tutor_mod.rda")) {
+  # # tutor_fit = stan(model_code = stanmod, data = stan_dat, iter = 10000)
+  tutor_mod = stan_model(model_code = stanmod)
+  # save model
+  save(tutor_mod, file = "tutor_mod.rda", compress = "xz")
+}
 load(file = "tutor_mod.rda")
 # draw samples from the model
-tutor_fit = sampling(tutor_mod, data = stan_dat, iter = 10000)
+tutor_fit = sampling(tutor_mod, data = stan_dat,
+                     iter = 10000)
 
 # alternative example with specified starting values
 # init_list = list(list(sigmasq = 1, mu0 = 9, alpha2 = 0, alpha3 = 9, alpha4 = 4),
@@ -100,7 +104,8 @@ summary(tutor_fit)$summary
 summary(tutor_fit)$summary[,"Rhat"]
 
 # plot of densities
-stan_dens(tutor_fit, par = c("mu0", "alpha2", "alpha3", "alpha4"),
+stan_dens(tutor_fit,
+          par = c("mu0", "alpha2", "alpha3", "alpha4"),
           separate_chains = TRUE)
 
 # 95% central posterior intervals
@@ -126,5 +131,6 @@ ggplot(df) + geom_boxplot(aes(y = mean, x = tutor))
 # parallel violin plots
 ggplot(df) + geom_violin(aes(y = mean, x = tutor))
 # overlaid density plots
-ggplot(df) + geom_density(aes(x = mean, fill = tutor), alpha = 0.4)
+ggplot(df) + geom_density(aes(x = mean, fill = tutor),
+                          alpha = 0.4)
 

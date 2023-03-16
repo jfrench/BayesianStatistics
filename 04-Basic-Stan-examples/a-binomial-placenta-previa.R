@@ -81,7 +81,7 @@ stan_dens(placenta_previa_fit, "theta")
 # histogram of ytilde
 stan_hist(placenta_previa_fit, "ytilde")
 # ACF plot of chain
-stan_ac(placenta_previa_fit, "theta", lags = 10, fun = "se_mean")
+stan_ac(placenta_previa_fit, "theta", lags = 10)
 
 # coda plots
 # convert samples to coda object

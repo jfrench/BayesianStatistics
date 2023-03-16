@@ -96,19 +96,24 @@ stan_dat = list(n = n, y = soda$Time,
                 X = X, mu0 = c(0, 0, 0), V = solve(crossprod(X)),
                 I = diag(n), csq = 100^2, v = v)
 
-# fit model using stan with 4 chains
-# soda_g2_fit = stan(model_code = stanmod, data = stan_dat,
-#                    iter = 10000, chains = 4)
+if (!file.exists("soda_g2_mod.rda")) {
+  # fit model using stan with 4 chains
+  # soda_g2_fit = stan(model_code = stanmod, data = stan_dat,
+  #                    iter = 10000, chains = 4)
 
-# soda_g2_mod = stan_model(model_code = stanmod)
-# # save model
-# save(soda_g2_mod, file = "soda_g2_mod.rda", compress = "xz")
+  soda_g2_mod = stan_model(model_code = stanmod)
+  # save model
+  save(soda_g2_mod, file = "soda_g2_mod.rda",
+       compress = "xz")
+}
 load(file = "soda_g2_mod.rda")
 # draw samples from the model
-soda_g2_fit = sampling(soda_g2_mod, data = stan_dat, iter = 10000, chains = 4)
+soda_g2_fit = sampling(soda_g2_mod, data = stan_dat,
+                       iter = 10000, chains = 4)
 
 # plot of densities
-stan_dens(soda_g2_fit, par = c("beta", "sigmasq"), separate_chains = TRUE)
+stan_dens(soda_g2_fit, par = c("beta", "sigmasq"),
+          separate_chains = TRUE)
 
 # check convergence with gelman-rubin statistics
 summary(soda_g2_fit)$summary[,"Rhat"]

@@ -101,17 +101,23 @@ generated quantities {
 stan_dat = list(n = n, y = soda$Time, cases = soda$Cases,
                  dist = soda$Distance, v = v)
 
-# fit model using stan with 4 chains
-# soda_fit = stan(model_code = stanmod, data = stan_dat,
-#                 iter = 50000, chains = 4)
-# save(soda_fit, file = "soda_fit.rda", compress = "xz")
-# load(file = "soda_fit.rda")
-# soda_mod = stan_model(model_code = stanmod)
+# if compiled model doesn't already exist,
+# compile the model, sample from model,
+# returns object of class stan
 # save model
-# save(soda_mod, file = "soda_mod.rda", compress = "xz")
+if (!file.exists("soda_mod.rda")) {
+  # soda_fit = stan(model_code = stanmod, data = stan_dat,
+  #                 iter = 10000, chains = 4)
+  # save(soda_fit, file = "soda_fit.rda", compress = "xz")
+  # load(file = "soda_fit.rda")
+  soda_mod = stan_model(model_code = stanmod)
+  # save model
+  save(soda_mod, file = "soda_mod.rda", compress = "xz")
+}
 load(file = "soda_mod.rda")
 # # draw samples from the model
-soda_fit = sampling(soda_mod, data = stan_dat, iter = 10000, chains = 4)
+soda_fit = sampling(soda_mod, data = stan_dat,
+                    iter = 10000, chains = 4)
 
 # summary of soda_fitted values
 summary(soda_fit)$summary

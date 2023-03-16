@@ -102,27 +102,37 @@ dat1 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
 dat2 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
             V = solve(crossprod(X)), v = v, csq = 100^2)
 
-# fit models using stan with for both g-priors
-# soda_fit1 = stan(model_code = mod, data = dat1,
-#             iter = 10000, seed = 30)
-# soda_fit2 = stan(model_code = mod, data = dat2,
-#              iter = 10000, seed = 31)
-
-# compile model
-# soda_gprior_mod = stan_model(model_code = mod)
-# save model
-# save(soda_gprior_mod, file = "soda_gprior_mod.rda", compress = "xz")
+if (!file.exists("soda_grior_mod.rda")) {
+  # fit models using stan with for both g-priors
+  # soda_fit1 = stan(model_code = mod, data = dat1,
+  #             iter = 10000, seed = 30)
+  # soda_fit2 = stan(model_code = mod, data = dat2,
+  #              iter = 10000, seed = 31)
+  # compile model
+  soda_gprior_mod = stan_model(model_code = mod)
+  # save model
+  save(soda_gprior_mod, file = "soda_gprior_mod.rda",
+       compress = "xz")
+}
 load(file = "soda_gprior_mod.rda")
 # draw samples from the model
-soda_gprior_fit1 = sampling(soda_gprior_mod, data = dat1, iter = 10000, seed = 30)
-soda_gprior_fit2 = sampling(soda_gprior_mod, data = dat2, iter = 10000, seed = 31)
+soda_gprior_fit1 = sampling(soda_gprior_mod, data = dat1,
+                            iter = 10000, seed = 30)
+soda_gprior_fit2 = sampling(soda_gprior_mod, data = dat2,
+                            iter = 10000, seed = 31)
 
-fits = rbind(cbind(as.data.frame(soda_gprior_fit1), model = "model1"),
-             cbind(as.data.frame(soda_gprior_fit2), model = "model2"))
+# combine results into a data frame
+fits = rbind(cbind(as.data.frame(soda_gprior_fit1),
+                   model = "model1"),
+             cbind(as.data.frame(soda_gprior_fit2),
+                   model = "model2"))
 
-df = tidyr::gather_(fits,
-                    key_col = "parameter", value_col = "value",
-                    gather_cols = c("beta[1]", "beta[2]", "beta[3]"))
+# restructure data frame for plotting
+df = tidyr::pivot_longer(
+  data = fits,
+  cols = c("beta[1]", "beta[2]", "beta[3]"),
+  names_to = "parameter"
+)
 
 # check convergence with gelman-rubin statistics
 summary(soda_gprior_fit1)$summary[,"Rhat"]
