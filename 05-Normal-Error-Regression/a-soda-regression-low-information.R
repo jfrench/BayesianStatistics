@@ -123,7 +123,8 @@ soda_fit = sampling(soda_mod, data = stan_dat,
 summary(soda_fit)$summary
 
 # plot of densities
-stan_dens(soda_fit, par = c("beta0", "beta1", "beta2", "sigmasq"),
+stan_dens(soda_fit,
+          par = c("beta0", "beta1", "beta2", "sigmasq"),
           separate_chains = TRUE)
 
 # check convergence with gelman-rubin statistics

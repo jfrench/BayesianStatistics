@@ -71,9 +71,9 @@ stan_dat = list(n = length(y), y = y, mu0 = 1.9, k0 = 1,
 # save model
 if (!file.exists("midge_mod.rda")) {
   # midge_fit model using stand with 4 chains
-  midge_fit = stan(model_code = stanmod,
-                   data = stan_dat,
-                   iter = 100)
+  # midge_fit = stan(model_code = stanmod,
+  #                  data = stan_dat,
+  #                  iter = 100)
   # compile model
   midge_mod = stan_model(model_code = stanmod)
   # save model

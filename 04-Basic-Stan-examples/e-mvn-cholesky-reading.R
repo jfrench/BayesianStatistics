@@ -43,7 +43,7 @@ y = data.frame(pretest = y[,1], posttest = y[,2])
 # Create model.  Notice the quotes
 stanmod = "
 data {
-  int<lower=1> n; // number of trials
+  int<lower=1> n; // number of students
   vector[2] y[n]; // 2d array of pre- and post-test measurements
   vector[2] mu0; //prior mean for mu
   real<lower=0> k0; //prior number of observations for mu
