@@ -1,4 +1,5 @@
 library(rstan)
+library(ggplot2)
 library(loo) # compute waic and looic
 
 # Example:  Oxygen uptake (Kuehl 2000)
@@ -78,11 +79,16 @@ generated quantities {
 dat = list(n = n, y = y, x = x, d2 = D2, v = v)
 
 # draw samples from the model
-# oxygen_pl_mod = stan_model(model_code = pl_mod)
-# save(oxygen_pl_mod, file = "oxygen_pl_mod.rda", compress = "xz")
+if (!file.exists("oxygen_pl_mod.rda")) {
+  oxygen_pl_mod = stan_model(model_code = pl_mod)
+  save(oxygen_pl_mod, file = "oxygen_pl_mod.rda",
+       compress = "xz")
+}
 load("oxygen_pl_mod.rda")
-fit_oxygen_pl = sampling(oxygen_pl_mod, data = dat, iter = 5000,
-                         control = list(adapt_delta = 0.99), seed = 43)
+fit_oxygen_pl = sampling(oxygen_pl_mod, data = dat,
+                         iter = 5000,
+                         control = list(adapt_delta = 0.99),
+                         seed = 43)
 
 # check convergence with gelman-rubin statistics
 summary(fit_oxygen_pl)$summary[,"Rhat"]
@@ -159,11 +165,16 @@ generated quantities {
 "
 
 # draw samples from the model
-# oxygen_sl_mod = stan_model(model_code = sl_mod)
-# save(oxygen_sl_mod, file = "oxygen_sl_mod.rda", compress = "xz")
+if (!file.exists("oxygen_pl_mod.rda")) {
+  oxygen_sl_mod = stan_model(model_code = sl_mod)
+  save(oxygen_sl_mod, file = "oxygen_sl_mod.rda",
+       compress = "xz")
+}
 load("oxygen_sl_mod.rda")
-fit_oxygen_sl = sampling(oxygen_sl_mod, data = dat, iter = 5000,
-                         control = list(adapt_delta = 0.99), seed = 43)
+fit_oxygen_sl = sampling(oxygen_sl_mod, data = dat,
+                         iter = 5000,
+                         control = list(adapt_delta = 0.99),
+                         seed = 43)
 
 # check convergence with gelman-rubin statistics
 summary(fit_oxygen_sl)$summary[,"Rhat"]
@@ -190,14 +201,15 @@ stan_dens(fit_oxygen_sl, par = c("beta0", "beta1", "alpha2", "delta2", "sigmasq"
 stan_dens(fit_oxygen_sl, "Rbsq") + xlim(c(0.25, 1))
 
 # Plot with estimated regression lines (using means)
-plot(x, y, xlab = "Age", ylab = "Maximum Oxygen Uptake", pch = D2 + 1,
-     col = D2 + 3)
-legend("topleft", pch = c(1, 2), col = c("green", "blue"), legend =
-         c("aerobic", "running"))
+plot(x, y, xlab = "Age", ylab = "Maximum Oxygen Uptake",
+     pch = D2 + 1, col = D2 + 3)
+legend("topleft", pch = c(1, 2), col = c("green", "blue"),
+       legend = c("aerobic", "running"))
 
 sl_coef = summary(fit_oxygen_sl)$summary[c("beta0", "beta1", "alpha2", "delta2"),"mean"]
 abline(sl_coef[1], sl_coef[2], col = "green")
-abline(sl_coef[1] + sl_coef[3], sl_coef[2] + sl_coef[4], col = "blue")
+abline(sl_coef[1] + sl_coef[3], sl_coef[2] + sl_coef[4],
+       col = "blue")
 
 # extract log likelihoods
 ll_pl = extract_log_lik(fit_oxygen_pl, merge_chains = FALSE)
