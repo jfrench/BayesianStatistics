@@ -28,7 +28,7 @@ senility  =  c(1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0)
 
-waismod = "
+wais_code = "
 data {
   int<lower=1> n; // number of observations
   int y[n];       // indicator of senility
@@ -57,9 +57,17 @@ generated quantities {
 # create the data list
 senility_data = list(n = n, y = senility, x = wais)
 
-# compile and sample from model
-# wais_mod = stan_model(model_code = waismod)
-# save(wais_mod, file = "wais_mod.rda", compress = "xz")
+# compile from model
+if (!file.exists("wais_mod.rda")) {
+  wais_fit = stan(model_code = wais_code,
+                  data = senility_data,
+                  iter = 50000, seed = 90)
+  wais_mod = stan_model(model_code = wais_code)
+  save(wais_mod, file = "wais_mod.rda",
+       compress = "xz")
+}
+
+# draw samples from model
 load("wais_mod.rda")
 wais_fit = sampling(wais_mod, data = senility_data,
                     iter = 50000, seed = 90)
