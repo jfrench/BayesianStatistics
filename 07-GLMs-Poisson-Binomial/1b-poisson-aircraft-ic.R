@@ -253,20 +253,55 @@ aircraft_data = list(n = n, y = damage, type = type, bombload = bombload,
                      airexp = airexp)
 
 # compile, save the models
-# aircraft_mod_t = stan_model(model_code = mod_t)
-# save(aircraft_mod_t, file = "aircraft_mod_t.rda", compress = "xz")
-# aircraft_mod_b = stan_model(model_code = mod_b)
-# save(aircraft_mod_b, file = "aircraft_mod_b.rda", compress = "xz")
-# aircraft_mod_a = stan_model(model_code = mod_a)
-# save(aircraft_mod_a, file = "aircraft_mod_a.rda", compress = "xz")
-# aircraft_mod_tb = stan_model(model_code = mod_tb)
-# save(aircraft_mod_tb, file = "aircraft_mod_tb.rda", compress = "xz")
-# aircraft_mod_ta = stan_model(model_code = mod_ta)
-# save(aircraft_mod_ta, file = "aircraft_mod_ta.rda", compress = "xz")
-# aircraft_mod_ba = stan_model(model_code = mod_ba)
-# save(aircraft_mod_ba, file = "aircraft_mod_ba.rda", compress = "xz")
-# aircraft_mod_tba = stan_model(model_code = mod_tba)
-# save(aircraft_mod_tba, file = "aircraft_mod_tba.rda", compress = "xz")
+if (!file.exists("aircraft_mod_t.rda")) {
+aircraft_fit_t = stan(model_code = mod_t,
+                      data = aircraft_data,
+                      iter = 10, refresh = 0, chain = 2)
+aircraft_mod_t = stan_model(model_code = mod_t)
+save(aircraft_mod_t, file = "aircraft_mod_t.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_b.rda")) {
+  aircraft_fit_b = stan(model_code = mod_b,
+                        data = aircraft_data,
+                        iter = 10, refresh = 0, chain = 2)
+aircraft_mod_b = stan_model(model_code = mod_b)
+save(aircraft_mod_b, file = "aircraft_mod_b.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_a.rda")) {
+  aircraft_fit_a = stan(model_code = mod_a,
+                        data = aircraft_data,
+                        iter = 10, refresh = 0, chain = 2)
+  aircraft_mod_a = stan_model(model_code = mod_a)
+  save(aircraft_mod_a, file = "aircraft_mod_a.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_tb.rda")) {
+  aircraft_fit_tb = stan(model_code = mod_tb,
+                        data = aircraft_data,
+                        iter = 10, refresh = 0, chain = 2)
+  aircraft_mod_tb = stan_model(model_code = mod_tb)
+  save(aircraft_mod_tb, file = "aircraft_mod_tb.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_ta.rda")) {
+  aircraft_fit_ta = stan(model_code = mod_ta,
+                         data = aircraft_data,
+                         iter = 10, refresh = 0, chain = 2)
+  aircraft_mod_ta = stan_model(model_code = mod_ta)
+  save(aircraft_mod_ta, file = "aircraft_mod_ta.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_ba.rda")) {
+  aircraft_fit_ba = stan(model_code = mod_ba,
+                         data = aircraft_data,
+                         iter = 10, refresh = 0, chain = 2)
+  aircraft_mod_ba = stan_model(model_code = mod_ba)
+  save(aircraft_mod_ba, file = "aircraft_mod_ba.rda", compress = "xz")
+}
+if (!file.exists("aircraft_mod_tba.rda")) {
+  aircraft_fit_tba = stan(model_code = mod_tba,
+                         data = aircraft_data,
+                         iter = 10, refresh = 0, chain = 2)
+  aircraft_mod_tba = stan_model(model_code = mod_tba)
+  save(aircraft_mod_tba, file = "aircraft_mod_tba.rda", compress = "xz")
+}
 
 # load all compiled models
 load("aircraft_mod_t.rda")
@@ -278,13 +313,34 @@ load("aircraft_mod_ba.rda")
 load("aircraft_mod_tba.rda")
 
 # sampling from compiled models
-fit_aircraft_mod_t = sampling(aircraft_mod_t, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_b = sampling(aircraft_mod_b, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_a = sampling(aircraft_mod_a, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_tb = sampling(aircraft_mod_tb, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_ta = sampling(aircraft_mod_ta, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_ba = sampling(aircraft_mod_ba, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
-fit_aircraft_mod_tba = sampling(aircraft_mod_tba, data = aircraft_data, iter = 10000, refresh = 0, chain = 2)
+fit_aircraft_mod_t = sampling(aircraft_mod_t,
+                              data = aircraft_data,
+                              iter = 10000, refresh = 0,
+                              chain = 2)
+fit_aircraft_mod_b = sampling(aircraft_mod_b,
+                              data = aircraft_data,
+                              iter = 10000, refresh = 0,
+                              chain = 2)
+fit_aircraft_mod_a = sampling(aircraft_mod_a,
+                              data = aircraft_data,
+                              iter = 10000, refresh = 0,
+                              chain = 2)
+fit_aircraft_mod_tb = sampling(aircraft_mod_tb,
+                               data = aircraft_data,
+                               iter = 10000, refresh = 0,
+                               chain = 2)
+fit_aircraft_mod_ta = sampling(aircraft_mod_ta,
+                               data = aircraft_data,
+                               iter = 10000, refresh = 0,
+                               chain = 2)
+fit_aircraft_mod_ba = sampling(aircraft_mod_ba,
+                               data = aircraft_data,
+                               iter = 10000, refresh = 0,
+                               chain = 2)
+fit_aircraft_mod_tba = sampling(aircraft_mod_tba,
+                                data = aircraft_data,
+                                iter = 10000, refresh = 0,
+                                chain = 2)
 
 # compute and waic and looic
 waic_t = waic(extract_log_lik(fit_aircraft_mod_t))

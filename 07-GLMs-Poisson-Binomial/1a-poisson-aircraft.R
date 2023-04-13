@@ -25,8 +25,8 @@ bombload = c(4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8,
 airexp = c(91.5, 84, 76.5, 69, 61.5, 80, 72.5, 65, 57.5, 50,
 	 103, 95.5, 88, 80.5, 73, 116.1, 100.6, 85, 69.4, 53.9,
 	 112.3, 96.7, 81.1, 65.6, 50, 120, 104.4, 88.9, 73.7, 57.8)
-
 n = length(damage)
+
 aircraft_code = "
 data {
   int<lower=1> n;      // number of observations
@@ -66,12 +66,17 @@ generated quantities {
 "
 
 # Specify the data in R, using a list format compatible with STAN:
-aircraft_data = list(n = n, y = damage, type = type, bombload = bombload,
-            airexp = airexp)
-
+aircraft_data = list(n = n, y = damage, type = type,
+                     bombload = bombload, airexp = airexp)
 # draw samples from the model
-# aircraft_mod = stan_model(model_code = aircraft_code)
-# save(aircraft_mod, file = "aircraft_mod.rda", compress = "xz")
+if (!file.exists("aircraft_mod.rda")) {
+  aircraft_fit = stan(model_code = aircraft_code,
+                      data = aircraft_data,
+                      iter = 10, seed = 101, chains = 2)
+  aircraft_mod = stan_model(model_code = aircraft_code)
+  save(aircraft_mod, file = "aircraft_mod.rda",
+       compress = "xz")
+}
 load("aircraft_mod.rda")
 # draw samples from the stan model
 fit_aircraft= sampling(aircraft_mod, data = aircraft_data,

@@ -33,14 +33,16 @@ df = data.frame(int = 1, damage, type, bombload, airexp)
 # automatically rescaling the intercept
 
 # compile and sample each model
-mod_t = stan_glm(damage ~ int - 1 + type, family = poisson(link = "log"),
+mod_t = stan_glm(damage ~ int - 1 + type,
+                 family = poisson(link = "log"),
                  data = df,
                  prior = normal(0, sqrt(1000)),
                  iter = 10000, chains = 2)
 
 # init_r sets initial values to be generated uniformly
 # between -0.5 and 0.5 (on the internal transformed scale)
-mod_b = stan_glm(damage ~ int - 1 + bombload, family = poisson(),
+mod_b = stan_glm(damage ~ int - 1 + bombload,
+                 family = poisson(),
                  data = df,
                  prior = normal(0, sqrt(1000)),
                  prior_intercept = normal(0, sqrt(1000)),

@@ -165,7 +165,7 @@ generated quantities {
 "
 
 # draw samples from the model
-if (!file.exists("oxygen_pl_mod.rda")) {
+if (!file.exists("oxygen_sl_mod.rda")) {
   oxygen_sl_mod = stan_model(model_code = sl_mod)
   save(oxygen_sl_mod, file = "oxygen_sl_mod.rda",
        compress = "xz")
