@@ -74,11 +74,19 @@ generated quantities {
 }
 "
 
-# Specify the data in R, using a list format compatible with STAN:
-aircraft_data = list(n = n, y = damage, type = type, bombload = bombload,
-                     airexp = airexp)
-# aircraft_mod_pp_check = stan_model(model_code = tba_code_pp_check)
-# save(aircraft_mod_pp_check, file = "aircraft_mod_pp_check.rda", compress = "xz")
+# specify data
+aircraft_data = list(n = n, y = damage, type = type,
+                     bombload = bombload, airexp = airexp)
+if (!file.exists("aircraf_mod_pp_check.rda")) {
+  aircraft_mod_fit =
+    stan(model_code = tba_code_pp_check,
+         data = aircraft_data,
+         iter = 10, chains = 2)
+  aircraft_mod_pp_check =
+    stan_model(model_code = tba_code_pp_check)
+  save(aircraft_mod_pp_check,
+       file = "aircraft_mod_pp_check.rda", compress = "xz")
+}
 # load all compiled models
 load("aircraft_mod_pp_check.rda")
 fit_aircraft_check = sampling(aircraft_mod_pp_check,
@@ -89,7 +97,8 @@ fit_aircraft_check = sampling(aircraft_mod_pp_check,
 summary(fit_aircraft_check)$summary[,"Rhat"]
 
 # plot of densities
-stan_dens(fit_aircraft_check, par = c("beta0", "beta1", "beta2", "beta3"),
+stan_dens(fit_aircraft_check,
+          par = c("beta0", "beta1", "beta2", "beta3"),
           separate_chains = TRUE)
 
 chains = as.data.frame(fit_aircraft_check)
@@ -105,6 +114,7 @@ yrep_freqdf = dplyr::bind_rows(yrep_freq)
 y_freqdf = plyr::count(data.frame(damage))
 
 # compare boxplots of yrep counts to observed counts
+# too many 0s, not enough 1s
 ggplot(yrep_freqdf, aes(x = x, y = freq)) +
   geom_boxplot(aes(group = cut_width(x, 1))) +
   geom_path(data = y_freqdf,
@@ -113,9 +123,9 @@ ggplot(yrep_freqdf, aes(x = x, y = freq)) +
 
 # plot ppo vs y
 ppo = colMeans(chains[,65:94])
-plot(freq ~ damage, y_freqdf, type = "h")
+# ppo for each value of damage
 plot(ppo ~ damage)
-
-# too many 0's, not enough 1's
-lattice::xyplot(damage ~ bombload, group = type)
-lattice::xyplot(damage ~ airexp, group = type)
+# relative frequency of each value of damage
+points(x = y_freqdf$damage,
+       y = y_freqdf$freq/sum(y_freqdf$freq),
+       type = "h")
