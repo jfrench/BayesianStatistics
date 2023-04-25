@@ -35,7 +35,7 @@ yrep = matrix(0, nrow = nyrep, ncol = n)
 y = newcomb
 # sample 66 observations from posterior predictive distribution
 for (i in seq_len(nyrep)) {
-  yrep[i, ] = rnorm(66, mean = mu[i], sd = sqrt(sigmasq[i]))
+  yrep[i, ] = rnorm(n, mean = mu[i], sd = sqrt(sigmasq[i]))
 }
 
 # compare minimum of observed data to minimum from
@@ -56,7 +56,6 @@ d_sim = d_obs = numeric(nrow(yrep))
 sort_y = sort(newcomb)
 
 for (i in 1:nrow(yrep)) {
-  thetai = mu[i]
   sort_yrep = sort(yrep[i, ])
   d_sim[i] = abs(sort_yrep[61] - mu[i]) -
          abs(sort_yrep[6] - mu[i])
@@ -67,7 +66,9 @@ for (i in 1:nrow(yrep)) {
 (sum(d_sim >= d_obs) + 1)/(length(d_sim) + 1)
 
 # compare observed and simulated discrepancy measures
-plot(d_sim ~ d_obs, xlab = "observed discrepancy", ylab = "simulated discrepancy")
+plot(d_sim ~ d_obs,
+     xlab = "observed discrepancy",
+     ylab = "simulated discrepancy")
 abline(0, 1)
 
 # compare histograms of y and yrep

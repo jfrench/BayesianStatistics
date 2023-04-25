@@ -9,33 +9,33 @@
 # We assume that is y_ij = mu + a_i + epsilon_ij
 # We consider a hierarchical model
 # a_i ~ N(0, sigmasq_a), epsilon_ij ~ N(0, sigmasq)
-# 
+#
 # Equivalently, Y_ij ~ N(mu_i, sigma^2) with mui = mu + a_i
 # and a_i ~ N(0, sigmasq_a)
 #
-# We assume low information prior distributions for the regression coefficients, 
+# We assume low information prior distributions for the regression coefficients,
 # mu ~ N(0, 1000), sigmasq ~ IG(0.001, 0.001), sigmasq_a ~ IG(0.001, 0.001)
-# 
+#
 # Fixed effects model
-# Data distribution: 
+# Data distribution:
 # Y_ij ~ N(mu_i, sigma^2) with mui = mu + a_i
-# Prior distributions: a_i ~ N(0, 1000), 
+# Prior distributions: a_i ~ N(0, 1000),
 # mu ~ N(0, 1000), sigmasq ~ IG(0.001, 0.001)
 #
 # Common mean model
-# Data distribution: 
+# Data distribution:
 # Y_ij ~ N(mu, sigma^2)
-# Prior distributions: 
+# Prior distributions:
 # mu ~ N(0, 1000), sigmasq ~ IG(0.001, 0.001)
 
-library(rstan)         
+library(rstan)
 
 # Enter data manually
 n = 20
-y = matrix(c(108, NA, 91, NA, NA, NA, 104, NA, 99, 97, 95, 
-             98, 93, 97, 99, 96, 90, 100, 92, 95, 101, 89, 
-             97, 97, 97, 100, 96, 95, 106, 100, 100, 98, 
-             90, 99, 88, 98, 92, 92, 100, 101), 
+y = matrix(c(108, NA, 91, NA, NA, NA, 104, NA, 99, 97, 95,
+             98, 93, 97, 99, 96, 90, 100, 92, 95, 101, 89,
+             97, 97, 97, 100, 96, 95, 106, 100, 100, 98,
+             90, 99, 88, 98, 92, 92, 100, 101),
            ncol = 2, byrow = TRUE)
 
 # convert data to vector
@@ -56,7 +56,7 @@ yobs = y[obs]
 nsubjects = 20
 
 # random effects model
-remod = "
+recode = "
 data {
   int<lower=1> nobs; // number of observed data values
   int<lower=1> nmiss;  // number of missing data values
@@ -76,7 +76,7 @@ model {
   mu ~ normal(0, sqrt(1000));
   sigmasq_a ~ inv_gamma(0.001, 0.001);
   sigmasq ~ inv_gamma(0.001, 0.001);
-  
+
   // distribution of random effects for mean
   for(i in 1:nsubjects) a[i] ~ normal(0, sqrt(sigmasq_a));
 
@@ -94,7 +94,7 @@ generated quantities {
 "
 
 # fixed effects model
-femod = "
+fecode = "
 data {
   int<lower=1> nobs; // number of observed data values
   int<lower=1> nmiss;  // number of missing data values
@@ -112,10 +112,10 @@ model {
   // prior distributions
   mu ~ normal(0, sqrt(1000));
   sigmasq ~ inv_gamma(0.001, 0.001);
-  
+
   // distribution of random effects for mean
   for(i in 1:nsubjects) a[i] ~ normal(0, sqrt(1000));
-  
+
   // data distribution
   for(i in 1:nobs) {
       yobs[i] ~ normal(mu + a[subject_id_obs[i]], sqrt(sigmasq));
@@ -130,7 +130,7 @@ model {
 "
 
 # common mean model
-cmmod = "
+cmcode = "
 data {
   int<lower=1> nobs; // number of observed data values
   int<lower=1> nmiss;  // number of missing data values
@@ -147,7 +147,7 @@ model {
   // prior distributions
   mu ~ normal(0, sqrt(1000));
   sigmasq ~ inv_gamma(0.001, 0.001);
-  
+
   // data distribution
   for(i in 1:nobs) {
     yobs[i] ~ normal(mu, sqrt(sigmasq));
@@ -165,21 +165,45 @@ blood_data = list(nobs = nobs, nmiss = nmiss,
                   subject_id_obs = subject_id_obs,
                   subject_id_miss = subject_id_miss)
 
-# # draw samples from the models
-# re_mod = stan(model_code = remod, data = blood_data, 
-#               iter = 5e4, seed = 23)
-# fe_mod = stan(model_code = femod, data = blood_data, 
-#               iter = 5e4, seed = 24)
-# cm_mod = stan(model_code = cmmod, data = blood_data, 
-#               iter = 5e4, seed = 25)
-# save data for later
-# save(re_mod, fe_mod, cm_mod, file = "example_9_1_missing_values.rda")
-load(file = "example_9_1_missing_values.rda")
+if (!file.exists("example_9_1_re_mod.rda")) {
+  # draw samples from the models
+  re_fit = stan(model_code = recode, data = blood_data,
+                iter = 10, seed = 23)
+  re_mod = stan_model(model_code = recode)
+  save(re_mod, file = "example_9_1_re_mod.rda")
+}
+# draw samples from the models
+re_fit = sampling(re_mod, data = blood_data,
+                  iter = 5e4, seed = 23)
+
+
+if (!file.exists("example_9_1_fe_mod.rda")) {
+  # draw samples from the models
+  fe_fit = stan(model_code = fecode, data = blood_data,
+                iter = 10, seed = 24)
+  fe_mod = stan_model(model_code = fecode)
+  save(fe_mod, file = "example_9_1_fe_mod.rda")
+}
+# draw samples from the models
+fe_fit = sampling(fe_mod, data = blood_data,
+                  iter = 5e4, seed = 24)
+
+
+if (!file.exists("example_9_1_cm_mod.rda")) {
+  # draw samples from the models
+  cm_fit = stan(model_code = cmcode, data = blood_data,
+                iter = 10, seed = 25)
+  cm_mod = stan_model(model_code = cmcode)
+  save(cm_mod, file = "example_9_1_cm_mod.rda")
+}
+# draw samples from the models
+cm_fit = sampling(cm_mod, data = blood_data,
+                  iter = 5e4, seed = 25)
 
 # summarize information from each model
-re_sum = summary(re_mod, prob = c(0.025, 0.975))$summary
-fe_sum = summary(fe_mod, prob = c(0.025, 0.975))$summary
-cm_sum = summary(cm_mod, prob = c(0.025, 0.975))$summary
+re_sum = summary(re_fit, prob = c(0.025, 0.975))$summary
+fe_sum = summary(fe_fit, prob = c(0.025, 0.975))$summary
+cm_sum = summary(cm_fit, prob = c(0.025, 0.975))$summary
 
 # order to match book
 o = c(2, 3, 1, 4, 5)
