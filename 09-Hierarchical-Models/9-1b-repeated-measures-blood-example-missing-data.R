@@ -216,8 +216,8 @@ round(cm_sum[3, c("mean", "sd", "2.5%", "97.5%"), drop = FALSE], 1)
 
 library(bayesplot)
 
-re_df = as.data.frame(re_mod)
-fe_df = as.data.frame(fe_mod)
+re_df = as.data.frame(re_fit)
+fe_df = as.data.frame(fe_fit)
 mcmc_intervals(re_df[,4:23])
 mcmc_intervals(fe_df[,3:22])
 
