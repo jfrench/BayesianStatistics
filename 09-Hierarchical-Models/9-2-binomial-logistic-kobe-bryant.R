@@ -11,18 +11,18 @@
 # mu_i ~ N(mu_{i-1}, sigmasq_theta)
 
 kobe <-
-structure(list(SEASON = structure(as.integer(c(4, 5, 6, 7, 8, 
-9, 10, 11)), .Label = c(" 1996-97", " 1997-98", " 1998-99", " 1999-00", 
-" 2000-01", " 2001-02", " 2002-03", " 2003-04", " 2004-05", " 2005-06", 
-" 2006-07"), class = "factor"), TEAM = structure(as.integer(c(1, 
-1, 1, 1, 1, 1, 1, 1)), .Label = "LAL     ", class = "factor"), 
-    GAMES = c(66, 68, 80, 82, 65, 66, 80, 42), FGTOTAL = c(554, 
-    701, 749, 868, 516, 573, 978, 399), FGTOTATT = c(1183, 1510, 
-    1597, 1924, 1178, 1324, 2173, 845)), .Names = c("SEASON", 
-"TEAM", "GAMES", "FGTOTAL", "FGTOTATT"), row.names = c("4", "5", 
+structure(list(SEASON = structure(as.integer(c(4, 5, 6, 7, 8,
+9, 10, 11)), .Label = c(" 1996-97", " 1997-98", " 1998-99", " 1999-00",
+" 2000-01", " 2001-02", " 2002-03", " 2003-04", " 2004-05", " 2005-06",
+" 2006-07"), class = "factor"), TEAM = structure(as.integer(c(1,
+1, 1, 1, 1, 1, 1, 1)), .Label = "LAL     ", class = "factor"),
+    GAMES = c(66, 68, 80, 82, 65, 66, 80, 42), FGTOTAL = c(554,
+    701, 749, 868, 516, 573, 978, 399), FGTOTATT = c(1183, 1510,
+    1597, 1924, 1178, 1324, 2173, 845)), .Names = c("SEASON",
+"TEAM", "GAMES", "FGTOTAL", "FGTOTATT"), row.names = c("4", "5",
 "6", "7", "8", "9", "10", "11"), class = "data.frame")
 
-library(rstan)         
+library(rstan)
 
 # fixed effects model
 femod = "
@@ -73,7 +73,7 @@ model {
   mu_theta ~ normal(0, 10);
   sigmasq_theta ~ inv_gamma(0.01, 0.01);
   for(i in 1:n) theta[i] ~ normal(mu_theta, sqrt(sigmasq_theta));
-  
+
   // data distribution
   y ~ binomial_logit(N, theta);
 }
@@ -124,14 +124,16 @@ generated quantities {
 # create the data list
 kobe_data = list(n = nrow(kobe), y = kobe$FGTOTAL, N = kobe$FGTOTATT)
 
-# # draw samples from the models
-# fe_mod <- stan(model_code = femod, data = kobe_data,
-#                iter = 5e4, seed = 32)
-# sh_mod <- stan(model_code = shmod, data = kobe_data,
-#                       iter = 5e4, seed = 24)
-# ss_mod <- stan(model_code = ssmod, data = kobe_data,
-#                iter = 5e4, seed = 8)
-# save(fe_mod, sh_mod, ss_mod, file = "example_9_2.rda")
+if(!file.exists("example_9_2.rda")) {
+# draw samples from the models
+fe_mod <- stan(model_code = femod, data = kobe_data,
+               iter = 5e4, seed = 32)
+sh_mod <- stan(model_code = shmod, data = kobe_data,
+                      iter = 5e4, seed = 24)
+ss_mod <- stan(model_code = ssmod, data = kobe_data,
+               iter = 5e4, seed = 8)
+save(fe_mod, sh_mod, ss_mod, file = "example_9_2.rda")
+}
 load(file = "example_9_2.rda")
 
 # posterior summaries
@@ -164,13 +166,13 @@ s = rep(c("1999-00",
           "2006-07"), each = 1)
 
 # plot results
-ggplot(df, aes(x = x, lty = model, col = model)) + 
-  geom_linerange(aes(ymin = lower, ymax = upper)) + 
-  geom_point(aes(x = x, y = median)) + 
+ggplot(df, aes(x = x, lty = model, col = model)) +
+  geom_linerange(aes(ymin = lower, ymax = upper)) +
+  geom_point(aes(x = x, y = median)) +
   ggtitle("posterior summaries of field goal success") +
-  ylab("field goal success percentage") + 
-  xlab("season") + 
-  scale_x_continuous(breaks = 1:8, labels = s) + 
+  ylab("field goal success percentage") +
+  xlab("season") +
+  scale_x_continuous(breaks = 1:8, labels = s) +
   theme(axis.text.x = element_text(angle = 90))
 
 library(loo)
