@@ -107,6 +107,7 @@ init_fun_ma = function() {
 }
 
 library(rstan)
+library(ggplot2)
 library(bayesplot)
 
 if (!file.exists("example_9_4.rda")) {
@@ -120,7 +121,8 @@ save(ma_mod,
 }
 load(file = "example_9_4.rda")
 
-sum_ma = summary(ma_mod, pars = c("OR", "OR_mu"))$summary[,c("mean", "sd", "2.5%", "97.5%", "Rhat")]
+sum_ma = summary(ma_mod,
+                 pars = c("OR", "OR_mu"))$summary[,c("mean", "sd", "2.5%", "97.5%", "Rhat")]
 round(sum_ma, 3)
 
 ma_array = as.array(ma_mod)
