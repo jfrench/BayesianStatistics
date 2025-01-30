@@ -1,7 +1,11 @@
 # Summarizing posterior inference
 
-# install.packages("TeachingDemos") #install TeachingDemos R package
-library(TeachingDemos) #load package for hpd function
+# load and install TeachingDemos package if necessary
+if (!require(TeachingDemos)) {
+  install.packages("TeachingDemos",
+                   repos = "https://cran.r-project.org")
+  library(TeachingDemos)
+}
 
 #posterior distribution for theta is Beta(10, 2)
 #set shape parameters
