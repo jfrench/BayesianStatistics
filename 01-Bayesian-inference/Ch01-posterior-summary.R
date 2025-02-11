@@ -38,5 +38,8 @@ legend("topleft", legend = c("central", "HPD"), lty = 1,
 optimize(f = dbeta, interval = 0:1, shape1 = 10, shape2 = 2,
          maximum = TRUE)
 
+# estimate mean
+mean(rbeta(n = 1000, shape1 = a, shape2 = b))
 
-
+# estimate variance
+var(rbeta(n = 1000, shape1 = a, shape2 = b))

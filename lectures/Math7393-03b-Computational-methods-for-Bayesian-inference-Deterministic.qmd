@@ -2,14 +2,16 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
-# format: html
-jupyter:
-  kernelspec:
-    display_name: R
-    language: R
-    name: ir
-execute:
-  output: false    
+engine: knitr
+format: html
+# jupyter:
+#   kernelspec:
+#     display_name: R
+#     language: R
+#     name: ir
+# format: ipynb
+# execute:
+#   output: false
 self-contained: true
 title-block-banner: true
 wrap: 'none'
@@ -40,7 +42,7 @@ if(!require(cubature, quietly = TRUE)) {
 
 ## MAP estimation
 
-The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \ln p(y | \theta ) + \ln p(\theta).$$
+The *maximum a posteriori* estimator, $\hat{\theta}_{\textrm{MAP}}$, summarizes the posterior with the parameter values that maximize the posterior distribution, i.e., $$\hat{\theta}_{\textrm{MAP}} = \text{argmax}_{\theta} \ln p(\theta \mid y) = \text{argmax}_{\theta} \ln p(y \mid \theta ) + \ln p(\theta).$$
 
 **MAP Example 1**
 
@@ -594,7 +596,7 @@ legend("topright",
 
 *Data distribution*
 
-$y_1, y_2, \ldots, y_n | \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu, \sigma^2)$
+$y_1, y_2, \ldots, y_n \mid \mu, \sigma^2 \stackrel{i.i.d.}{\sim} N(\mu, \sigma^2)$
 
 *Prior distribution*
 
@@ -602,7 +604,7 @@ $\mu \sim U(10, 15)$, $p(\sigma^2) \propto N(0.5, 0.5^2) I_{(0, \infty)}(\sigma^
 
 *Posterior distribution (Bayesian CLT)*
 
-Assuming $n$ is large, $\theta = (\mu, \sigma^2)$, and $\hat{\theta} = \hat{\theta}_{MAP}$, $\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$
+Assuming $n$ is large, $\theta = (\mu, \sigma^2)$, and $\hat{\theta} = \hat{\theta}_{MAP}$, $\theta \mid y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$
 
 Let's determine $I(\hat{\theta})^{-1}$.
 
@@ -634,22 +636,22 @@ The data density is
 
 $$
 \begin{aligned}
-p(y|\theta) &= \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
+p(y\mid\theta) &= \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
  &= (2\pi)^{-n/2}\left(\sigma^2\right)^{-n/2}\exp\left(-\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2\right)
 \end{aligned}
 $$
 and
 $$
-\ln p(y|\theta) = \mathrm{const} - \frac{n}{2} \ln \left(\sigma^2\right) -\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
+\ln p(y\mid\theta) = \mathrm{const} - \frac{n}{2} \ln \left(\sigma^2\right) -\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2.
 $$
 
-The first partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y|\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y|\theta) = -\frac{n}{2\sigma^2} +\frac{1}{2\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
+The first partial derivatives of $\ln p(y\mid\theta)$ are $$\frac{\partial}{\partial \mu} \ln p(y\mid\theta) = \frac{1}{\sigma^2}\sum_{i=1}^n(y_i-\mu)$$ and $$\frac{\partial}{\partial \sigma^2} \ln p(y\mid\theta) = -\frac{n}{2\sigma^2} +\frac{1}{2\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)^2.$$
 
-The second partial derivatives of $\ln p(y|\theta)$ are $$\frac{\partial^2}{\partial \mu^2} \ln p(y|\theta) = -\frac{n}{\sigma^2}$$ and $$\frac{\partial^2}{\partial \left(\sigma^2\right)^2} \ln p(y|\theta) = \frac{n}{2\left(\sigma^2\right)^2} -\frac{1}{\left(\sigma^2\right)^3}\sum_{i=1}^n(y_i-\mu)^2$$ and
+The second partial derivatives of $\ln p(y\mid\theta)$ are $$\frac{\partial^2}{\partial \mu^2} \ln p(y\mid\theta) = -\frac{n}{\sigma^2}$$ and $$\frac{\partial^2}{\partial \left(\sigma^2\right)^2} \ln p(y\mid\theta) = \frac{n}{2\left(\sigma^2\right)^2} -\frac{1}{\left(\sigma^2\right)^3}\sum_{i=1}^n(y_i-\mu)^2$$ and
 
-$$\frac{\partial^2}{\partial \mu \partial \sigma^2} \ln p(y|\theta) = -\frac{1}{\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)$$
+$$\frac{\partial^2}{\partial \mu \partial \sigma^2} \ln p(y\mid\theta) = -\frac{1}{\left(\sigma^2\right)^2}\sum_{i=1}^n(y_i-\mu)$$
 
-Thus, if $\hat{\theta} = (\hat{\mu}, \hat{\sigma}^2)$ is the MAP estimate of $\theta = (\mu, \sigma^2)$, then the Bayesian CLT approximation of the posterior is $\theta | y \approx N(\hat{\theta}, I(\hat{\theta})^{-1})$, where
+Thus, if $\hat{\theta} = (\hat{\mu}, \hat{\sigma}^2)$ is the MAP estimate of $\theta = (\mu, \sigma^2)$, then the Bayesian CLT approximation of the posterior is $\theta \mid y \approx N(\hat{\theta}, I(\hat{\theta})^{-1})$, where
 
 $$
 I(\hat{\theta})^{-1} = \begin{bmatrix}

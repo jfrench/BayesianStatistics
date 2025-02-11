@@ -10,7 +10,7 @@ self-contained: true
 
 ## Summary of computational methods
 
--   Bayesian statistics focuses on determining or summarizing the posterior distribution, $p(\theta | y).$
+-   Bayesian statistics focuses on determining or summarizing the posterior distribution, $p(\theta \mid y).$
 -   When this cannot be done with a closed-form expression, we must rely on numerical approximations.
 -   Some common deterministic methods for approximating the posterior distribution include:
     -   maximum a posteriori estimation
@@ -30,16 +30,16 @@ self-contained: true
 -   The quantities of interest can often be written as an integral, in which case we may be able to use fast deterministic methods for evaluating the integral.
     -   E.g., quadrature rule, Simpson's rule, etc.
 -   The integral can be approximated by evaluating the function at a finite number of points and aggregating the results.
--   The posterior expectation of any function $h(\theta)$ is defined as $$E\left( h(\theta) | y \right) = \int {h(\theta) p(\theta | y)} d\theta.$$
-    -   Note: $p\left( \tilde{y} | y \right) = E_{\theta|y}\left\lbrack p\left( \tilde{y} | \theta,y \right) \right\rbrack.$
+-   The posterior expectation of any function $h(\theta)$ is defined as $$E\left( h(\theta) \mid y \right) = \int {h(\theta) p(\theta \mid y)} d\theta.$$
+    -   Note: $p\left( \tilde{y} \mid y \right) = E_{\theta \mid y}\left\lbrack p\left( \tilde{y} \mid \theta,y \right) \right\rbrack.$
 
 ## Distributional approximations
 
 -   The posterior distribution can be approximated by another known distribution.
--   The most common approximation is to approximate the posterior by $$\theta | y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}),$$ which is sometimes called the Bayesian Central Limit Theorem.
+-   The most common approximation is to approximate the posterior by $$\theta \mid y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}),$$ which is sometimes called the Bayesian Central Limit Theorem.
     -   $\hat{\theta}$ is an estimate of $\theta$ such as the MLE or MAP.
     -   $I(\hat{\theta})$ is the *observed information matrix*.
--   The observed information matrix is $$I(\hat{\theta}) = -{\mathbf{H}(\theta)} |_{\theta = \hat{\theta}},$$ where $$\mathbf{H}_{i,j} = \frac{\partial^2}{\partial \theta_i \partial \theta_j} \ln p(y | \theta).$$
+-   The observed information matrix is $$I(\hat{\theta}) = -{\mathbf{H}(\theta)} \mid {\theta = \hat{\theta}},$$ where $$\mathbf{H}_{i,j} = \frac{\partial^2}{\partial \theta_i \partial \theta_j} \ln p(y \mid \theta).$$
 -   $\hat{\theta}$ is chosen to be the MLE of $\theta$ from the data or the MAP estimate from the posterior.
 -   The Integrated nested Laplace approximation (INLA) is a more advanced normal-based approximation to the posterior that has gained popularity.
 -   Variational Bayes methods postulate a possibly non-Gaussian parametric distribution for the posterior and then solve for the parameter estimates that make the distributions most similar.
@@ -72,7 +72,7 @@ The LLN implies that:
 -   MCMC methods produce correlated samples from the posterior.
 -   The Gibbs sampler is the often the preferred MCMC method.
     -   Samples are drawn from the full conditional distributions of each parameter.
-    -   E.g., Samples are drawn for $p(\theta_1, \theta_2 | y)$ by drawing a sample from $p(\theta_1 | y, \theta_2)$, then from $p(\theta_2 | y, \theta_1)$, and repeating this process.
+    -   E.g., Samples are drawn for $p(\theta_1, \theta_2 | y)$ by drawing a sample from $p(\theta_1 \mid y, \theta_2)$, then from $p(\theta_2 \mid y, \theta_1)$, and repeating this process.
 -   The Metropolis-Hastings algorithm is a more general MCMC method.
     -   A sample is drawn from a proposal distribution for the parameter.
     -   The sample is retained with some probability determined by an acceptance ratio.
