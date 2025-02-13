@@ -1,17 +1,17 @@
 ---
-title: Computational methods for Bayesian inference
+title: Computational methods for Bayesian inference (Deterministic)
 author: Joshua French
 date: ''
 engine: knitr
-format: html
-# jupyter:
-#   kernelspec:
-#     display_name: R
-#     language: R
-#     name: ir
-# format: ipynb
-# execute:
-#   output: false
+# format: html
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+format: ipynb
+execute:
+  output: false
 self-contained: true
 title-block-banner: true
 wrap: 'none'
@@ -71,7 +71,7 @@ pdf:
 <br>\
 <br>
 
-$\ln p(\theta \mid y) \propto \text{const} - (n - 1) \theta + \sum y_i \ln(\theta)$
+$\ln p(\theta \mid y) \propto \text{const} - (n + 1) \theta + \sum y_i \ln(\theta)$
 
 Let's start by generating some data.
 
