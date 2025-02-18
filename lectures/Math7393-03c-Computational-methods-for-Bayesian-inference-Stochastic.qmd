@@ -3,12 +3,12 @@ title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
 # format: html
-format: ipynb
 jupyter:
   kernelspec:
     display_name: R
     language: R
     name: ir
+format: ipynb
 execute:
   output: false
 self-contained: true
@@ -30,9 +30,9 @@ To open this information in an interactive Colab notebook, click the Open in Col
 
 Rejection sampling can be used to draw samples from a target density $p(\theta \mid y)$ or its unnormalized version $q(\theta \mid y)$.
 
-Rejection sampling assumes there exists a *proposal distribution* $G$ with density function $g(\theta)$ such that:
+Rejection sampling assumes there is a *proposal distribution* $G$, with density function $g(\theta)$, such that:
 
--   We can easily draw a realization from $G$, i.e., the distribution defined by $g(\theta)$.
+-   We can easily draw a realization from $G$, i.e., from the distribution defined by $g(\theta)$.
 -   If $p(\theta = \theta^{\star} \mid y) > 0$, then $g(\theta = \theta^{\star} ) > 0$.
 -   The *importance ratio* $p(\theta \mid y) / g(\theta)$ must have a known bound.
     -   i.e., there exists $M$ such that for all $\theta$, $p(\theta\mid y) / g(\theta) \leq M$.
@@ -58,8 +58,8 @@ Comments about rejection sampling:
 
 ## Rejection sampling example 1
 
--   Suppose the (unnormalized) target density is $q(\theta | y) = \theta(1-\theta)I_{(0,1)}(\theta).$
--   The $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$, bounds $q(\theta\mid y) $.
+-   Suppose the (unnormalized) target density is $q(\theta \mid y) = \theta(1-\theta)I_{(0,1)}(\theta).$
+-   $q(\theta\mid y)$ is bounded by a $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$.
 -   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5\mid y) = 0.25$.
 -   Pick $M = 0.25$.
 
@@ -83,7 +83,7 @@ gM = function(theta) {
 Let's plot the target density and bounding function.
 
 ```{r}
-theta = seq(0, 1, len = 1000)
+theta = seq(0, 1, len = 10000)
 par(mar = c(4, 4, 0.4, 0.4))
 plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
      ylab = expression(q(theta*"|"*y)))
@@ -104,9 +104,6 @@ Consider drawing a sample from $p(\theta \mid y)$:
 Let's visualize this.
 
 ```{r}
-#| echo: false
-#| eval: true
-#| output: true
 set.seed(1)
 thetastar1 = 0.6
 u1 = 0.066
@@ -230,8 +227,9 @@ abline(v = 1/2)
 We now implement our rejection sampling algorithm.
 
 ```{r}
-B = 1000 # number of samples to keep
+B = 10000 # number of samples to keep
 mytheta = numeric(B) # vector to store kept samples
+set.seed(57) # reproducibility
 
 i = 0 # the samples accepted
 while (i < B) {
@@ -417,7 +415,7 @@ legend("topright", legend = c("approximation", "truth"),
 
 ## Rejection sampling example 5
 
-The last example chose a proposal distribution analytically. We probability wouldn't do that unless we were forced to. Let's try something more realistic.
+We chose a proposal distribution analytically in the last example. We probably wouldn't do that unless we were forced to. Let's try something more realistic.
 
 *Proposal distribution*
 
@@ -434,7 +432,7 @@ gM = function(theta) {
 We compare the target density and bounding function.
 
 ```{r}
-theta = seq(0, 5, len = 1000)
+theta = seq(0, 5, len = 10000)
 plot(theta, gM(theta), type = "l", col = "blue",
      xlab = expression(theta), ylab = "", ylim = c(0, 1.25))
 lines(theta, qtarget(theta))

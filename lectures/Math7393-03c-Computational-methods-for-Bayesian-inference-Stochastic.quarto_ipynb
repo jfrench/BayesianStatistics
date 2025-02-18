@@ -1,0 +1,779 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: Computational methods for Bayesian inference\n",
+        "author: Joshua French\n",
+        "date: ''\n",
+        "# format: html\n",
+        "jupyter:\n",
+        "  kernelspec:\n",
+        "    display_name: R\n",
+        "    language: R\n",
+        "    name: ir\n",
+        "format: ipynb\n",
+        "execute:\n",
+        "  output: false\n",
+        "self-contained: true\n",
+        "title-block-banner: true\n",
+        "wrap: 'none'\n",
+        "---\n",
+        "\n",
+        "\n",
+        "To open this information in an interactive Colab notebook, click the Open in Colab graphic below.\n",
+        "\n",
+        "<a href=\"https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/lectures/Math7393-03c-Computational-methods-for-Bayesian-inference-Stochastic.ipynb\">\n",
+        "   <img src=\"https://colab.research.google.com/assets/colab-badge.svg\">\n",
+        "</a>\n",
+        "\n",
+        "---\n",
+        "\n",
+        "# Stochastic methods\n",
+        "\n",
+        "## Rejection sampling\n",
+        "\n",
+        "Rejection sampling can be used to draw samples from a target density $p(\\theta \\mid y)$ or its unnormalized version $q(\\theta \\mid y)$.\n",
+        "\n",
+        "Rejection sampling assumes there is a *proposal distribution* $G$, with density function $g(\\theta)$, such that:\n",
+        "\n",
+        "-   We can easily draw a realization from $G$, i.e., from the distribution defined by $g(\\theta)$.\n",
+        "-   If $p(\\theta = \\theta^{\\star} \\mid y) > 0$, then $g(\\theta = \\theta^{\\star} ) > 0$.\n",
+        "-   The *importance ratio* $p(\\theta \\mid y) / g(\\theta)$ must have a known bound.\n",
+        "    -   i.e., there exists $M$ such that for all $\\theta$, $p(\\theta\\mid y) / g(\\theta) \\leq M$.\n",
+        "\n",
+        "Rejection sampling draws $B$ samples from $p(\\theta\\mid y)$ using the following algorithm:\n",
+        "\n",
+        "1.  Sample $\\theta^{\\star}$ from the distribution defined by $g(\\theta)$.\n",
+        "2.  Accept $\\theta^{\\star}$ as a sample from $p(\\theta\\mid y)$ with probability $\\frac{p(\\theta^{\\star}\\mid y)}{M g(\\theta^{\\star})}.$\n",
+        "    -   If $\\theta^{\\star}$ is accepted, continue to step 3.\n",
+        "    -   Otherwise, return to step 1.\n",
+        "3.  Return to step 1 until $B$ draws from $g(\\theta)$ have been accepted.\n",
+        "\n",
+        "An alternative approach to decide whether we accept the proposed value, $\\theta^{\\star}$,  from $g(\\theta)$ is:\n",
+        "\n",
+        "- Draw $u^{\\star}$ from a $U(0, M g(\\theta^{\\star} ) )$ distribution.\n",
+        "- Keep $\\theta^{\\star}$ if $u^{\\star} \\leq p(\\theta^{\\star} \\mid y)$.\n",
+        "\n",
+        "Comments about rejection sampling:\n",
+        "\n",
+        "-   The unnormalized density, $q(\\theta \\mid y)$, is almost always used instead of the true density, $p(\\theta \\mid y)$\n",
+        "-   $p(\\theta \\mid y) \\leq M g(\\theta \\mid y)$ ensures the acceptance probability is no larger than 1.\n",
+        "-   $M$ should be chosen so that $M g(\\theta \\mid y)$ is as close as possible to $p(\\theta\\mid y)$.\n",
+        "\n",
+        "## Rejection sampling example 1\n",
+        "\n",
+        "-   Suppose the (unnormalized) target density is $q(\\theta \\mid y) = \\theta(1-\\theta)I_{(0,1)}(\\theta).$\n",
+        "-   $q(\\theta\\mid y)$ is bounded by a $U(0, 1)$ density, i.e., $g(\\theta)=I_{(0,1)}(\\theta)$.\n",
+        "-   $\\text{argmax}_{\\theta}q(\\theta \\mid y) = 0.5$ with $q(0.5\\mid y) = 0.25$.\n",
+        "-   Pick $M = 0.25$.\n",
+        "\n",
+        "Let's define an unnormalized target density.\n"
+      ],
+      "id": "47a5aa55"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "qtarget = function(theta) {\n",
+        "  theta * (1 - theta)\n",
+        "}"
+      ],
+      "id": "9d2552e1",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Let's define a bounding function, $g(\\theta)M$.\n"
+      ],
+      "id": "1c005bfd"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# define bounding function\n",
+        "gM = function(theta) {\n",
+        "  rep(.25, length(theta))\n",
+        "}"
+      ],
+      "id": "fd4897b2",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Let's plot the target density and bounding function.\n"
+      ],
+      "id": "16dcab2d"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "theta = seq(0, 1, len = 10000)\n",
+        "par(mar = c(4, 4, 0.4, 0.4))\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta*\"|\"*y)))\n",
+        "lines(theta, gM(theta), col = \"blue\")"
+      ],
+      "id": "c267deb0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Consider drawing a sample from $p(\\theta \\mid y)$:\n",
+        "\n",
+        "-   We draw a value $\\theta^*$ from the $U(0,1)$ distribution.\n",
+        "    -   Suppose this value is $\\theta^*=0.6$.\n",
+        "-   We need to decide whether we keep $\\theta^*$.\n",
+        "    -   Note that $M g(\\theta)$ evaluated at $0.6$ is $0.25 \\times 1 = 0.25$.\n",
+        "    -   Note that $q(0.6 \\mid y) = 0.6(1-0.6) = 0.24$.\n",
+        "-   Draw $u^{\\star}$ from $U(0, 0.25)$.\n",
+        "    - Let's say $u^{\\star} = 0.066$.\n",
+        "    - Since $u^{\\star}<q(\\theta\\mid y) = 0.24$, we accept it as a sample from $q(\\theta\\mid y)$.\n",
+        "\n",
+        "Let's visualize this.\n"
+      ],
+      "id": "45891171"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "set.seed(1)\n",
+        "thetastar1 = 0.6\n",
+        "u1 = 0.066\n",
+        "accept1 = (u1 <= qtarget(thetastar1))\n",
+        "\n",
+        "# plot q and bounding function\n",
+        "theta = seq(0, 1, len = 1000)\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta*\"|\"*y)))\n",
+        "lines(theta, gM(theta), col = \"blue\")\n",
+        "abline(v = thetastar1, col = \"grey\")\n",
+        "points(thetastar1, u1, pch = ifelse(accept1, 20, 1))"
+      ],
+      "id": "ab8e92b6",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Consider drawing another sample from $p(\\theta \\mid y)$:\n",
+        "\n",
+        "-   We draw a value $\\theta^*$ from the $U(0,1)$ distribution.\n",
+        "    -   Suppose this value is $\\theta^*=0.185$.\n",
+        "-   We draw $u^{\\star}=0.176$ from $U(0, Mg(\\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.\n",
+        "-   $u^{\\star}=0.176 > 0.151 = q(\\theta^{\\star}|y) = q(0.185|y)$, so we reject the proposed value of $\\theta^{\\star}$.\n",
+        "\n",
+        "Let's visualize this.\n"
+      ],
+      "id": "1e833d88"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| echo: false\n",
+        "#| eval: true\n",
+        "#| output: true\n",
+        "set.seed(2)\n",
+        "thetastar2 = 0.185\n",
+        "# u2 = runif(1, 0, gM(thetastar2))\n",
+        "u2 = 0.176\n",
+        "accept2 = (u2 <= qtarget(thetastar2))\n",
+        "\n",
+        "# plot q and bounding function\n",
+        "theta = seq(0, 1, len = 1000)\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta*\"|\"*y)))\n",
+        "lines(theta, gM(theta), col = \"blue\")\n",
+        "abline(v = thetastar2, col = \"grey\")\n",
+        "points(thetastar2, u2, pch = ifelse(accept2, 20, 1))"
+      ],
+      "id": "e537e023",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Let's run a rejection sampling algorithim to draw samples\n",
+        "from the target distribution. We plot closed circles for each\n",
+        "$(\\theta^*, u^*)$ that's accepted and a closed circle for each\n",
+        "$(\\theta^*, u^*)$ that's rejected.\n"
+      ],
+      "id": "320312b5"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# plot target density and bounding function\n",
+        "theta = seq(0, 1, len = 1000)\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta*\"|\"*y)))\n",
+        "lines(theta, gM(theta), col = \"blue\")\n",
+        "# plot some earlier results\n",
+        "thetastar1 = 0.6\n",
+        "thetastar2 = 0.185\n",
+        "u1 = 0.066\n",
+        "u2 = 0.176\n",
+        "accept1 = TRUE\n",
+        "accept2 = FALSE\n",
+        "points(thetastar1, u1, pch = ifelse(accept1, 20, 1))\n",
+        "points(thetastar2, u2, pch = ifelse(accept2, 20, 1))\n",
+        "for(i in 1:98) {\n",
+        "  thetastar = runif(1)\n",
+        "  u = runif(1, 0, gM(thetastar))\n",
+        "  accept = (u <= qtarget(thetastar))\n",
+        "  points(thetastar, u, pch = ifelse(accept, 20, 1))\n",
+        "}\n",
+        "title(\"Accepted (black dot) vs Rejected (open circle) comparison\")"
+      ],
+      "id": "bf366e0d",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Rejection sampling example 2\n",
+        "\n",
+        "We illustrate rejection sampling by drawing from an unnormalized Beta(3, 3). \n",
+        "\n",
+        "We will compare our rejection sampling results with the truth.\n",
+        "\n",
+        "*Target density*\n",
+        "\n",
+        "$p(\\theta | y) \\propto \\theta^2  (1 - \\theta)^2 = q(\\theta).$\n",
+        "\n",
+        "*Proposal distribution*\n",
+        "\n",
+        "Since $q(\\theta)$ has finite support, our proposal distribution can be $G\\sim U(0,1)$. \n",
+        "\n",
+        "We simply need to choose an appropriate bounding constant $M$ for our bounding function.\n",
+        "\n",
+        "Taking the derivative of $q(\\theta)$ with respect to $\\theta$,\n",
+        "we can determine that the function has a maximum at $\\theta = 1/2$.\n",
+        "\n",
+        "The maximum is $q(1/2) = 0.0625$.\n",
+        "\n",
+        "Thus, $q(\\theta) <= g(\\theta)M$ with $M = 0.0625$.\n",
+        "\n",
+        "We define the unnormalized target density.\n"
+      ],
+      "id": "cdf696b4"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "qtarget = function(theta) {\n",
+        "\ttheta^2*(1 - theta)^2\n",
+        "}"
+      ],
+      "id": "5f186206",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We define the bounding function.\n"
+      ],
+      "id": "80043455"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gM = function(theta) {\n",
+        "\trep(.0625, length(theta))\n",
+        "}"
+      ],
+      "id": "790143f8",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We compare the target density and bounding function.\n"
+      ],
+      "id": "6ecacca0"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "theta = seq(0, 1, len = 1000)\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta)))\n",
+        "lines(theta, gM(theta), col = \"blue\")\n",
+        "abline(v = 1/2)"
+      ],
+      "id": "2c4c49e0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We now implement our rejection sampling algorithm.\n"
+      ],
+      "id": "64804ffa"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "B = 10000 # number of samples to keep\n",
+        "mytheta = numeric(B) # vector to store kept samples\n",
+        "set.seed(57) # reproducibility\n",
+        "\n",
+        "i = 0 # the samples accepted\n",
+        "while (i < B) {\n",
+        "  x = runif(1) # sample from g distribution\n",
+        "\n",
+        "  # accept x with probability q(x)/gM(x)\n",
+        "\tif (runif(1) <= qtarget(x)/gM(x)) {\n",
+        "\t\ti = i + 1\n",
+        "\t\tmytheta[i] = x\n",
+        "\t}\n",
+        "}"
+      ],
+      "id": "02fb390f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Lastly, we compare our empirical density to the true density.\n"
+      ],
+      "id": "14d29e03"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "dmytheta = density(mytheta)\n",
+        "dtruth = dbeta(theta, 3, 3)\n",
+        "\n",
+        "plot(dmytheta, xlab = expression(theta), ylab = \"density\", main = \"\")\n",
+        "lines(theta, dtruth, col = \"orange\")\n",
+        "legend(\"topleft\", legend = c(\"approximation\", \"truth\"),\n",
+        "       col = c(\"black\", \"orange\"), lwd = c(1, 1))"
+      ],
+      "id": "d52646ed",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Rejection sampling example 3\n",
+        "\n",
+        "We repeat the previous example with a more efficient proposal distribution.\n",
+        "\n",
+        "Since we know that our target density is symmetric around 0.5, we choose to bound it by a normal distribution centered around 0.5.\n",
+        "\n",
+        "*Proposal distribution*\n",
+        "\n",
+        "$G\\sim N(0.5, 0.25^2)$.\n",
+        "\n",
+        "We choose $M=0.04$ for our bounding function (chosen by trial and error).\n",
+        "\n",
+        "We define bounding function.\n"
+      ],
+      "id": "b026ea58"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gM = function(theta) {\n",
+        "\t0.04 * dnorm(theta, mean = 0.5, sd = 0.25)\n",
+        "}"
+      ],
+      "id": "b7a9b1b5",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We compare the target density to the bounding function.\n"
+      ],
+      "id": "62146c69"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "theta = seq(0, 1, len = 1000)\n",
+        "plot(theta, qtarget(theta), type = \"l\", xlab = expression(theta),\n",
+        "     ylab = expression(q(theta)))\n",
+        "lines(theta, gM(theta), col = \"blue\")\n",
+        "abline(v = 1/2)"
+      ],
+      "id": "60e05373",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We now implement our rejection sampling algorithm.\n"
+      ],
+      "id": "4af8285c"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "B = 100000\n",
+        "mytheta = numeric(B)\n",
+        "\n",
+        "i = 0 # the samples accepted\n",
+        "while (i < B) {\n",
+        "  x = rnorm(1, mean = 0.5, sd = 0.25) # sample from g distribution\n",
+        "\n",
+        "  # accept x with probability q(x)/gM(x)\n",
+        "\tif (runif(1) <= qtarget(x)/gM(x)) {\n",
+        "\t\ti = i + 1\n",
+        "\t\tmytheta[i] = x\n",
+        "\t}\n",
+        "}"
+      ],
+      "id": "3c5c91f9",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Lastly, we compare our empirical density to the true density.\n"
+      ],
+      "id": "a76351fa"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "dmytheta = density(mytheta)\n",
+        "dtruth = dbeta(theta, 3, 3)\n",
+        "\n",
+        "plot(theta, dtruth, col = \"orange\", type = \"l\")\n",
+        "lines(dmytheta)\n",
+        "legend(\"topleft\", legend = c(\"approximation\", \"truth\"),\n",
+        "       col = c(\"black\", \"orange\"), lwd = c(1, 1))"
+      ],
+      "id": "6e4b87f0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Rejection sampling example 4\n",
+        "\n",
+        "We want to sample from a folded $N(0,1)$ distribution.\n",
+        "\n",
+        "- If $y\\sim N(0,1)$, then $|y|$ is a folded $N(0,1)$ distribution.\n",
+        "\n",
+        "*Target density*\n",
+        "\n",
+        "$q(\\theta) = \\exp(-\\theta^2/2)I_{[0,\\infty)}(\\theta)$.\n",
+        "\n",
+        "*Proposal distribution*\n",
+        "\n",
+        "$G\\sim \\mathrm{Exp}(1)$. \n",
+        "\n",
+        "How do we choose a bounding constant?\n",
+        "\n",
+        "The optimal solution is find a single intersecting point between the folded normal and our envelope (at the inflection point of the folded normal), which is at $\\theta = 1$.\n",
+        "\n",
+        "$\\frac{dq(\\theta)}{d\\theta} = -\\exp(-\\theta^2/2)\\theta$.\n",
+        "\n",
+        "$\\frac{d^2q(\\theta)}{d\\theta^2} = \\exp(-\\theta^2/2)(\\theta^2-1)$.\n",
+        "\n",
+        "Setting $g(\\theta)M = q(\\theta)$ and solving for $M$ when\n",
+        "$\\theta = 1$ results in the solution $M = \\exp(1/2)$.\n",
+        "\n",
+        "We define the target density.\n"
+      ],
+      "id": "f1a63e31"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "qtarget = function(theta) {\n",
+        "\texp(-theta^2/2)\n",
+        "}"
+      ],
+      "id": "debb235f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We define the bounding function.\n"
+      ],
+      "id": "fc5f93c3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gM = function(theta) {\n",
+        "\tdexp(theta)*exp(1/2)\n",
+        "}"
+      ],
+      "id": "babd991c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We compare the target density to the bounding function.\n"
+      ],
+      "id": "630e9768"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "theta = seq(0, 5, len = 1000)\n",
+        "plot(theta, qtarget(theta), ylim = c(0, qtarget(0.001)),\n",
+        "     type = \"l\",\n",
+        "     ylab = \"qtarget\", xlab = expression(theta))\n",
+        "lines(theta, gM(theta), type = \"l\", col = \"blue\")\n",
+        "legend(\"topright\", legend = c(\"qtarget\", \"gM\"),\n",
+        "       lty = 1, col = c(\"black\", \"blue\"))"
+      ],
+      "id": "f8f6bb57",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We now implement our rejection sampling algorithm.\n"
+      ],
+      "id": "b68d45fb"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "B = 10000 # number of retained samples desired\n",
+        "mytheta = numeric(B) # vector to store samples\n",
+        "i = 0 # number of retained samples\n",
+        "while (i < B) {\n",
+        "\tx = rexp(1) # draw a value from proposal distribution\n",
+        "\t# accept the value with probability based on the importance\n",
+        "\t# ratio\n",
+        "\tif (runif(1) <= qtarget(x)/gM(x)) {\n",
+        "\t\ti = i + 1 # increment i if sample retained\n",
+        "\t\tmytheta[i] = x # store sample\n",
+        "\t}\n",
+        "}"
+      ],
+      "id": "95df35b0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Lastly, we compare our empirical density to the true density.\n"
+      ],
+      "id": "a16ddc3d"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#The true density\n",
+        "dens = function(theta) {\n",
+        "\tsqrt(2/pi)*exp(-theta^2/2)\n",
+        "}\n",
+        "\n",
+        "dmytheta = density(mytheta, from = 0, to = 5, cut = 0)\n",
+        "plot(dmytheta, xlab = \"theta\", ylab = \"density\", main = \"\")\n",
+        "lines(theta, dens(theta), col = \"blue\")\n",
+        "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
+        "\tlwd = c(1, 1), col = c(\"black\", \"blue\"))"
+      ],
+      "id": "6a6e7b60",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Why didn't that work properly?\n",
+        "\n",
+        "Let's try a different approach.\n"
+      ],
+      "id": "22366bf9"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# plot with a probability histogram instead to get a better comparison\n",
+        "hist(mytheta, freq = FALSE, breaks = 100)\n",
+        "lines(theta, dens(theta), col = \"blue\")\n",
+        "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
+        "\tlwd = c(1, 1), col = c(\"black\", \"blue\"))"
+      ],
+      "id": "349f2da3",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Rejection sampling example 5\n",
+        "\n",
+        "We chose a proposal distribution analytically in the last example. We probably wouldn't do that unless we were forced to. Let's try something more realistic.\n",
+        "\n",
+        "*Proposal distribution*\n",
+        "\n",
+        "$G\\sim \\chi^2_2$ with bounding constant $M=2.4$ (chosen by trial and error).\n",
+        "\n",
+        "We create the bounding function.\n"
+      ],
+      "id": "35d700e3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gM = function(theta) {\n",
+        "\t2.4 * dchisq(theta, df = 2)\n",
+        "}"
+      ],
+      "id": "c652d51c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We compare the target density and bounding function.\n"
+      ],
+      "id": "f99f1cd3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "theta = seq(0, 5, len = 10000)\n",
+        "plot(theta, gM(theta), type = \"l\", col = \"blue\",\n",
+        "     xlab = expression(theta), ylab = \"\", ylim = c(0, 1.25))\n",
+        "lines(theta, qtarget(theta))\n",
+        "legend(\"topright\", legend = c(\"q\", \"gM\"), lty = 1,\n",
+        "       col = c(\"black\", \"blue\"))"
+      ],
+      "id": "7804ef0f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "We implement our rejection sampling algorithm.\n"
+      ],
+      "id": "e3ae3f87"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "B = 10000\n",
+        "mytheta = numeric(B)\n",
+        "i = 0\n",
+        "while (i < B) {\n",
+        "\tx = rchisq(1, df = 2)\n",
+        "\tif (runif(1) <= qtarget(x)/gM(x)) {\n",
+        "\t\ti = i + 1\n",
+        "\t\tmytheta[i] = x\n",
+        "\t}\n",
+        "}"
+      ],
+      "id": "54c69c45",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Lastly, we compare our empirical density to the true density.\n"
+      ],
+      "id": "b96e9fd1"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "hist(mytheta, freq = FALSE, breaks = 100)\n",
+        "lines(theta, dens(theta), col = \"blue\")\n",
+        "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
+        "       lwd = c(1, 1), col = c(\"black\", \"blue\"))"
+      ],
+      "id": "9d96607e",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "R",
+      "language": "R",
+      "name": "ir"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
