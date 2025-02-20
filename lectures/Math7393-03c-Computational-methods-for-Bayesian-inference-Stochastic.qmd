@@ -37,9 +37,9 @@ Rejection sampling assumes there is a *proposal distribution* $G$, with density 
 -   The *importance ratio* $p(\theta \mid y) / g(\theta)$ must have a known bound.
     -   i.e., there exists $M$ such that for all $\theta$, $p(\theta\mid y) / g(\theta) \leq M$.
 
-Rejection sampling draws $B$ samples from $p(\theta\mid y)$ using the following algorithm:
+Rejection sampling draws $B$ observations from $p(\theta\mid y)$ using the following algorithm:
 
-1.  Sample $\theta^{\star}$ from the distribution defined by $g(\theta)$.
+1.  Draw $\theta^{\star}$ from the distribution defined by $g(\theta)$.
 2.  Accept $\theta^{\star}$ as a sample from $p(\theta\mid y)$ with probability $\frac{p(\theta^{\star}\mid y)}{M g(\theta^{\star})}.$
     -   If $\theta^{\star}$ is accepted, continue to step 3.
     -   Otherwise, return to step 1.
@@ -63,11 +63,11 @@ Comments about rejection sampling:
 -   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5\mid y) = 0.25$.
 -   Pick $M = 0.25$.
 
-Let's define an unnormalized target density.
+Let's define an unnormalized target density. Notice the indicator terms to ensure that $\theta \in (0, 1)$.
 
 ```{r}
 qtarget = function(theta) {
-  theta * (1 - theta)
+  theta * (1 - theta) * (theta > 0) * (theta < 1)
 }
 ```
 
@@ -90,14 +90,14 @@ plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
 lines(theta, gM(theta), col = "blue")
 ```
 
-Consider drawing a sample from $p(\theta \mid y)$:
+Consider drawing an observation from $p(\theta \mid y)$:
 
--   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
+-   We draw a value, $\theta^*$, from the $U(0,1)$ proposal distribution.
     -   Suppose this value is $\theta^*=0.6$.
--   We need to decide whether we keep $\theta^*$.
+-   We need to decide whether we retain or reject $\theta^*$.
     -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
     -   Note that $q(0.6 \mid y) = 0.6(1-0.6) = 0.24$.
--   Draw $u^{\star}$ from $U(0, 0.25)$.
+-   Draw $u^{\star}$ from a $U(0, 0.25)$ density.
     - Let's say $u^{\star} = 0.066$.
     - Since $u^{\star}<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
 
@@ -118,7 +118,7 @@ abline(v = thetastar1, col = "grey")
 points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
 ```
 
-Consider drawing another sample from $p(\theta \mid y)$:
+Consider drawing another observation from $p(\theta \mid y)$:
 
 -   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
     -   Suppose this value is $\theta^*=0.185$.
@@ -146,7 +146,7 @@ abline(v = thetastar2, col = "grey")
 points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
 ```
 
-Let's run a rejection sampling algorithim to draw samples
+Let's run a rejection sampling algorithim to draw observations
 from the target distribution. We plot closed circles for each
 $(\theta^*, u^*)$ that's accepted and a closed circle for each
 $(\theta^*, u^*)$ that's rejected.
@@ -177,13 +177,13 @@ title("Accepted (black dot) vs Rejected (open circle) comparison")
 
 ## Rejection sampling example 2
 
-We illustrate rejection sampling by drawing from an unnormalized Beta(3, 3). 
+We illustrate rejection sampling by trying to draw realizations from an unnormalized Beta(3, 3) density. 
 
 We will compare our rejection sampling results with the truth.
 
 *Target density*
 
-$p(\theta | y) \propto \theta^2  (1 - \theta)^2 = q(\theta).$
+$p(\theta | y) \propto \theta^2  (1 - \theta)^2 I(0<\theta<1)= q(\theta).$
 
 *Proposal distribution*
 
@@ -202,7 +202,7 @@ We define the unnormalized target density.
 
 ```{r}
 qtarget = function(theta) {
-	theta^2*(1 - theta)^2
+	theta^2*(1 - theta)^2 * (theta > 0) * (theta < 1)
 }
 ```
 
@@ -380,8 +380,8 @@ while (i < B) {
 	# accept the value with probability based on the importance
 	# ratio
 	if (runif(1) <= qtarget(x)/gM(x)) {
-		i = i + 1 # increment i if sample retained
-		mytheta[i] = x # store sample
+		i = i + 1 # increment i if value retained
+		mytheta[i] = x # store value
 	}
 }
 ```

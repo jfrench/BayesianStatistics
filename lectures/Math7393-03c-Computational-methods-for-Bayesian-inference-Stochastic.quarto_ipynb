@@ -44,9 +44,9 @@
         "-   The *importance ratio* $p(\\theta \\mid y) / g(\\theta)$ must have a known bound.\n",
         "    -   i.e., there exists $M$ such that for all $\\theta$, $p(\\theta\\mid y) / g(\\theta) \\leq M$.\n",
         "\n",
-        "Rejection sampling draws $B$ samples from $p(\\theta\\mid y)$ using the following algorithm:\n",
+        "Rejection sampling draws $B$ observations from $p(\\theta\\mid y)$ using the following algorithm:\n",
         "\n",
-        "1.  Sample $\\theta^{\\star}$ from the distribution defined by $g(\\theta)$.\n",
+        "1.  Draw $\\theta^{\\star}$ from the distribution defined by $g(\\theta)$.\n",
         "2.  Accept $\\theta^{\\star}$ as a sample from $p(\\theta\\mid y)$ with probability $\\frac{p(\\theta^{\\star}\\mid y)}{M g(\\theta^{\\star})}.$\n",
         "    -   If $\\theta^{\\star}$ is accepted, continue to step 3.\n",
         "    -   Otherwise, return to step 1.\n",
@@ -70,19 +70,19 @@
         "-   $\\text{argmax}_{\\theta}q(\\theta \\mid y) = 0.5$ with $q(0.5\\mid y) = 0.25$.\n",
         "-   Pick $M = 0.25$.\n",
         "\n",
-        "Let's define an unnormalized target density.\n"
+        "Let's define an unnormalized target density. Notice the indicator terms to ensure that $\\theta \\in (0, 1)$.\n"
       ],
-      "id": "47a5aa55"
+      "id": "2fd4f321"
     },
     {
       "cell_type": "code",
       "metadata": {},
       "source": [
         "qtarget = function(theta) {\n",
-        "  theta * (1 - theta)\n",
+        "  theta * (1 - theta) * (theta > 0) * (theta < 1)\n",
         "}"
       ],
-      "id": "9d2552e1",
+      "id": "a2ae0e8e",
       "execution_count": null,
       "outputs": []
     },
@@ -92,7 +92,7 @@
       "source": [
         "Let's define a bounding function, $g(\\theta)M$.\n"
       ],
-      "id": "1c005bfd"
+      "id": "1555e348"
     },
     {
       "cell_type": "code",
@@ -103,7 +103,7 @@
         "  rep(.25, length(theta))\n",
         "}"
       ],
-      "id": "fd4897b2",
+      "id": "a7c99dc3",
       "execution_count": null,
       "outputs": []
     },
@@ -113,7 +113,7 @@
       "source": [
         "Let's plot the target density and bounding function.\n"
       ],
-      "id": "16dcab2d"
+      "id": "34330852"
     },
     {
       "cell_type": "code",
@@ -125,7 +125,7 @@
         "     ylab = expression(q(theta*\"|\"*y)))\n",
         "lines(theta, gM(theta), col = \"blue\")"
       ],
-      "id": "c267deb0",
+      "id": "387c0d9b",
       "execution_count": null,
       "outputs": []
     },
@@ -133,20 +133,20 @@
       "cell_type": "markdown",
       "metadata": {},
       "source": [
-        "Consider drawing a sample from $p(\\theta \\mid y)$:\n",
+        "Consider drawing an observation from $p(\\theta \\mid y)$:\n",
         "\n",
-        "-   We draw a value $\\theta^*$ from the $U(0,1)$ distribution.\n",
+        "-   We draw a value, $\\theta^*$, from the $U(0,1)$ proposal distribution.\n",
         "    -   Suppose this value is $\\theta^*=0.6$.\n",
-        "-   We need to decide whether we keep $\\theta^*$.\n",
+        "-   We need to decide whether we retain or reject $\\theta^*$.\n",
         "    -   Note that $M g(\\theta)$ evaluated at $0.6$ is $0.25 \\times 1 = 0.25$.\n",
         "    -   Note that $q(0.6 \\mid y) = 0.6(1-0.6) = 0.24$.\n",
-        "-   Draw $u^{\\star}$ from $U(0, 0.25)$.\n",
+        "-   Draw $u^{\\star}$ from a $U(0, 0.25)$ density.\n",
         "    - Let's say $u^{\\star} = 0.066$.\n",
         "    - Since $u^{\\star}<q(\\theta\\mid y) = 0.24$, we accept it as a sample from $q(\\theta\\mid y)$.\n",
         "\n",
         "Let's visualize this.\n"
       ],
-      "id": "45891171"
+      "id": "587c0e8c"
     },
     {
       "cell_type": "code",
@@ -165,7 +165,7 @@
         "abline(v = thetastar1, col = \"grey\")\n",
         "points(thetastar1, u1, pch = ifelse(accept1, 20, 1))"
       ],
-      "id": "ab8e92b6",
+      "id": "08035c5d",
       "execution_count": null,
       "outputs": []
     },
@@ -173,7 +173,7 @@
       "cell_type": "markdown",
       "metadata": {},
       "source": [
-        "Consider drawing another sample from $p(\\theta \\mid y)$:\n",
+        "Consider drawing another observation from $p(\\theta \\mid y)$:\n",
         "\n",
         "-   We draw a value $\\theta^*$ from the $U(0,1)$ distribution.\n",
         "    -   Suppose this value is $\\theta^*=0.185$.\n",
@@ -182,7 +182,7 @@
         "\n",
         "Let's visualize this.\n"
       ],
-      "id": "1e833d88"
+      "id": "ac6d37b5"
     },
     {
       "cell_type": "code",
@@ -205,7 +205,7 @@
         "abline(v = thetastar2, col = \"grey\")\n",
         "points(thetastar2, u2, pch = ifelse(accept2, 20, 1))"
       ],
-      "id": "e537e023",
+      "id": "8f0dba0a",
       "execution_count": null,
       "outputs": []
     },
@@ -213,12 +213,12 @@
       "cell_type": "markdown",
       "metadata": {},
       "source": [
-        "Let's run a rejection sampling algorithim to draw samples\n",
+        "Let's run a rejection sampling algorithim to draw observations\n",
         "from the target distribution. We plot closed circles for each\n",
         "$(\\theta^*, u^*)$ that's accepted and a closed circle for each\n",
         "$(\\theta^*, u^*)$ that's rejected.\n"
       ],
-      "id": "320312b5"
+      "id": "a4a1af2d"
     },
     {
       "cell_type": "code",
@@ -246,7 +246,7 @@
         "}\n",
         "title(\"Accepted (black dot) vs Rejected (open circle) comparison\")"
       ],
-      "id": "bf366e0d",
+      "id": "758704f8",
       "execution_count": null,
       "outputs": []
     },
@@ -256,13 +256,13 @@
       "source": [
         "## Rejection sampling example 2\n",
         "\n",
-        "We illustrate rejection sampling by drawing from an unnormalized Beta(3, 3). \n",
+        "We illustrate rejection sampling by trying to draw realizations from an unnormalized Beta(3, 3) density. \n",
         "\n",
         "We will compare our rejection sampling results with the truth.\n",
         "\n",
         "*Target density*\n",
         "\n",
-        "$p(\\theta | y) \\propto \\theta^2  (1 - \\theta)^2 = q(\\theta).$\n",
+        "$p(\\theta | y) \\propto \\theta^2  (1 - \\theta)^2 I(0<\\theta<1)= q(\\theta).$\n",
         "\n",
         "*Proposal distribution*\n",
         "\n",
@@ -279,17 +279,17 @@
         "\n",
         "We define the unnormalized target density.\n"
       ],
-      "id": "cdf696b4"
+      "id": "f078ca11"
     },
     {
       "cell_type": "code",
       "metadata": {},
       "source": [
         "qtarget = function(theta) {\n",
-        "\ttheta^2*(1 - theta)^2\n",
+        "\ttheta^2*(1 - theta)^2 * (theta > 0) * (theta < 1)\n",
         "}"
       ],
-      "id": "5f186206",
+      "id": "9258ac68",
       "execution_count": null,
       "outputs": []
     },
@@ -299,7 +299,7 @@
       "source": [
         "We define the bounding function.\n"
       ],
-      "id": "80043455"
+      "id": "45bb2aca"
     },
     {
       "cell_type": "code",
@@ -309,7 +309,7 @@
         "\trep(.0625, length(theta))\n",
         "}"
       ],
-      "id": "790143f8",
+      "id": "1422d3d2",
       "execution_count": null,
       "outputs": []
     },
@@ -319,7 +319,7 @@
       "source": [
         "We compare the target density and bounding function.\n"
       ],
-      "id": "6ecacca0"
+      "id": "5e940566"
     },
     {
       "cell_type": "code",
@@ -331,7 +331,7 @@
         "lines(theta, gM(theta), col = \"blue\")\n",
         "abline(v = 1/2)"
       ],
-      "id": "2c4c49e0",
+      "id": "4c273b5e",
       "execution_count": null,
       "outputs": []
     },
@@ -341,7 +341,7 @@
       "source": [
         "We now implement our rejection sampling algorithm.\n"
       ],
-      "id": "64804ffa"
+      "id": "d7eb1b60"
     },
     {
       "cell_type": "code",
@@ -362,7 +362,7 @@
         "\t}\n",
         "}"
       ],
-      "id": "02fb390f",
+      "id": "19f1f042",
       "execution_count": null,
       "outputs": []
     },
@@ -372,7 +372,7 @@
       "source": [
         "Lastly, we compare our empirical density to the true density.\n"
       ],
-      "id": "14d29e03"
+      "id": "3cfd97e2"
     },
     {
       "cell_type": "code",
@@ -386,7 +386,7 @@
         "legend(\"topleft\", legend = c(\"approximation\", \"truth\"),\n",
         "       col = c(\"black\", \"orange\"), lwd = c(1, 1))"
       ],
-      "id": "d52646ed",
+      "id": "a42f6177",
       "execution_count": null,
       "outputs": []
     },
@@ -408,7 +408,7 @@
         "\n",
         "We define bounding function.\n"
       ],
-      "id": "b026ea58"
+      "id": "83a65567"
     },
     {
       "cell_type": "code",
@@ -418,7 +418,7 @@
         "\t0.04 * dnorm(theta, mean = 0.5, sd = 0.25)\n",
         "}"
       ],
-      "id": "b7a9b1b5",
+      "id": "71107317",
       "execution_count": null,
       "outputs": []
     },
@@ -428,7 +428,7 @@
       "source": [
         "We compare the target density to the bounding function.\n"
       ],
-      "id": "62146c69"
+      "id": "14d8d9f4"
     },
     {
       "cell_type": "code",
@@ -440,7 +440,7 @@
         "lines(theta, gM(theta), col = \"blue\")\n",
         "abline(v = 1/2)"
       ],
-      "id": "60e05373",
+      "id": "376386eb",
       "execution_count": null,
       "outputs": []
     },
@@ -450,7 +450,7 @@
       "source": [
         "We now implement our rejection sampling algorithm.\n"
       ],
-      "id": "4af8285c"
+      "id": "6a823e43"
     },
     {
       "cell_type": "code",
@@ -470,7 +470,7 @@
         "\t}\n",
         "}"
       ],
-      "id": "3c5c91f9",
+      "id": "b55ec0fe",
       "execution_count": null,
       "outputs": []
     },
@@ -480,7 +480,7 @@
       "source": [
         "Lastly, we compare our empirical density to the true density.\n"
       ],
-      "id": "a76351fa"
+      "id": "aece481e"
     },
     {
       "cell_type": "code",
@@ -494,7 +494,7 @@
         "legend(\"topleft\", legend = c(\"approximation\", \"truth\"),\n",
         "       col = c(\"black\", \"orange\"), lwd = c(1, 1))"
       ],
-      "id": "6e4b87f0",
+      "id": "7f9c1a10",
       "execution_count": null,
       "outputs": []
     },
@@ -529,7 +529,7 @@
         "\n",
         "We define the target density.\n"
       ],
-      "id": "f1a63e31"
+      "id": "0dc5b281"
     },
     {
       "cell_type": "code",
@@ -539,7 +539,7 @@
         "\texp(-theta^2/2)\n",
         "}"
       ],
-      "id": "debb235f",
+      "id": "5157d26d",
       "execution_count": null,
       "outputs": []
     },
@@ -549,7 +549,7 @@
       "source": [
         "We define the bounding function.\n"
       ],
-      "id": "fc5f93c3"
+      "id": "87383f1f"
     },
     {
       "cell_type": "code",
@@ -559,7 +559,7 @@
         "\tdexp(theta)*exp(1/2)\n",
         "}"
       ],
-      "id": "babd991c",
+      "id": "af39e1c5",
       "execution_count": null,
       "outputs": []
     },
@@ -569,7 +569,7 @@
       "source": [
         "We compare the target density to the bounding function.\n"
       ],
-      "id": "630e9768"
+      "id": "6d5ee23e"
     },
     {
       "cell_type": "code",
@@ -583,7 +583,7 @@
         "legend(\"topright\", legend = c(\"qtarget\", \"gM\"),\n",
         "       lty = 1, col = c(\"black\", \"blue\"))"
       ],
-      "id": "f8f6bb57",
+      "id": "92b1f437",
       "execution_count": null,
       "outputs": []
     },
@@ -593,7 +593,7 @@
       "source": [
         "We now implement our rejection sampling algorithm.\n"
       ],
-      "id": "b68d45fb"
+      "id": "4916077c"
     },
     {
       "cell_type": "code",
@@ -607,12 +607,12 @@
         "\t# accept the value with probability based on the importance\n",
         "\t# ratio\n",
         "\tif (runif(1) <= qtarget(x)/gM(x)) {\n",
-        "\t\ti = i + 1 # increment i if sample retained\n",
-        "\t\tmytheta[i] = x # store sample\n",
+        "\t\ti = i + 1 # increment i if value retained\n",
+        "\t\tmytheta[i] = x # store value\n",
         "\t}\n",
         "}"
       ],
-      "id": "95df35b0",
+      "id": "974f3a86",
       "execution_count": null,
       "outputs": []
     },
@@ -622,7 +622,7 @@
       "source": [
         "Lastly, we compare our empirical density to the true density.\n"
       ],
-      "id": "a16ddc3d"
+      "id": "6339980c"
     },
     {
       "cell_type": "code",
@@ -639,7 +639,7 @@
         "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
         "\tlwd = c(1, 1), col = c(\"black\", \"blue\"))"
       ],
-      "id": "6a6e7b60",
+      "id": "35012305",
       "execution_count": null,
       "outputs": []
     },
@@ -651,7 +651,7 @@
         "\n",
         "Let's try a different approach.\n"
       ],
-      "id": "22366bf9"
+      "id": "ac4e0eee"
     },
     {
       "cell_type": "code",
@@ -663,7 +663,7 @@
         "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
         "\tlwd = c(1, 1), col = c(\"black\", \"blue\"))"
       ],
-      "id": "349f2da3",
+      "id": "ffe61b77",
       "execution_count": null,
       "outputs": []
     },
@@ -681,7 +681,7 @@
         "\n",
         "We create the bounding function.\n"
       ],
-      "id": "35d700e3"
+      "id": "b790be9d"
     },
     {
       "cell_type": "code",
@@ -691,7 +691,7 @@
         "\t2.4 * dchisq(theta, df = 2)\n",
         "}"
       ],
-      "id": "c652d51c",
+      "id": "da436c0f",
       "execution_count": null,
       "outputs": []
     },
@@ -701,7 +701,7 @@
       "source": [
         "We compare the target density and bounding function.\n"
       ],
-      "id": "f99f1cd3"
+      "id": "d8b008f6"
     },
     {
       "cell_type": "code",
@@ -714,7 +714,7 @@
         "legend(\"topright\", legend = c(\"q\", \"gM\"), lty = 1,\n",
         "       col = c(\"black\", \"blue\"))"
       ],
-      "id": "7804ef0f",
+      "id": "5d544e28",
       "execution_count": null,
       "outputs": []
     },
@@ -724,7 +724,7 @@
       "source": [
         "We implement our rejection sampling algorithm.\n"
       ],
-      "id": "e3ae3f87"
+      "id": "1973ab79"
     },
     {
       "cell_type": "code",
@@ -741,7 +741,7 @@
         "\t}\n",
         "}"
       ],
-      "id": "54c69c45",
+      "id": "12dc7982",
       "execution_count": null,
       "outputs": []
     },
@@ -751,7 +751,7 @@
       "source": [
         "Lastly, we compare our empirical density to the true density.\n"
       ],
-      "id": "b96e9fd1"
+      "id": "d8f63976"
     },
     {
       "cell_type": "code",
@@ -762,7 +762,7 @@
         "legend(\"topright\", legend = c(\"approximation\", \"truth\"),\n",
         "       lwd = c(1, 1), col = c(\"black\", \"blue\"))"
       ],
-      "id": "9d96607e",
+      "id": "3a1e6729",
       "execution_count": null,
       "outputs": []
     }
