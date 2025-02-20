@@ -2,15 +2,16 @@
 title: Computational methods for Bayesian inference
 author: Joshua French
 date: ''
-# format: html
-format: ipynb
-jupyter:
-  kernelspec:
-    display_name: R
-    language: R
-    name: ir
-execute:
-  output: false
+engine: knitr
+format: html
+# jupyter:
+#   kernelspec:
+#     display_name: R
+#     language: R
+#     name: ir
+# format: ipynb
+# execute:
+#   output: false
 self-contained: true
 title-block-banner: true
 wrap: 'none'
