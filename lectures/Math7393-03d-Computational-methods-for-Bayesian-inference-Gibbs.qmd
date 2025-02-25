@@ -59,6 +59,7 @@ if (!require("autoimage", quietly = TRUE)) {
 # Introduction to MCMC Methods
 
 A *stochastic process* is a family of random variables $\{\theta^{(t)}\}_{t\in T}$, where $T$ is a subset of $[0, \infty)$.
+
   -   $\theta^{(t)}$ denotes the stochastic process at time $t$.
   -   The value $\theta^{(t)}$ takes at time $t$ is known as the *state* of the process at time $t$.
   -   We only consider discrete-time stochastic processes with $T=\{0,1,2,…\}$.
@@ -66,19 +67,22 @@ A *stochastic process* is a family of random variables $\{\theta^{(t)}\}_{t\in T
 The *state space* of a stochastic process is the set of all possible values the process takes.
 
 A *Markov chain* is a stochastic process $\{\theta^{(0)}, \theta^{(1)}, \ldots, \theta^{(B)}\}$ such that $$p(\theta^{(t+1)} | \theta^{(t)}, \theta^{(t-1)}, \ldots, \theta^{(0)}) = p(\theta^{(t+1)} | \theta^{(t)}).$$
+
   -   $p(\theta^{(t+1)} | \theta^{(t)})$ is often called the *transition distribution*.
 
 Markov chain Monte Carlo (MCMC) methods attempt to draw samples from a target distribution when sampling directly from the target distribution is impossible or computationally expensive.
+
   - The samples form a Markov chain.
   - MCMC methods are constructed so that the (limiting) distribution of the Markov chain converges to the target distribution.
       -   The distribution producing the samples at each step of the Markov chain becomes more like the target distribution at each step of the chain.
 
 A Markov chain converges to a *stationary distribution* when the Markov chain is irreducible, aperiodic, and positive recurrent.
-    - Irreducible: any state $j$ can be reached from any state $i$ in a finite number of steps.
-    - Positive recurrent: with probability 1, the chain starting in state i returns to state i in a finite number of steps for any starting state.
-    - Aperiodic: the chain does not travel between states in a specific pattern or number of steps.
-    - Combined: for any state $i$ and $j$, we can travel from $i$ to $j$ in a finite number of steps, and then we will travel back to $i$ with probability 1, but not in a specific pattern or number of steps.
-    -   This ensures that we adequately explore the entire support of our target distribution.
+
+- Irreducible: any state $j$ can be reached from any state $i$ in a finite number of steps.
+- Positive recurrent: with probability 1, the chain starting in state i returns to state i in a finite number of steps for any starting state.
+- Aperiodic: the chain does not travel between states in a specific pattern or number of steps.
+- Combined: for any state $i$ and $j$, we can travel from $i$ to $j$ in a finite number of steps, and then we will travel back to $i$ with probability 1, but not in a specific pattern or number of steps.
+-   This ensures that we adequately explore the entire support of our target distribution.
 
 An effective MCMC method has two desirable properties:
 
