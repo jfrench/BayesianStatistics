@@ -24,7 +24,7 @@ library(mvtnorm) # need to sample from multivariate normal and evaluate
 # B = number of cycles to run
 # start = d-dimensional vector of starting values
 # const = scaling constant c related to size of jump for
-#         proprosal distribution
+#         proposal distribution
 mh = function(B, start, const) {
   # identity matrix for proposal distribution
   Imat = diag(length(start))
