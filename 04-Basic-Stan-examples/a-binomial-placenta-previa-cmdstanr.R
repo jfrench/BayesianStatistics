@@ -84,11 +84,13 @@ summarize_draws(post_draws)
 # subset of summary
 summarize_draws(post_draws,
                 "mean", "sd",
-                ~quantile2(., probs = 0.05),
-                ~quantile2(., probs = 0.95),
+                ~quantile2(., probs = 0.025),
+                ~quantile2(., probs = 0.975),
                 "rhat", "ess_bulk")
 # trace plot
 mcmc_trace(post_draws, pars = c("theta"))
+# highlight a single chain
+mcmc_trace_highlight(post_draws, pars = "theta", highlight = 1)
 
 # central posterior interval (median shown as point, by default)
 # shows 50% and 95% posterior intervals, by default
@@ -96,18 +98,14 @@ mcmc_intervals(post_draws, pars = "theta")
 # area plot of each parameter (shows 50% credible interval by default)
 # shows median as vertical line
 mcmc_areas(post_draws, pars = "theta")
-mcmc_areas(posterior, pars = "ytilde")
+mcmc_areas(post_draws, pars = "ytilde")
 # histogram
-mcmc_hist(posterior, pars = c("theta", "ytilde"))
+mcmc_hist(post_draws, pars = c("theta", "ytilde"))
 # histogram by chain
-mcmc_hist_by_chain(posterior, pars = c("theta", "ytilde"))
+mcmc_hist_by_chain(post_draws, pars = c("theta", "ytilde"))
 # density plot
-mcmc_dens(posterior, pars = c("theta", "ytilde"))
+mcmc_dens(post_draws, pars = c("theta", "ytilde"))
 # overlay density for each chain
-mcmc_dens_overlay(posterior, pars = c("theta", "ytilde"))
+mcmc_dens_overlay(post_draws, pars = c("theta", "ytilde"))
 # violin plots
-mcmc_violin(posterior, pars = c("theta", "ytilde"))
-# trace plots
-mcmc_trace(posterior, pars = "theta")
-# highlight a single chain
-mcmc_trace_highlight(posterior, pars = "theta", highlight = 1)
+mcmc_violin(post_draws, pars = c("theta", "ytilde"))
