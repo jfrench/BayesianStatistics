@@ -102,7 +102,7 @@ dat1 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
 dat2 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
             V = solve(crossprod(X)), v = v, csq = 100^2)
 
-if (!file.exists("soda_grior_mod.rda")) {
+if (!file.exists("soda_gprior_mod.rda")) {
   # fit models using stan with for both g-priors
   soda_fit1 = stan(model_code = mod, data = dat1,
               iter = 10000, seed = 30)

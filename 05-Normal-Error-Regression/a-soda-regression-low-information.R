@@ -106,8 +106,8 @@ stan_dat = list(n = n, y = soda$Time, cases = soda$Cases,
 # returns object of class stan
 # save model
 if (!file.exists("soda_mod.rda")) {
-  # soda_fit = stan(model_code = stanmod, data = stan_dat,
-  #                 iter = 10000, chains = 4)
+  soda_fit = stan(model_code = stanmod, data = stan_dat,
+                  iter = 10000, chains = 4)
   # save(soda_fit, file = "soda_fit.rda", compress = "xz")
   # load(file = "soda_fit.rda")
   soda_mod = stan_model(model_code = stanmod)

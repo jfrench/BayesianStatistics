@@ -40,9 +40,9 @@ model {
 }
 generated quantities {
   //variables must be the first things declared in a block
-  real<lower=0> sigmasq;
+  real<lower=0> sigmasq = square(exp(logsigma)); //sigmasq;
   vector[n] yrep;
-  sigmasq = square(exp(logsigma));
+  //sigmasq = square(exp(logsigma));
   for (j in 1:n) {
     yrep[j] = normal_rng(mu, sigma);
   }
@@ -101,7 +101,7 @@ summary(sol_fit, pars = c("mu", "sigmasq"),
 y = newcomb
 yrep = extract(sol_fit, "yrep")$yrep
 # histogram comparing y, yrep
-ppc_hist(y, yrep[31:38,])
+ppc_hist(y, yrep[51:58,])
 
 # scatterplot of y vs yrep
 ppc_scatter(y, yrep[10:18,])

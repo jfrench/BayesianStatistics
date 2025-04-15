@@ -11,7 +11,7 @@
 # Data distribution:
 # y_1, ..., y_n | mu, Sigma ~ i.i.d. N_2(mu, Sigma)
 # For priors:
-# mu | Sigma ~ N(mu0, Sigma/k0)
+# mu | Sigma ~ N_2(mu0, Sigma/k0)
 # Sigma ~ Inv-Wishart(nu, L0^(-1))
 
 # The exam was designed to give average score around 50 out of 100, so
@@ -95,8 +95,8 @@ reading_fit = sampling(reading_mod, data = stan_dat,
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
-# mu1 40.21531 45.37341 47.30597 49.26025 54.17412
-# mu2 45.90558 51.56652 53.72375 55.86592 61.38130
+# mu[1] 40.21531 45.37341 47.30597 49.26025 54.17412
+# mu[2] 45.90558 51.56652 53.72375 55.86592 61.38130
 
 # results should be similar
 summary(reading_fit, par = "mu",

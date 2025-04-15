@@ -60,7 +60,7 @@ transformed parameters{
 }
 model {
   // specify prior distributions for mu and Sigma
-  mu ~ multi_normal(mu0, Sigma/k0);
+  mu ~ multi_normal_cholesky(mu0, chol_Sigma/sqrt(k0));
   Sigma ~ inv_wishart(nu0, L0);
 
   // specify data distribution in terms of Cholesky
@@ -73,10 +73,6 @@ generated quantities {
   vector[2] ytilde; //pre- and post-test measurements for new students
   // vector[2] yrep[n];
   ytilde = multi_normal_cholesky_rng(mu, chol_Sigma);
-  // much faster to generate yrep manually
-  //for(i in 1:n){
-  //  yrep[i] = multi_normal_cholesky_rng(mu, chol_Sigma);
-  //}
 }
 "
 
