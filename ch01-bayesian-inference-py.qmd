@@ -11,17 +11,17 @@ wrap: 'none'
 format: ipynb
 jupyter:
   kernelspec:
-    display_name: R
-    language: R
-    name: ir
+    display_name: Python 3
+    language: python
+    name: python3
 execute:
   output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
 
-<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference.ipynb">
-   <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300">
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference-py.ipynb">
+   <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference-py.svg" width="300">
 </a>
 
 ---
@@ -314,21 +314,26 @@ Suppose $\theta\mid y \sim \text{Beta}(10,\ 2)$.
 
 A plot of the distribution is shown below.
 
-```{r}
-#posterior distribution for theta is Beta(10, 2)
-#set shape parameters
-a <- 10
-b <- 2
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import beta
 
-#create sequence of possible values of theta
-theta <- seq(0, 1, len = 1000)
-#find posterior density for these values of theta
-d <- dbeta(theta, shape1 = a, shape2 = b)
+# posterior distribution for theta is Beta(10, 2)
+# set shape parameters
+a = 10
+b = 2
+
+# create sequence of possible values of theta
+theta = np.linspace(0, 1, 1000)
+# find posterior density for these values of theta
+d = beta.pdf(theta, a=a, b=b)
 
 # plot of density
-plot(theta, d, type = "l",
-     ylab = "density",
-     xlab = expression(theta))
+plt.plot(theta, d)
+plt.xlabel(r"$\theta$")
+plt.ylabel("density")
+plt.show()
 ```
 
 **Central and HPD credible intervals**
@@ -336,51 +341,74 @@ plot(theta, d, type = "l",
 The 95% central credible interval: \[0.58, 0.98\].
 
 -   This was found by determining the .025 and .975 quantiles of the Beta(10, 2) distribution.
--   `qbeta(c(0.025, 0.975), 10, 2)`
+-   `beta.ppf([0.025, 0.975], 10, 2)`
 
-```{r}
-#find 95% central credible interval and hpd
-cci <- qbeta(c(.025, .975), shape1 = a, shape2 = b)
+```{python}
+# find 95% central credible interval
+cci = beta.ppf([0.025, 0.975], a=a, b=b)
 cci
 ```
 
 The 95% HPD interval: \[0.63, 1.00\].
 
--   This was found numerically using the `hpd` function in the **TeachingDemos** R package.
+-   This was found numerically from the Beta density by solving for the shortest interval containing 95% of the posterior probability.
 
-```{r}
-# load and install TeachingDemos package if necessary
-if (!require(TeachingDemos)) {
-  install.packages("TeachingDemos",
-                   repos = "https://cran.r-project.org")
-  library(TeachingDemos)
-}
+```{python}
+from scipy.optimize import minimize_scalar
 
-hpdi <- hpd(qbeta, shape1 = a, shape2 = b, conf = .95)
+# Compute the 95% highest-posterior-density (HPD) interval numerically.
+# For a unimodal continuous distribution, the HPD interval is the
+# shortest interval containing the requested posterior probability.
+def hpd_beta(a, b, cred_mass=0.95):
+    def interval_length(lower):
+        upper = beta.ppf(beta.cdf(lower, a, b) + cred_mass, a, b)
+        return upper - lower
+
+    # The lower endpoint must leave enough probability in the upper tail.
+    upper_bound = beta.ppf(1 - cred_mass, a, b)
+    result = minimize_scalar(
+        interval_length,
+        bounds=(0.0, upper_bound),
+        method="bounded",
+    )
+
+    lower = result.x
+    upper = beta.ppf(beta.cdf(lower, a, b) + cred_mass, a, b)
+    return np.array([lower, upper])
+
+hpdi = hpd_beta(a, b, cred_mass=0.95)
 hpdi
 ```
 
 We visually compare the two intervals.
 
-```{r}
-plot(theta, d, type = "l",
-     ylab = "density",
-     xlab = expression(theta))
-#draw vertical lines on plot for cci and hpdi.  Add legend
-abline(v = cci, col = "blue")
-abline(v = hpdi, col = "orange")
-legend("topleft", legend = c("central", "HPD"), lty = 1,
-       col = c("blue", "orange"))
+```{python}
+plt.plot(theta, d, label="density")
+# draw vertical lines on plot for cci and hpdi; add legend
+for x in cci:
+    plt.axvline(x, color="tab:blue", label="central" if x == cci[0] else None)
+for x in hpdi:
+    plt.axvline(x, color="tab:orange", label="HPD" if x == hpdi[0] else None)
+plt.xlabel(r"$\theta$")
+plt.ylabel("density")
+plt.legend(loc="upper left")
+plt.show()
 ```
 
 **MAP estimate**
 
 The MAP estimate is approximately 0.9.
 
-```{r}
-# map estimate
-optimize(f = dbeta, interval = 0:1, shape1 = 10, shape2 = 2,
-         maximum = TRUE)
+```{python}
+from scipy.optimize import minimize_scalar
+
+# MAP estimate
+map_result = minimize_scalar(
+    lambda x: -beta.pdf(x, a=10, b=2),
+    bounds=(0, 1),
+    method="bounded",
+)
+map_result.x
 ```
 
 **Posterior mean estimate**
@@ -389,9 +417,11 @@ The posterior mean is $10/(10 + 2) = 5/6 \approx 0.8333$.
 
 Estimate via simulation:
 
-```{r}
+```{python}
 # estimate mean
-mean(rbeta(n = 1000, shape1 = a, shape2 = b))
+rng = np.random.default_rng()
+samples = rng.beta(a=a, b=b, size=1000)
+samples.mean()
 ```
 
 **Posterior variance estimate**
@@ -400,9 +430,9 @@ The posterior variance is $\frac{10\cdot 2}{(10+2)^2(10+2+1)} \approx 0.01$.
 
 Estimate via simulation:
 
-```{r}
+```{python}
 # estimate variance
-var(rbeta(n = 1000, shape1 = a, shape2 = b))
+samples.var(ddof=1)
 ```
 
 ## Posterior distribution as compromise 
