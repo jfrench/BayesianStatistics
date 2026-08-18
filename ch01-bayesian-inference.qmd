@@ -5,15 +5,10 @@ date: today
 date-format: long
 title-block-banner: true
 wrap: 'none'
-format: html
-engine: knitr
 self-contained: true
+format: html
 # format: ipynb
-# jupyter:
-#   kernelspec:
-#     display_name: R
-#     language: R
-#     name: ir
+# jupyter: ir
 # execute:
 #   output: false
 ---
@@ -21,12 +16,18 @@ self-contained: true
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
 
 <a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference.ipynb">
-   <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300">
-</a>
+  <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300">
+    </a>
+    
+::: {.content-visible when-format="pdf"}
+  \begin{center}
+  \href{https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference.ipynb}{
+    \includegraphics[width=3in]{qr_codes/bayesian-inference.png}
+  }
+  \end{center}
+:::
 
 ---
-
-# Some Basics
 
 ## Statistics
 
@@ -176,7 +177,12 @@ A woman's mother carries one hemophilia gene (but not two), while her father doe
 - If the woman has two unaffected sons, what is the probability that the woman carries the hemophilia gene?
 - How does the probability change if the woman has three unaffected sons instead of two unaffected sons?
 
+::: {.content-visible when-format="pdf"}
 \vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
 
 ## Example: Spelling correction
 
@@ -184,7 +190,12 @@ Classification of words is a problem of managing uncertainty. For example, suppo
 
 What is the probability that 'radom' actually means random?
 
+::: {.content-visible when-format="pdf"}
 \vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
 
 ## Example: Estimating the probability of a female birth
 
@@ -198,7 +209,12 @@ Prior: $\text{Beta}(\alpha,\beta)$
 - Derive the posterior predictive distribution of a new, independent observation, $\widetilde{y}$, i.e., $p(\widetilde{y} \mid y)$.
     - Since $\widetilde{y} \in \{ 0,1\}$, we can simply find $P(\widetilde{y} = 1 \mid y)$ and $P(\widetilde{y} = 0 \mid y)$.
 
+::: {.content-visible when-format="pdf"}
 \vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
 
 ##  Summarizing (univariate) posterior distributions 
 
@@ -295,9 +311,8 @@ This empirical distribution is known as a **Monte Carlo approximation** to $p(\t
 The Law of Large Numbers says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta|y)$, then for (almost) any function $h(\theta)$, we have
 
 $$
-\frac{1}{B}\sum_{j = 1}^{B}{h\left( \theta^{(j)} \right) \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int h(\theta) p\left( \theta \mid y \right)d\theta}}\text{ as }\ B \rightarrow \infty.
+\frac{1}{B}\sum_{j = 1}^{B}{h\left( \theta^{(j)} \right)} \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int h(\theta) p\left( \theta \mid y \right)\,d\theta\text{ as }\ B \rightarrow \infty.
 $$
-
 This implies that:
 
 -   $\bar{\theta} = \frac{1}{B}\sum_{i=1}^{B}\theta^{(j)} \rightarrow E\left( \theta \mid y \right)$
