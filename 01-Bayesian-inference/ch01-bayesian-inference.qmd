@@ -1,13 +1,13 @@
 ---
 title: "Bayesian Inference"
 subtitle: "BDA 3: 1.1-1.4, 2.1-2.3" 
-self-contained: true
 date: today
 date-format: long
 title-block-banner: true
 wrap: 'none'
-engine: knitr
 # format: html
+# engine: knitr
+# self-contained: true
 format: ipynb
 jupyter:
   kernelspec:
@@ -16,6 +16,14 @@ jupyter:
     name: ir
 execute:
   output: false
+---
+
+An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference.ipynb">
+   <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300">
+</a>
+
 ---
 
 # Some Basics
@@ -93,14 +101,12 @@ Bayesian statistics uses probability statements and distributions to draw conclu
 ## More notation and terminology
 
 | Term | Description |
-|------|------|
-| $p\left( y \mid \theta \right)$     |  Likelihood function    |
-| $p(\theta)$    | Prior distribution for $\theta$ |
-| $p(y)$     | Marginal likelihood for $y$ (a.k.a. prior predictive distribution)    |
-| $p(\theta \mid y)$ | Posterior distribution for $\theta$      |
-| $p(\tilde{y} \mid y)$ | Posterior predictive distribution for an observable quantity      |
-
-
+|------|-------------|
+| $p\left(y \mathrel{\vert} \theta\right)$ | Likelihood function |
+| $p(\theta)$ | Prior distribution for $\theta$ |
+| $p(y)$ | Marginal likelihood for $y$ (a.k.a. prior predictive distribution) |
+| $p(\theta \mathrel{\vert} y)$ | Posterior distribution for $\theta$ |
+| $p(\widetilde{y} \mathrel{\vert} y)$ | Posterior predictive distribution for an observable quantity |
 
 ## Using Bayes' rule in Bayesian Inference
 
@@ -151,7 +157,7 @@ p(\widetilde{y} \mid y) & = \int_{}^{}{p\left( \widetilde{y},\theta \mid y \righ
 
 Notes:
 
-- The last line follows under the assumption that $y$ and $\widetilde{y}$ are conditionally independent given $\theta$, i.e., $p(y, \tilde{y} \mid \theta) = p(y \mid \theta) p(\tilde{y} \mid \theta)$.
+- The last line follows under the assumption that $y$ and $\widetilde{y}$ are conditionally independent given $\theta$, i.e., $p(y \mid \theta, \widetilde{y} \mid \theta) = p(\widetilde{y} \mid \theta)$.
 - The second and third lines indicate that the posterior predictive distribution is an average of conditional predictions over the posterior distribution of $\theta$.
 
 ## Likelihood Principle
@@ -170,9 +176,15 @@ A woman's mother carries one hemophilia gene (but not two), while her father doe
 - If the woman has two unaffected sons, what is the probability that the woman carries the hemophilia gene?
 - How does the probability change if the woman has three unaffected sons instead of two unaffected sons?
 
+\vspace{4in}
+
 ## Example: Spelling correction
 
-Classification of words is a problem of managing uncertainty. For example, suppose someone types 'radom.' How should that be read? It could be a misspelling or mistyping of 'random' or 'radon' or some other alternative, or it could be the intentional typing of 'radom' (as in its first use in this paragraph). What is the probability that 'radom' actually means random?
+Classification of words is a problem of managing uncertainty. For example, suppose someone types 'radom.' How should that be read? It could be a misspelling or mistyping of 'random' or 'radon' or some other alternative, or it could be the intentional typing of 'radom' (as in its first use in this paragraph).
+
+What is the probability that 'radom' actually means random?
+
+\vspace{4in}
 
 ## Example: Estimating the probability of a female birth
 
@@ -185,6 +197,8 @@ Prior: $\text{Beta}(\alpha,\beta)$
 - Derive the posterior distribution for $\theta$, $p\left( \theta \mid y \right):$
 - Derive the posterior predictive distribution of a new, independent observation, $\widetilde{y}$, i.e., $p(\widetilde{y} \mid y)$.
     - Since $\widetilde{y} \in \{ 0,1\}$, we can simply find $P(\widetilde{y} = 1 \mid y)$ and $P(\widetilde{y} = 0 \mid y)$.
+
+\vspace{4in}
 
 ##  Summarizing (univariate) posterior distributions 
 
@@ -281,7 +295,7 @@ This empirical distribution is known as a **Monte Carlo approximation** to $p(\t
 The Law of Large Numbers says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta|y)$, then for (almost) any function $h(\theta)$, we have
 
 $$
-\frac{1}{B}\sum_{j = 1}^{B}{h\left( \theta^{(j)} \right) \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int_{}^{}{h(\theta)p\left( \theta \mid y \right)d\theta}}\text{ as }\ B \rightarrow \infty.
+\frac{1}{B}\sum_{j = 1}^{B}{h\left( \theta^{(j)} \right) \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int h(\theta) p\left( \theta \mid y \right)d\theta}}\text{ as }\ B \rightarrow \infty.
 $$
 
 This implies that:
@@ -391,9 +405,9 @@ Estimate via simulation:
 var(rbeta(n = 1000, shape1 = a, shape2 = b))
 ```
 
-## Posterior distribution as compromise {#posterior-distribution-as-compromise .unnumbered}
+## Posterior distribution as compromise 
 
-Is there a general relation between the prior distribution and the posterior distribution in Bayesian inference?
+Is there a general relationship between the prior distribution and the posterior distribution in Bayesian inference?
 
 Recall that
 

@@ -10,6 +10,10 @@
 # A state space model assumes:
 # mu_i ~ N(mu_{i-1}, sigmasq_theta)
 
+library(rstan)
+library(ggplot2)
+library(loo)
+
 kobe <-
 structure(list(SEASON = structure(as.integer(c(4, 5, 6, 7, 8,
 9, 10, 11)), .Label = c(" 1996-97", " 1997-98", " 1998-99", " 1999-00",
@@ -21,8 +25,6 @@ structure(list(SEASON = structure(as.integer(c(4, 5, 6, 7, 8,
     1597, 1924, 1178, 1324, 2173, 845)), .Names = c("SEASON",
 "TEAM", "GAMES", "FGTOTAL", "FGTOTATT"), row.names = c("4", "5",
 "6", "7", "8", "9", "10", "11"), class = "data.frame")
-
-library(rstan)
 
 # fixed effects model
 femod = "
@@ -175,7 +177,6 @@ ggplot(df, aes(x = x, lty = model, col = model)) +
   scale_x_continuous(breaks = 1:8, labels = s) +
   theme(axis.text.x = element_text(angle = 90))
 
-library(loo)
 # extract log likelihoods
 ll_fe = extract_log_lik(fe_mod, merge_chains = FALSE)
 ll_sh = extract_log_lik(sh_mod, merge_chains = FALSE)
@@ -198,7 +199,7 @@ looic_sh = loo(ll_sh, r_eff = r_eff_sh)
 looic_ss = loo(ll_ss, r_eff = r_eff_ss)
 
 # compare results for three models
-compare(waic_fe, waic_sh, waic_ss)
-compare(loo_fe, loo_sh, loo_ss)
+loo_compare(waic_fe, waic_sh, waic_ss)
+loo_compare(looic_fe, looic_sh, looic_ss)
 
 

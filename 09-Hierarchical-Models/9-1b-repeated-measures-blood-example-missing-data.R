@@ -29,6 +29,7 @@
 # mu ~ N(0, 1000), sigmasq ~ IG(0.001, 0.001)
 
 library(rstan)
+library(ggplot2)
 
 # Enter data manually
 n = 20

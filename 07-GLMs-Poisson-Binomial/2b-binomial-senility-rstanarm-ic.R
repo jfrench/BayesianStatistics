@@ -28,6 +28,7 @@ senility  =  c(1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,
 	0, 0, 0, 0, 0, 0)
 
 df = data.frame(wais, senility)
+
 glmod_logit = stan_glm(senility ~ wais, data = df,
                        family = binomial(link = "logit"),
                        prior = normal(0, sqrt(1000)),

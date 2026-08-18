@@ -86,9 +86,12 @@ library(loo)
 library(bayesplot)
 
 if(!file.exists("example_9_3_nb_simple_output.rda")) {
-nb_simple = stan(model_code = nb_simple_code, data = gss,
-               iter = 5e4, seed = 7,
-               init = init_fun_nb_simple)
+  nb_simple = stan(model_code = nb_simple_code, data = gss,
+                 iter = 5e4, seed = 7,
+                 init = init_fun_nb_simple)
+  save(nb_simple, file = "nb_simple.rda")
+}
+load("nb_simple.rda")
 
 # summary information
 summary_nb_simple = summary(nb_simple,
@@ -107,13 +110,14 @@ samples_nb_simple = extract(nb_simple)
 s = sample(seq_len(nrow(samples_nb_simple$log_lik)), 1000)
 yrep_nb_simple = samples_nb_simple$yrep[s, ]
 
-save(summary_nb_simple,
-     waic_nb_simple, looic_nb_simple,
-     params_nb_simple,
-     yrep_nb_simple,
-     file = "example_9_3_nb_simple_output.rda")
-}
-load(file = "example_9_3_nb_simple_output.rda")
+# if (!file.exists("example_9_3_nb_simple_output.rda"))
+# save(summary_nb_simple,
+#      waic_nb_simple, looic_nb_simple,
+#      params_nb_simple,
+#      yrep_nb_simple,
+#      file = "example_9_3_nb_simple_output.rda")
+# }
+# load(file = "example_9_3_nb_simple_output.rda")
 
 # summary of posteriors
 summary_nb_simple$summary
