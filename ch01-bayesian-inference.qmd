@@ -1,0 +1,419 @@
+---
+title: "Bayesian Inference"
+subtitle: "BDA 3: 1.1-1.4, 2.1-2.3" 
+self-contained: true
+date: today
+date-format: long
+title-block-banner: true
+wrap: 'none'
+engine: knitr
+# format: html
+format: ipynb
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+execute:
+  output: false
+---
+
+# Some Basics
+
+## Statistics
+
+**Statistical inference**: using data to draw conclusions about unobserved quantities.
+
+**Estimand**: an unobserved quantity for which statistical inference is made.
+
+## Bayesian versus Frequentist
+
+**Frequentist/classical statistics**
+
+- A parameter is a fixed but unknown quantity.
+- Inference is made over hypothetical random samples of data.
+- Probability statements about data/procedures under repeated sampling.
+
+**Bayesian statistics**
+
+- A parameter is a random variable with a probability distribution.
+- Inference is made by conditioning on the observed sample of data.
+- Probability statements about the parameter given the observed data.
+
+Both viewpoints are useful.
+
+Both approaches make subjective choices.
+
+- Bayesian methods tend to be more transparent about subjective choices.
+
+## Bayes' Rule
+
+Consider two random variables $X$ and $Y$ with joint distribution $p(x,y)$.
+
+**Bayes' rule** (or theorem) states that
+
+$$
+p\left( x \mid y \right) = \frac{p\left( y \mid x \right)p(x)}{p(y)}.
+$$
+
+-   $p\left( x \mid y \right)$ is the conditional distribution of $X$ given $Y$.
+-   $p\left( y \mid x \right)$ is the conditional distribution of $Y$ given $X$.
+-   $p(x)$ is the marginal distribution of $X$.
+-   $p(y)$ is the marginal distribution of $Y$.
+
+## Notation
+
+- **Observed data**: $y = \left( y_{1},y_{2},\ldots,y_{n} \right)$. 
+- **Unobservable quantities/parameters**: $\theta = (\theta_{1},\theta_{2},\ldots,\theta_{p})$.
+- **Unknown, but observable quantities of interest**: $\widetilde{y} = \left( {\widetilde{y}}_{1},{\widetilde{y}}_{2},\ldots,{\widetilde{y}}_{m} \right)$. 
+- **Explanatory variables**:
+    - Explanatory variable for observation $i$: $x_{i}$.
+    - The $j$th explanatory variable for observation $i$: $x_{i,j}$
+
+## Assumption
+
+$y = (y_1, \ldots, y_n)$ is assumed to be **exchangeable**.
+
+- **Exchangeable**: the joint probability density $p(y_{1},y_{2},\ldots,y_{n})$ is invariant to permutations of the indices.
+-   Observations are nonexchangeable if information relevant to the outcome is conveyed in the unit indices rather than by explanatory variables.
+-   Exchangeable random variables are often modeled as independent and identically distributed (i.i.d.) random variables conditional on knowing the model parameters and/or enough covariate information.
+
+##  The process
+
+Bayesian data analysis can be idealized into three parts:
+
+1.  Set up a **full probability model**: construct a joint probability distribution for all observable and unobservable quantities in a problem.
+
+2.  Condition on the observed data: calculate and interpret the **posterior distribution**, the probability distribution of unobserved quantities of interest conditional on the observed data.
+
+3.  Evaluate model fit: Does the model fit the data? Are the modeling assumptions reasonable? How sensitive is the model to the assumptions?
+
+Bayesian statistics uses probability statements and distributions to draw conclusions about a parameter $\theta$ or unobserved data $\widetilde{y}$.
+
+## More notation and terminology
+
+| Term | Description |
+|------|------|
+| $p\left( y \mid \theta \right)$     |  Likelihood function    |
+| $p(\theta)$    | Prior distribution for $\theta$ |
+| $p(y)$     | Marginal likelihood for $y$ (a.k.a. prior predictive distribution)    |
+| $p(\theta \mid y)$ | Posterior distribution for $\theta$      |
+| $p(\tilde{y} \mid y)$ | Posterior predictive distribution for an observable quantity      |
+
+
+
+## Using Bayes' rule in Bayesian Inference
+
+Since Bayesian statistics treats both $y$ and $\theta$ as random, Bayes' rule can be used to perform inference.
+
+- **Prior distribution**: $p(\theta)$.
+    - A distribution for $\theta$ that describes our initial beliefs about $\theta$.
+- **Likelihood**: $p(y \mid \theta)$.
+    - A sensible distribution for $y$ if we knew the value of $\theta$ used to generate the data.
+    - a.k.a. the data or sampling distribution.
+- **Posterior distribution**: $p(\theta \mid y)$.
+    - The updated distribution for $\theta$ after observing the data $y$.
+    - This is the main focus and primary inferential tool of Bayesian statistics.
+- **Marginal likelihood**: $p(y)$.
+    - A normalizing constant.
+    - Discrete $\theta$: $p(y) = \sum_{\theta}^{}{p\left( y \mid \theta \right)p(\theta)}$.
+    - Continuous $\theta$: $p(y) = \int_{\theta}^{}{p\left( y \mid \theta \right)p(\theta)\ d\theta}$.
+
+Using the definition of conditional probability and Bayes' rule, we see that
+$$
+p\left( \theta \mid y \right) = \frac{p(\theta,y)}{p(y)} = \frac{p\left( y \mid \theta \right)p(\theta)}{p(y)}.
+$$
+
+It is common to work with the unnormalized posterior density, which is the right side of
+
+$$p\left( \theta \mid y \right) \propto p\left( y \mid \theta \right)p(\theta).$$
+
+The **posterior distribution** describes our belief about the distribution of $\theta$ after seeing the data.
+
+The marginal likelihood of $y$ is also known as the **prior predictive distribution**.
+
+- Prior because it is not conditional on previously observed data.
+- Predictive because it is the distribution for a quantity that is observable.
+
+After the data $y$ have been observed, we can predict an unknown observable, $\widetilde{y}$, of the same process.
+
+**Posterior predictive distribution**: $p(\widetilde{y} \mid y)$
+
+-   Posterior because it is conditional on the observed $y$.
+-   Predictive because it is a prediction for an observable $\widetilde{y}$.
+
+For continuous $\theta$, the posterior predictive distribution may be derived as
+\begin{align*}
+p(\widetilde{y} \mid y) & = \int_{}^{}{p\left( \widetilde{y},\theta \mid y \right)d\theta} \\
+ &= \int_{}^{}{p\left( \widetilde{y} \mid \theta,y \right)p\left( \theta \mid y \right)d\theta} \\
+ &= \int_{}^{}{p\left( \widetilde{y} \mid \theta \right)p\left( \theta \mid y \right)d\theta,}.
+\end{align*}
+
+Notes:
+
+- The last line follows under the assumption that $y$ and $\widetilde{y}$ are conditionally independent given $\theta$, i.e., $p(y, \tilde{y} \mid \theta) = p(y \mid \theta) p(\tilde{y} \mid \theta)$.
+- The second and third lines indicate that the posterior predictive distribution is an average of conditional predictions over the posterior distribution of $\theta$.
+
+## Likelihood Principle
+
+Combining Bayes' rule with a chosen probability model means that the data $y$ affect the posterior inference **only** through the likelihood function $p(y \mid \theta)$.
+
+Bayesian inference obeys the **likelihood principle**, which states that for a given sample of data, any two probability models $p(y\mid\theta)$ that have the same likelihood function yield the same inference for $\theta$.
+
+-   Inference can change in classical statistics because the data-generating mechanism for the unobserved samples impacts the results.
+
+## Example: Genetics
+
+Biological males have one X-chromosome and one Y-chromosome, whereas females have two X-chromosomes, each chromosome being inherited from one parent. Hemophilia is a disease that exhibits X-chromosome-linked recessive inheritance, meaning that a male who inherits the gene that causes the disease on the X-chromosome is affected, whereas a female carrying the gene on only one of her two X-chromosomes is not affected. The disease is generally fatal for women who inherit two such genes, and this is rare, since the frequency of occurrence of the gene is low in human populations.
+A woman's mother carries one hemophilia gene (but not two), while her father does not.
+
+- If the woman has two unaffected sons, what is the probability that the woman carries the hemophilia gene?
+- How does the probability change if the woman has three unaffected sons instead of two unaffected sons?
+
+## Example: Spelling correction
+
+Classification of words is a problem of managing uncertainty. For example, suppose someone types 'radom.' How should that be read? It could be a misspelling or mistyping of 'random' or 'radon' or some other alternative, or it could be the intentional typing of 'radom' (as in its first use in this paragraph). What is the probability that 'radom' actually means random?
+
+## Example: Estimating the probability of a female birth
+
+The proportion of female births in the European population is accepted to be less than 0.5. Let $y$ be the number of females in $n$ recorded births and $\theta$ be the probability of a female birth among the European population. Out of $n = 100$ randomly selected births, $y = 60$ are female. The Beta$(\alpha,\beta)$ distribution is a natural prior for $\theta$ since its support is $(0,1)$. Without prior knowledge, any value of $\theta$ between 0 and 1 is equally likely. This is equivalent to a $\text{Beta}(1,1) = \text{U}(0,1)$ prior distribution.
+
+Likelihood: $\text{Bin}(y|n,\theta)$
+
+Prior: $\text{Beta}(\alpha,\beta)$
+
+- Derive the posterior distribution for $\theta$, $p\left( \theta \mid y \right):$
+- Derive the posterior predictive distribution of a new, independent observation, $\widetilde{y}$, i.e., $p(\widetilde{y} \mid y)$.
+    - Since $\widetilde{y} \in \{ 0,1\}$, we can simply find $P(\widetilde{y} = 1 \mid y)$ and $P(\widetilde{y} = 0 \mid y)$.
+
+##  Summarizing (univariate) posterior distributions 
+
+The final output of a Bayesian analysis is the posterior distribution of all model parameters, and possibly, the posterior predictive distribution of observable estimands.
+
+-   The distribution may not have a simple, closed form.
+-   Our intuition about a distribution often relies on knowing characteristics such as the mean, median, or standard deviation instead of a formula.
+
+## Plotting
+
+A plot can effectively summarize a univariate posterior while retaining its major features.
+
+-   It might be difficult to determine specific characteristics like the "center" and "spread".
+
+## Point estimation
+
+Point estimates are often used to summarize a posterior distribution.
+
+-   This is a single value that "best" estimates the parameter based on the posterior distribution.
+
+The **maximum a posteriori (MAP) estimator** is a common choice for summarizing a posterior distribution.
+
+The MAP estimator is the parameter value that maximizes the posterior distribution (i.e., the posterior mode):
+
+$$
+\widehat{\theta}_{\mathrm{MAP}}
+= \arg\max_{\theta} p(\theta \mid y)
+= \arg\max_{\theta} \log p(\theta \mid y)
+= \arg\max_{\theta}
+\left\{
+\log p(y \mid \theta) + \log p(\theta)
+\right\}.
+$$
+
+Other common point estimators for a (univariate) posterior distribution include:
+
+- Posterior mean: $E(\theta|y)$
+- Posterior median: e.g., ${\widehat{\theta}}_{median} = \left\{ \theta^{*}:\int_{- \infty}^{\theta^{*}}{p\left( \theta \mid y \right)\ d\theta = 0.5} \right\}$
+- Posterior variance: $var(\theta|y)$
+- Posterior standard deviation: $SD\left( \theta \mid y \right) = \sqrt{var(\theta|y)}$
+- Posterior quantiles
+
+## Interval estimation
+
+A **credible interval** (or **posterior interval)** is any interval $(l,u)$ such that $P\left( l \leq \theta \leq u \mid y \right) = 1 - \alpha$.
+
+Common methods for constructing credible intervals:
+
+-   **Central** or **equal-tailed** credible interval: $l$ and $u$ are the $\alpha/2$ and $1 - \alpha/2$ quantiles of the posterior distribution.
+-   **Highest posterior density (HPD)** credible interval: the range of values that contains $100(1 - \alpha)\%$ of the posterior probability AND the density within the region is never lower than that outside.
+
+The central credible interval:
+
+-   Has a direct interpretation as the posterior $\alpha/2$ and $1 - \alpha/2$ quantiles.
+-   Is invariant under one-to-one transformation of the estimand.
+-   Is easier to compute.
+-   Is more popular than the HPD interval.
+
+The HPD interval:
+
+-   Is always at least as narrow as the central credible interval.
+-   May differ substantially from the central credible interval when the posterior distribution is highly skewed.
+
+## Credible versus confidence interval
+
+A $100(1 - \alpha)\%$ **credible interval** for $\theta$ is an interval $\lbrack l(y),u(y)\rbrack$, based on the observed data $Y = y$, such that
+$$
+\Pr\left( l(y) \leq \theta \leq u(y) \mid Y = y \right) = 1 - \alpha.
+$$
+
+A $100(1 - \alpha)\%$ **confidence interval** for $\theta$ is a random interval $\lbrack l(Y),u(Y)\rbrack$, such that before the data are gathered,
+$$
+\Pr\left( l(Y) \leq \theta \leq u(Y) \mid \theta \right) = 1 - \alpha.
+$$
+
+The credible interval contains the parameter with the specified probability AFTER seeing the data. The thing that is random in this setting is the PARAMETER $\theta$.
+
+The confidence interval will contain the parameter with the specified probability BEFORE seeing the data. Once the data are observed, the interval will either contain the parameter or it will not. The thing that is random in this setting is the DATA $Y$.
+
+## Monte Carlo sampling
+
+The posterior distribution may not be describable with a closed-form expression.
+
+- A plot may not be adequate to study the posterior characteristics we care about.
+
+Monte Carlo sampling is a method for drawing independent samples from a distribution.
+
+Suppose we use Monte Carlo sampling to draw $\theta^{(1)},\ldots,\theta^{(B)}$, a sample of independent, random values of $\theta$, from the posterior distribution $p(\theta|y)$.
+
+Then the empirical distribution of ${\{\theta}^{(1)},\ldots,\theta^{(B)}\}$ would approximate $p(\theta|y)$, and the approximation would improve as the value of *B* increased.
+
+This empirical distribution is known as a **Monte Carlo approximation** to $p(\theta|y)$.
+
+The Law of Large Numbers says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta|y)$, then for (almost) any function $h(\theta)$, we have
+
+$$
+\frac{1}{B}\sum_{j = 1}^{B}{h\left( \theta^{(j)} \right) \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int_{}^{}{h(\theta)p\left( \theta \mid y \right)d\theta}}\text{ as }\ B \rightarrow \infty.
+$$
+
+This implies that:
+
+-   $\bar{\theta} = \frac{1}{B}\sum_{i=1}^{B}\theta^{(j)} \rightarrow E\left( \theta \mid y \right)$
+-   $\frac{1}{B - 1}\sum_{i=1}^{B}\left( \theta^{(j)} - \bar{\theta} \right)^{2} \rightarrow var\left( \theta \mid y \right)$
+-   $\frac{1}{B}\sum{i=1}^{B}I(\theta^{(j)} \leq c) \rightarrow P(\theta \leq c|y)$
+-   The empirical distribution of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\} \rightarrow p(\theta|y)$
+-   The $\alpha$-quantile of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\}$ converges to the $\alpha$-quantile of $p(\theta|y)$
+
+This is also known as **Monte Carlo integration**.
+
+## Example: Summarizing a posterior distribution
+
+Suppose $\theta\mid y \sim \text{Beta}(10,\ 2)$.
+
+A plot of the distribution is shown below.
+
+```{r}
+#posterior distribution for theta is Beta(10, 2)
+#set shape parameters
+a <- 10
+b <- 2
+
+#create sequence of possible values of theta
+theta <- seq(0, 1, len = 1000)
+#find posterior density for these values of theta
+d <- dbeta(theta, shape1 = a, shape2 = b)
+
+# plot of density
+plot(theta, d, type = "l",
+     ylab = "density",
+     xlab = expression(theta))
+```
+
+**Central and HPD credible intervals**
+
+The 95% central credible interval: \[0.58, 0.98\].
+
+-   This was found by determining the .025 and .975 quantiles of the Beta(10, 2) distribution.
+-   `qbeta(c(0.025, 0.975), 10, 2)`
+
+```{r}
+#find 95% central credible interval and hpd
+cci <- qbeta(c(.025, .975), shape1 = a, shape2 = b)
+cci
+```
+
+The 95% HPD interval: \[0.63, 1.00\].
+
+-   This was found numerically using the `hpd` function in the **TeachingDemos** R package.
+
+```{r}
+# load and install TeachingDemos package if necessary
+if (!require(TeachingDemos)) {
+  install.packages("TeachingDemos",
+                   repos = "https://cran.r-project.org")
+  library(TeachingDemos)
+}
+
+hpdi <- hpd(qbeta, shape1 = a, shape2 = b, conf = .95)
+hpdi
+```
+
+We visually compare the two intervals.
+
+```{r}
+plot(theta, d, type = "l",
+     ylab = "density",
+     xlab = expression(theta))
+#draw vertical lines on plot for cci and hpdi.  Add legend
+abline(v = cci, col = "blue")
+abline(v = hpdi, col = "orange")
+legend("topleft", legend = c("central", "HPD"), lty = 1,
+       col = c("blue", "orange"))
+```
+
+**MAP estimate**
+
+The MAP estimate is approximately 0.9.
+
+```{r}
+# map estimate
+optimize(f = dbeta, interval = 0:1, shape1 = 10, shape2 = 2,
+         maximum = TRUE)
+```
+
+**Posterior mean estimate**
+
+The posterior mean is $10/(10 + 2) = 5/6 \approx 0.8333$.
+
+Estimate via simulation:
+
+```{r}
+# estimate mean
+mean(rbeta(n = 1000, shape1 = a, shape2 = b))
+```
+
+**Posterior variance estimate**
+
+The posterior variance is $\frac{10\cdot 2}{(10+2)^2(10+2+1)} \approx 0.01$.
+
+Estimate via simulation:
+
+```{r}
+# estimate variance
+var(rbeta(n = 1000, shape1 = a, shape2 = b))
+```
+
+## Posterior distribution as compromise {#posterior-distribution-as-compromise .unnumbered}
+
+Is there a general relation between the prior distribution and the posterior distribution in Bayesian inference?
+
+Recall that
+
+- $E(\theta) = E\left\lbrack E\left(\theta \mid y \right)\right\rbrack$.
+- $var(\theta) = E\left\lbrack var\left( \theta \mid y \right) \right\rbrack + var\lbrack E\left( \theta \mid y \right)\rbrack$
+
+The prior mean of $\theta$ is the average of all possible posterior means over the distribution of the possible data.
+
+The posterior variance is, on average, smaller than the prior variance, by an amount that depends on the variation in the posterior means over all the data.
+
+The posterior distribution is a compromise between the prior information and the data, and the compromise is more heavily weighted toward the data as the sample size increases.
+
+**Example:** Binomial data
+
+In the binomial data example using the $\text{Beta}(1, 1) = \text{U}(0,1)$ prior distribution:
+
+- The prior mean is 1/2.
+- The sample proportion is $y/n$.
+- The posterior mean is $(y + 1)/(n + 2)$.
+
+Notice
+
+$$\frac{y + 1}{n + 2} = \frac{n}{n + 2} \cdot \frac{y}{n} + \frac{2}{n + 2} \cdot \frac{1}{2}.$$
