@@ -5,17 +5,17 @@ date: today
 date-format: long
 title-block-banner: true
 wrap: 'none'
-# format: html
-# engine: knitr
-# self-contained: true
-format: ipynb
-jupyter:
-  kernelspec:
-    display_name: R
-    language: R
-    name: ir
-execute:
-  output: false
+format: html
+engine: knitr
+self-contained: true
+# format: ipynb
+# jupyter:
+#   kernelspec:
+#     display_name: R
+#     language: R
+#     name: ir
+# execute:
+#   output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
