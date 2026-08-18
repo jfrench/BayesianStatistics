@@ -6,16 +6,15 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 # format: html
-# engine: knitr
 # self-contained: true
 format: ipynb
 jupyter:
-  kernelspec:
-    display_name: Python 3
-    language: python
-    name: python3
+ kernelspec:
+   display_name: Python 3
+   language: python
+   name: python3
 execute:
-  output: false
+ output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -383,7 +382,7 @@ hpdi
 We visually compare the two intervals.
 
 ```{python}
-plt.plot(theta, d, label="density")
+plt.plot(theta, d, color="tab:grey", label="density")
 # draw vertical lines on plot for cci and hpdi; add legend
 for x in cci:
     plt.axvline(x, color="tab:blue", label="central" if x == cci[0] else None)
