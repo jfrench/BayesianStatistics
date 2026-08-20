@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-# format: html
-format: ipynb
-jupyter: ir
-execute:
-  output: false
+format: html
+# format: ipynb
+# jupyter: ir
+# execute:
+#   output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -144,7 +144,7 @@ Posterior distribution: $\theta\mid y \sim \text{Beta}(y+\alpha,n-y+\beta)$
 
 Posterior predictive distribution:
 $$
-P(\widetilde y=1\mid y)=\frac{y+\alpha}{n+\alpha+\beta}.
+P(\tilde{y}=1\mid y)=\frac{y+\alpha}{n+\alpha+\beta}.
 $$
 
 ### Example: Placenta previa
@@ -469,37 +469,39 @@ The posterior mean $\mu_n$ is a weighted average of the prior mean and the obser
 
 - The larger the variance, the smaller the precision, and the less weight that component ($\overline y$ or $\mu_0$) has in the posterior mean.
 - This is intuitive because if a component has greater variability associated with it, it should play a less prominent role in affecting our posterior belief.
-- As the sample size increases (with everything else held constant), our posterior belief becomes largely determined by $\sigma^2$ and $\overline y$.
+- As the sample size increases (with everything else held constant), the data are more influential and our posterior mean converges to $\bar{y}$ and the posterior variance converges to 0.
 
 **Posterior predictive distribution**
 
 Notice that
 $$
 \begin{aligned}
-p(\widetilde y\mid y)
-&=\int p(\widetilde y,\theta\mid y)\,d\theta\\
-&=\int p(\widetilde y\mid\theta,y)p(\theta\mid y)\,d\theta\\
-&=\int p(\widetilde y\mid\theta)p(\theta\mid y)\,d\theta\\
-&\propto\int \exp\left[-\frac{1}{2\sigma^2}(\widetilde y-\theta)^2\right]
+p(\tilde{y}\mid y)
+&=\int p(\tilde{y}, \theta\mid y)\,d\theta\\
+&=\int p(\tilde{y}\mid\theta,y)p(\theta\mid y)\,d\theta\\
+&=\int p(\tilde{y}\mid\theta)p(\theta\mid y)\,d\theta\\
+&\propto\int \exp\left[-\frac{1}{2\sigma^2}(\tilde{y}-\theta)^2\right]
 \exp\left[-\frac{1}{2\tau_n^2}(\theta-\mu_n)^2\right]d\theta.
 \end{aligned}
 $$
 
-The product in the integrand is a quadratic function of $(\widetilde y,\theta)$, so the joint distribution is a normal distribution. Hence, the marginal distribution of $\widetilde y$ will be a normal distribution.
+The exponent in the integrand is a quadratic function of $(\tilde{y},\theta)$, so the joint distribution is a bivariate normal distribution. Hence, the marginal distribution of $\tilde{y}$ will be a normal distribution.
 
 Using properties of the mean and variance:
 
 $$
-E(\widetilde y\mid y)=E\left[E(\widetilde y\mid\theta,y)\mid y\right]=E(\theta\mid y)=\mu_n.
+E(\tilde{y}\mid y)=E\left[E(\tilde{y}\mid\theta,y)\mid y\right]=E(\theta\mid y)=\mu_n.
 $$
 
-\begin{align*}
+$$
+\begin{aligned}
 \text{var}(\tilde y\mid y)
 &=E\left[\text{var}(\tilde y\mid\theta,y)\mid y\right]
-+\text{var}\left[E(\widetilde y\mid\theta,y)\mid y\right]\\
++\text{var}\left[E(\tilde{y}\mid\theta,y)\mid y\right]\\
 &=E(\sigma^2\mid y)+\text{var}(\theta\mid y)\\
 &=\sigma^2+\tau_n^2.
-\end{align*}
+\end{aligned}
+$$
 
 The posterior predictive mean is simply the mean of the posterior distribution and the posterior predictive variance is the sum of the posterior variance and the variance of the data distribution.
 
@@ -507,7 +509,7 @@ The posterior predictive mean is simply the mean of the posterior distribution a
 
 The Poisson model arises naturally in the study of data taking counts, e.g., epidemiology, where the incidence of diseases is studied.
 
-Data distribution: $y_1,y_2,\ldots,y_n\mid\theta\stackrel{i.i.d.}{\sim}\text{Poisson}(\theta)$, with
+Data distribution: $y_1,y_2,\ldots,y_n\mid\theta\stackrel{\text{i.i.d.}}{\sim}\text{Poisson}(\theta)$, with
 $$
 p(y_i\mid\theta)=\frac{\theta^{y_i}e^{-\theta}}{y_i!}I_{\{0,1,2,\ldots\}}(y_i).
 $$
@@ -516,7 +518,7 @@ Prior: $\theta\sim\text{Gamma}(\alpha,\beta)$, with
 $$
 p(\theta)=\frac{\beta^\alpha}{\Gamma(\alpha)}\theta^{\alpha-1}e^{-\beta\theta}I_{(0,\infty)}(\theta),
 $$
-for shape parameter $\alpha>0$, and scale parameter $\beta>0$.
+for shape parameter $\alpha>0$ and rate (inverse scale) parameter $\beta>0$.
 
 Posterior distribution, $p(\theta\mid y)$:
 $$
@@ -583,7 +585,7 @@ The mean of the posterior is $6/7=0.86$, a substantial shrinkage toward the prio
 
 We now examine the R code used to determine these results.
 
-We setup our prior parameters.
+We set up our prior parameters.
 ```{r}
 alpha <- 3
 beta <- 5
@@ -612,7 +614,7 @@ We visually compare our exact and approximate posterior densities.
 par(mfrow = c(1, 2))
 # plot approximate posterior
 plot(density(post.draws), xlab = "theta",
-     main = "10,0000 draws from Gamma(6,7)")
+     main = "100,000 draws from Gamma(6,7)")
 # draw exact posterior
 theta <- seq(0.0001, 3, len = 1000)
 post1 <- dgamma(theta, shape = alpha + 3, rate = beta + 2)
@@ -658,7 +660,7 @@ post.draws2 <- rgamma(100000, shape = alpha + 30, rate = beta + 2 * 10)
 We plot the approximate posterior.
 
 ```{r}
-plot(density(post.draws2), xlab = "theta", main = "10,0000 draws from Gamma(33,25)")
+plot(density(post.draws2), xlab = "theta", main = "100,000 draws from Gamma(33,25)")
 ```
 
 We approximate the posterior mean.
@@ -709,7 +711,7 @@ Prior distribution: $\theta\sim\text{Gamma}(\alpha,\beta)$, with
 $$
 p(\theta)=\frac{\beta^\alpha}{\Gamma(\alpha)}\theta^{\alpha-1}e^{-\beta\theta}I_{(0,\infty)}(\theta),
 $$
-for shape parameter $\alpha>0$, and scale parameter $\beta>0$.
+for shape parameter $\alpha>0$ and rate parameter $\beta>0$.
 
 Posterior distribution, $p(\theta\mid y)$:
 $$
@@ -783,11 +785,11 @@ Jeffreys chose this rule so that
 $$
 \sqrt{J(\phi)}=\sqrt{J(\theta)}\left|\frac{d\theta}{d\phi}\right|,
 $$
-i.e., the prior for $\phi$, $\sqrt{J(\phi)}$, can be obtained by directly computing the Fisher's information for $\phi$ or finding $\sqrt{J(\theta)}$ and transforming the associated distribution using the change-of-variable formula.
+i.e., the prior for $\phi$, $\sqrt{J(\phi)}$, can be obtained by directly computing the Fisher information for $\phi$ or finding $\sqrt{J(\theta)}$ and transforming the associated distribution using the change-of-variable formula.
 
 Jeffreys' principle can be extended to multiparameter models.
 
-- Results vary based on whether you multiply the Jeffreys' priors for the parameters independently or use the square root of the determinant of the Fisher's information matrix.
+- Results vary based on whether you multiply the Jeffreys' priors for the parameters independently or use the square root of the determinant of the Fisher information matrix.
   - E.g., $\sqrt{J(\theta_1)J(\theta_2)}\neq\sqrt{\det J(\theta)}$ for $\theta=(\theta_1,\theta_2)$.
 - In high-dimensional parameter spaces, hierarchical models are often favored over noninformative priors.
 
@@ -820,7 +822,7 @@ The Empirical Bayes approach to choosing a prior distribution uses the data to s
 
 E.g., if $\gamma$ denotes the hyperparameters of the prior distribution, then an Empirical Bayes approach might be to choose $\gamma$ such that
 $$
-\widehat\gamma=\underset{\gamma}{\arg\max}\int p(y\mid\theta)p(\theta\mid\gamma)\,d\theta.
+\hat{\gamma}=\underset{\gamma}{\arg\max}\int p(y\mid\theta)p(\theta\mid\gamma)\,d\theta.
 $$
 
 - This is the marginal maximum likelihood estimator for the hyperparameter.
@@ -871,15 +873,17 @@ Consider a set of i.i.d. $N(\mu,\sigma^2)$ random variables. Determine the natur
 <br><br><br><br><br><br><br><br><br><br><br><br>
 :::
 
-If $y_1,\ldots,y_n$ are i.i.d., then the Fisher's information for the $n$ observations is $nJ(\theta)$, where $J(\theta)$ is the Fisher's information for a single observation.
+If $y_1,\ldots,y_n$ are i.i.d., then the Fisher information for the $n$ observations is $nJ(\theta)$, where $J(\theta)$ is the Fisher information for a single observation.
 
 **Example: Jeffreys prior for Binomial data distribution**
 
 If $y\mid\theta\sim\text{Binomial}(n,\theta)$, the log-likelihood is
-\begin{align*}
+$$
+\begin{aligned}
 \ln p(y\mid\theta) &=\ln\left[\binom{n}{y}\theta^y(1-\theta)^{n-y}\right]\\
 &=\text{constant}+y\ln(\theta)+(n-y)\ln(1-\theta).
-\end{align*}
+\end{aligned}
+$$
 
 From this,
 $$
