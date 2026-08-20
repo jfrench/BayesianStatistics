@@ -103,11 +103,11 @@ Bayesian statistics uses probability statements and distributions to draw conclu
 
 | Term | Description |
 |------|-------------|
-| $p(y \mid \theta)$ | Likelihood function |
+| $p(y \,\vert\, \theta)$ | Likelihood function |
 | $p(\theta)$ | Prior distribution for $\theta$ |
 | $p(y)$ | Marginal likelihood for $y$ (a.k.a. prior predictive distribution) |
-| $p(\theta \mid y)$ | Posterior distribution for $\theta$ |
-| $p(\tilde{y} \mid y)$ | Posterior predictive distribution for an observable quantity |
+| $p(\theta \,\vert\, y)$ | Posterior distribution for $\theta$ |
+| $p(\tilde{y} \,\vert\, y)$ | Posterior predictive distribution for an observable quantity |
 
 ## Using Bayes' rule in Bayesian Inference
 
