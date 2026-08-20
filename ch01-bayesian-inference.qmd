@@ -16,7 +16,7 @@ execute:
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
 
 <a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch01-bayesian-inference.ipynb">
-  <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300">
+  <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/bayesian-inference.svg" width="300" height="300">
     </a>
     
 ::: {.content-visible when-format="pdf"}
@@ -74,7 +74,7 @@ $$
 
 - **Observed data**: $y = \left( y_{1},y_{2},\ldots,y_{n} \right)$. 
 - **Unobservable quantities/parameters**: $\theta = (\theta_{1},\theta_{2},\ldots,\theta_{p})$.
-- **Unknown, but observable quantities of interest**: $\widetilde{y} = \left( {\widetilde{y}}_{1},{\widetilde{y}}_{2},\ldots,{\widetilde{y}}_{m} \right)$. 
+- **Unknown, but observable quantities of interest**: $\tilde{y} = \left( {\tilde{y}}_{1},{\tilde{y}}_{2},\ldots,{\tilde{y}}_{m} \right)$. 
 - **Explanatory variables**:
     - Explanatory variable for observation $i$: $x_{i}$.
     - The $j$th explanatory variable for observation $i$: $x_{i,j}$
@@ -97,17 +97,17 @@ Bayesian data analysis can be idealized into three parts:
 
 3.  Evaluate model fit: Does the model fit the data? Are the modeling assumptions reasonable? How sensitive is the model to the assumptions?
 
-Bayesian statistics uses probability statements and distributions to draw conclusions about a parameter $\theta$ or unobserved data $\widetilde{y}$.
+Bayesian statistics uses probability statements and distributions to draw conclusions about a parameter $\theta$ or unobserved data $\tilde{y}$.
 
 ## More notation and terminology
 
 | Term | Description |
 |------|-------------|
-| $p\left(y \mathrel{\vert} \theta\right)$ | Likelihood function |
+| $p(y \mid \theta)$ | Likelihood function |
 | $p(\theta)$ | Prior distribution for $\theta$ |
 | $p(y)$ | Marginal likelihood for $y$ (a.k.a. prior predictive distribution) |
-| $p(\theta \mathrel{\vert} y)$ | Posterior distribution for $\theta$ |
-| $p(\widetilde{y} \mathrel{\vert} y)$ | Posterior predictive distribution for an observable quantity |
+| $p(\theta \mid y)$ | Posterior distribution for $\theta$ |
+| $p(\tilde{y} \mid y)$ | Posterior predictive distribution for an observable quantity |
 
 ## Using Bayes' rule in Bayesian Inference
 
@@ -127,9 +127,7 @@ Since Bayesian statistics treats both $y$ and $\theta$ as random, Bayes' rule ca
     - Continuous $\theta$: $p(y) = \int_{\theta}^{}{p\left( y \mid \theta \right)p(\theta)\ d\theta}$.
 
 Using the definition of conditional probability and Bayes' rule, we see that
-$$
-p\left( \theta \mid y \right) = \frac{p(\theta,y)}{p(y)} = \frac{p\left( y \mid \theta \right)p(\theta)}{p(y)}.
-$$
+$$ p\left( \theta \mid y \right) = \frac{p(\theta,y)}{p(y)} = \frac{p\left( y \mid \theta \right)p(\theta)}{p(y)}. $$
 
 It is common to work with the unnormalized posterior density, which is the right side of
 
@@ -142,23 +140,23 @@ The marginal likelihood of $y$ is also known as the **prior predictive distribut
 - Prior because it is not conditional on previously observed data.
 - Predictive because it is the distribution for a quantity that is observable.
 
-After the data $y$ have been observed, we can predict an unknown observable, $\widetilde{y}$, of the same process.
+After the data $y$ have been observed, we can predict an unknown observable, $\tilde{y}$, of the same process.
 
-**Posterior predictive distribution**: $p(\widetilde{y} \mid y)$
+**Posterior predictive distribution**: $p(\tilde{y} \mid y)$
 
 -   Posterior because it is conditional on the observed $y$.
--   Predictive because it is a prediction for an observable $\widetilde{y}$.
+-   Predictive because it is a prediction for an observable $\tilde{y}$.
 
 For continuous $\theta$, the posterior predictive distribution may be derived as
 \begin{align*}
-p(\widetilde{y} \mid y) & = \int_{}^{}{p\left( \widetilde{y},\theta \mid y \right)d\theta} \\
- &= \int_{}^{}{p\left( \widetilde{y} \mid \theta,y \right)p\left( \theta \mid y \right)d\theta} \\
- &= \int_{}^{}{p\left( \widetilde{y} \mid \theta \right)p\left( \theta \mid y \right)d\theta,}.
+p(\tilde{y} \mid y) &= \int p(\tilde{y},\theta \mid y)\,d\theta \\
+&= \int p(\tilde{y} \mid \theta,y)p(\theta \mid y)\,d\theta \\
+&= \int p(\tilde{y} \mid \theta)p(\theta \mid y)\,d\theta.
 \end{align*}
 
 Notes:
 
-- The last line follows under the assumption that $y$ and $\widetilde{y}$ are conditionally independent given $\theta$, i.e., $p(y \mid \theta, \widetilde{y} \mid \theta) = p(\widetilde{y} \mid \theta)$.
+- The last line follows under the assumption that $y$ and $\tilde{y}$ are conditionally independent given $\theta$, i.e., $p(\tilde{y} \mid \theta, y) = p(\tilde{y} \mid \theta)$.
 - The second and third lines indicate that the posterior predictive distribution is an average of conditional predictions over the posterior distribution of $\theta$.
 
 ## Likelihood Principle
@@ -207,13 +205,13 @@ What is the probability that 'radom' actually means random?
 
 The proportion of female births in the European population is accepted to be less than 0.5. Let $y$ be the number of females in $n$ recorded births and $\theta$ be the probability of a female birth among the European population. Out of $n = 100$ randomly selected births, $y = 60$ are female. The Beta$(\alpha,\beta)$ distribution is a natural prior for $\theta$ since its support is $(0,1)$. Without prior knowledge, any value of $\theta$ between 0 and 1 is equally likely. This is equivalent to a $\text{Beta}(1,1) = \text{U}(0,1)$ prior distribution.
 
-Likelihood: $\text{Bin}(y|n,\theta)$
+Likelihood: $\text{Bin}(y \mid n,\theta)$
 
 Prior: $\text{Beta}(\alpha,\beta)$
 
 - Derive the posterior distribution for $\theta$, $p\left( \theta \mid y \right):$
-- Derive the posterior predictive distribution of a new, independent observation, $\widetilde{y}$, i.e., $p(\widetilde{y} \mid y)$.
-    - Since $\widetilde{y} \in \{ 0,1\}$, we can simply find $P(\widetilde{y} = 1 \mid y)$ and $P(\widetilde{y} = 0 \mid y)$.
+- Derive the posterior predictive distribution of a new, independent observation, $\tilde{y}$, i.e., $p(\tilde{y} \mid y)$.
+    - Since $\tilde{y} \in \{ 0,1\}$, we can simply find $P(\tilde{y} = 1 \mid y)$ and $P(\tilde{y} = 0 \mid y)$.
 
 ::: {.content-visible when-format="pdf"}
 \vspace{4in}
@@ -249,7 +247,7 @@ The **maximum a posteriori (MAP) estimator** is a common choice for summarizing 
 The MAP estimator is the parameter value that maximizes the posterior distribution (i.e., the posterior mode):
 
 $$
-\widehat{\theta}_{\mathrm{MAP}}
+\hat{\theta}_{\mathrm{MAP}}
 = \arg\max_{\theta} p(\theta \mid y)
 = \arg\max_{\theta} \log p(\theta \mid y)
 = \arg\max_{\theta}
@@ -261,9 +259,9 @@ $$
 Other common point estimators for a (univariate) posterior distribution include:
 
 - Posterior mean: $E(\theta|y)$
-- Posterior median: e.g., ${\widehat{\theta}}_{median} = \left\{ \theta^{*}:\int_{- \infty}^{\theta^{*}}{p\left( \theta \mid y \right)\ d\theta = 0.5} \right\}$
-- Posterior variance: $var(\theta|y)$
-- Posterior standard deviation: $SD\left( \theta \mid y \right) = \sqrt{var(\theta|y)}$
+- Posterior median: e.g., ${\hat{\theta}}_{median} = \left\{ \theta^{*}:\int_{- \infty}^{\theta^{*}}{p\left( \theta \mid y \right)\ d\theta = 0.5} \right\}$
+- Posterior variance: $\text{var}(\theta|y)$
+- Posterior standard deviation: $SD\left( \theta \mid y \right) = \sqrt{\text{var}(\theta|y)}$
 - Posterior quantiles
 
 ## Interval estimation
@@ -324,11 +322,11 @@ $$
 $$
 This implies that:
 
--   $\bar{\theta} = \frac{1}{B}\sum_{i=1}^{B}\theta^{(j)} \rightarrow E\left( \theta \mid y \right)$
--   $\frac{1}{B - 1}\sum_{i=1}^{B}\left( \theta^{(j)} - \bar{\theta} \right)^{2} \rightarrow var\left( \theta \mid y \right)$
--   $\frac{1}{B}\sum{i=1}^{B}I(\theta^{(j)} \leq c) \rightarrow P(\theta \leq c|y)$
--   The empirical distribution of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\} \rightarrow p(\theta|y)$
--   The $\alpha$-quantile of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\}$ converges to the $\alpha$-quantile of $p(\theta|y)$
+-   $\bar{\theta} = \frac{1}{B}\sum_{j=1}^{B}\theta^{(j)} \rightarrow E\left( \theta \mid y \right)$
+-   $\frac{1}{B - 1}\sum_{j=1}^{B}\left( \theta^{(j)} - \bar{\theta} \right)^{2} \rightarrow \text{var}\left( \theta \mid y \right)$
+-   $\frac{1}{B}\sum_{j=1}^{B}I(\theta^{(j)} \leq c) \rightarrow P(\theta \leq c \mid y)$
+-   The empirical distribution of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\} \rightarrow p(\theta \mid y)$
+-   The $\alpha$-quantile of $\left\{ \theta^{(1)},\ldots,\theta^{(B)} \right\}$ converges to the $\alpha$-quantile of $p(\theta \mid y)$
 
 This is also known as **Monte Carlo integration**.
 
@@ -357,7 +355,7 @@ plot(theta, d, type = "l",
 
 **Central and HPD credible intervals**
 
-The 95% central credible interval: \[0.58, 0.98\].
+The 95% central credible interval: $[0.58, 0.98]$.
 
 -   This was found by determining the .025 and .975 quantiles of the Beta(10, 2) distribution.
 -   `qbeta(c(0.025, 0.975), 10, 2)`
@@ -368,7 +366,7 @@ cci <- qbeta(c(.025, .975), shape1 = a, shape2 = b)
 cci
 ```
 
-The 95% HPD interval: \[0.63, 1.00\].
+The 95% HPD interval: $[0.63, 1.00]$.
 
 -   This was found numerically using the `hpd` function in the **TeachingDemos** R package.
 
@@ -436,7 +434,7 @@ Is there a general relationship between the prior distribution and the posterior
 Recall that
 
 - $E(\theta) = E\left\lbrack E\left(\theta \mid y \right)\right\rbrack$.
-- $var(\theta) = E\left\lbrack var\left( \theta \mid y \right) \right\rbrack + var\lbrack E\left( \theta \mid y \right)\rbrack$
+- $\text{var}(\theta) = E\left[ \text{var}\left( \theta \mid y \right) \right] + \text{var}[E\left( \theta \mid y \right)]$
 
 The prior mean of $\theta$ is the average of all possible posterior means over the distribution of the possible data.
 
