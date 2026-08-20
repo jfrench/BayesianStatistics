@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-# format: html
-format: ipynb
-jupyter: ir
-execute:
-  output: false
+format: html
+# format: ipynb
+# jupyter: ir
+# execute:
+#   output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -101,14 +101,11 @@ Bayesian statistics uses probability statements and distributions to draw conclu
 
 ## More notation and terminology
 
-| Term&nbsp;&nbsp;&nbsp;&nbsp;| Description |
-|:-----|:------------|
-| $p(y \mid \theta)$ | Likelihood function |
-| $p(\theta)$ | Prior distribution for $\theta$ |
-| $p(y)$ | Marginal likelihood for $y$ (a.k.a. prior predictive distribution) |
-| $p(\theta \mid y)$ | Posterior distribution for $\theta$ |
-| $p(\tilde{y} \mid y)$ | Posterior predictive distribution for an observable quantity |
-
+- **Likelihood function:** $p(y \mid \theta)$
+- **Prior distribution for $\theta$:** $p(\theta)$
+- **Marginal likelihood for $y$ (a.k.a. prior predictive distribution):** $p(y)$
+- **Posterior distribution for $\theta$:** $p(\theta \mid y)$
+- **Posterior predictive distribution for an observable quantity:** $p(\tilde{y} \mid y)$
 ## Using Bayes' rule in Bayesian Inference
 
 Since Bayesian statistics treats both $y$ and $\theta$ as random, Bayes' rule can be used to perform inference.
@@ -155,6 +152,7 @@ p(\tilde{y} \mid y) &= \int p(\tilde{y},\theta \mid y)\,d\theta \\
 &= \int p(\tilde{y} \mid \theta)p(\theta \mid y)\,d\theta.
 \end{aligned}
 $$
+
 Notes:
 
 - The last line follows under the assumption that $y$ and $\tilde{y}$ are conditionally independent given $\theta$, i.e., $p(\tilde{y} \mid \theta, y) = p(\tilde{y} \mid \theta)$.
