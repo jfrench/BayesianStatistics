@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-format: html
-# format: ipynb
-# jupyter: ir
-# execute:
-#   output: false
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -183,6 +183,9 @@ A woman's mother carries one hemophilia gene (but not two), while her father doe
 ::: {.content-visible when-format="html"}
 <div style="height: 4in;"></div>
 :::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
 
 ## Example: Spelling correction
 
@@ -195,6 +198,9 @@ What is the probability that 'radom' actually means random?
 :::
 ::: {.content-visible when-format="html"}
 <div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
 :::
 
 ## Example: Estimating the probability of a female birth
@@ -214,6 +220,9 @@ Prior: $\text{Beta}(\alpha,\beta)$
 :::
 ::: {.content-visible when-format="html"}
 <div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
 :::
 
 ##  Summarizing (univariate) posterior distributions 

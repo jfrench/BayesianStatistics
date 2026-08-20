@@ -1,0 +1,917 @@
+---
+title: "Single-parameter Models"
+subtitle: "BDA 3: 2.4-2.9"
+date: today
+date-format: long
+title-block-banner: true
+wrap: 'none'
+self-contained: true
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  output: false
+---
+
+An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch02-single-parameter-models.ipynb">
+  <img
+    src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/single-parameter-models.svg"
+    style="width: 300px; height: 300px;">
+</a>
+    
+::: {.content-visible when-format="pdf"}
+  \begin{center}
+  \href{https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch02-single-parameter-models.ipynb}{
+    \includegraphics[width=3in]{qr_codes/single-parameter-models.png}
+  }
+  \end{center}
+:::
+
+---
+
+## Prior distribution basics
+
+A prior distribution must be chosen to perform Bayesian inference.
+
+How do we decide what the prior distribution for $\theta$ should be?
+
+### Population vs state of knowledge
+
+**Population interpretation**: the prior distribution represents a population of possible parameter values from which the $\theta$ of current interest has been drawn.
+
+**State of knowledge interpretation**: the prior distribution describes our knowledge and uncertainty about $\theta$ as if its value were a random realization from the prior distribution.
+
+Approaches to choosing a prior distribution can be partitioned in various ways.
+
+### Subjective vs Objective
+
+**Subjective prior:** The prior distribution is chosen based on your beliefs about the behavior of $\theta$.
+
+**Objective prior:** The prior distribution is chosen in a systematic way to minimize personal bias in the result.
+
+### Informative vs Noninformative
+
+**Informative prior:** The prior distribution is specifically chosen based on available information or knowledge to help make the posterior distribution more precise.
+
+**Noninformative prior:** The prior distribution is intentionally chosen to be vague so that it plays only a minimal role in the posterior distribution.
+
+- Let the data "speak for themselves".
+
+### Proper vs improper
+
+**Proper prior:** The prior distribution is a valid statistical distribution and does not depend on the data.
+
+**Improper prior:** The prior is NOT a valid statistical distribution (usually it does not integrate to 1).
+
+**Caution:** An improper prior can sometimes lead to situations where the posterior doesn't integrate to a finite constant! However, sometimes it is fine, e.g., let
+$$
+p(\sigma^2) = \frac{1}{\sigma^2}
+$$
+be the prior density for $\sigma^2$ when the data distribution is $y\mid\sigma^2 \sim N(\theta,\sigma^2)$ with $\theta$ assumed to be known.
+
+### Conjugate vs non-conjugate
+
+**Conjugate prior:** The posterior distribution has the same parametric form as the prior distribution.
+
+**Non-conjugate prior:** Any prior that's not a conjugate prior.
+
+The prior distribution should include all plausible values of $\theta$, though it doesn't need to be centered around the true value since the data will far outweigh any reasonable prior.
+
+The parameters of the prior distribution are known as **hyperparameters**.
+
+### Definition of conjugate priors
+
+Let $F$ be a family of distributions containing the data distribution, $p(y\mid\theta)$, and $H$ be a family of distributions containing the prior distribution for $\theta$, $p(\theta)$.
+
+- $N(\mu,\sigma^2)$, $\mu\in(-\infty,\infty)$, $\sigma^2>0$, is a family of distributions.
+- $N(0,1)$ is a member of that family.
+
+Distributional family $H$ is conjugate for distributional family $F$ if
+$$
+p(y\mid\theta)\in F \text{ and } p(\theta)\in H \quad\Longrightarrow\quad p(\theta\mid y)\in H.
+$$
+
+- e.g., $p(y\mid\theta)\in\text{Binomial}$ and $p(\theta)\in\text{Beta}$ implies $p(\theta\mid y)\in\text{Beta}$.
+
+We are most interested in *natural* conjugate prior families, which arise by taking $H$ to be the set of all densities having the same functional form as the likelihood.
+
+Typically, only data distributions from exponential families have conjugate prior distributions.
+
+**Advantages:**
+
+- Closed-form solution for the posterior distribution.
+- Simplifies computations.
+- Often a "good enough" approximation of your real beliefs.
+- Can often be interpreted as "additional data" in the model.
+
+**Disadvantages:**
+
+- Can be unrealistic.
+- May be impossible for complex models.
+
+Conjugate priors may be sufficiently flexible to be useful in your analysis. Consider the flexibility of the Beta distribution.
+
+```{r}
+# vector for parameter values
+theta <- seq(0, 1, len = 10000)
+# densities for different members of the Beta family
+d1 <- dbeta(theta, 0.1, 0.1)
+d2 <- dbeta(theta, 1, 1)
+d3 <- dbeta(theta, 50, 100)
+# plot densities
+plot(theta, d3, type = "l", col = "orange", lty = 3,
+     xlab = expression(theta),
+     ylab = "density")
+lines(theta, d2, col = "blue", lty = 1)
+lines(theta, d1, col = "brown", lty = 2)
+legend("topright",
+       legend = c("Beta(1, 1)", "Beta(0.1, 0.1)", "Beta(50, 100)"),
+       col = c("blue", "brown", "orange"),
+       lwd = 1, lty = 1:3)
+```
+
+## Conjugate prior examples
+
+### Beta-Binomial conjugate pair
+
+Data distribution: $y\mid\theta \sim \text{Bin}(n,\theta)$
+
+Prior distribution: $\theta \sim \text{Beta}(\alpha,\beta)$
+
+Posterior distribution: $\theta\mid y \sim \text{Beta}(y+\alpha,n-y+\beta)$
+
+Posterior predictive distribution:
+$$
+P(\widetilde y=1\mid y)=\frac{y+\alpha}{n+\alpha+\beta}.
+$$
+
+### Example: Placenta previa
+
+Placenta previa is a condition in which the placenta of an unborn child is implanted very low in the uterus, obstructing the child from a normal vaginal delivery. An early study concerning the sex of placenta previa births in Germany found that of a total of 980 births, 437 were female. How strong is the evidence that the proportion of female births in the population of placenta previa births is less than 0.485 (the proportion in the general population)?
+
+## Analysis using a uniform prior
+
+Assuming a Uniform$(0,1)$ prior distribution for $\theta$, and a binomial sampling model for $y\mid\theta$, then the posterior distribution for $\theta$ is
+$$
+\theta\mid y \sim \text{Beta}(y+1,n-y+1)=\text{Beta}(438,544).
+$$
+
+The mean is $438/(438+544)=.446$.
+
+The 95% central credible interval is $[.415,.477]$.
+
+The posterior probability of interest is $P(\theta < 0.485 \mid y) = 0.993$.
+
+We now examine the R code used to determine these results.
+
+```{r}
+#set parameters of Beta(a, b) posterior
+a <- 438
+b <- 544
+```
+
+```{r}
+(mu <- a / (a + b)) # posterior mean
+```
+
+```{r}
+(v <- (a * b) / (a + b)^2 / (a + b + 1)) # posterior variance
+```
+
+```{r}
+qbeta(.5, a, b) # posterior median
+```
+
+```{r}
+(ci0 <- qbeta(c(.025, .975), a, b)) # credible interval
+```
+
+```{r}
+pbeta(0.485, a, b) #posterior probability of interest
+```
+
+### Analysis using different conjugate prior distributions
+
+Since the $\text{Beta}(\alpha,\beta)$ distribution is conjugate for the binomial sampling model, we will see the effect of varying the hyperparameters $\alpha$ and $\beta$ on the posterior distribution $p(\theta\mid y)$.
+
+| $\alpha$ | $\beta$ | Posterior median | 95% credible interval for $\theta$ |
+|---:|---:|---:|:---|
+| 1 | 1 | 0.446 | [0.415, 0.477] |
+| 0.97 | 1.03 | 0.446 | [0.415, 0.477] |
+| 2.425 | 2.575 | 0.446 | [0.415, 0.477] |
+| 4.85 | 5.15 | 0.446 | [0.415, 0.477] |
+| 9.7 | 10.3 | 0.447 | [0.416, 0.478] |
+| 48.5 | 51.5 | 0.450 | [0.420, 0.479] |
+| 97 | 103 | 0.453 | [0.424, 0.481] |
+
+We now examine the R code used to determine these results.
+
+```{r}
+# set data
+n <- 980
+y <- 437
+```
+
+```{r}
+# set prior parameters
+alpha <- c(1, 0.97, 2.425, 4.85, 9.7, 48.5, 97)
+beta <- c(1, 1.03, 2.575, 5.15, 10.3, 51.5, 103)
+```
+
+```{r}
+# posterior distribution parameters
+a <-  alpha + y
+b <- n - y + beta
+```
+
+```{r}
+a / (a + b) # posterior means
+```
+
+```{r}
+qbeta(p = .5, a, b) # posterior medians
+```
+
+```{r}
+cbind(qbeta(c(.025), a, b), qbeta(c(.975), a, b)) # credible intervals
+```
+
+```{r}
+pbeta(0.485, a, b) # posterior probabilities of interest
+```
+
+We compare the prior and posterior densities for several parameter combinations.
+
+```{r}
+#determine prior densities for each combination prior parameters
+prior1 <- dbeta(theta, shape1 = alpha[1], shape2 = beta[1])
+prior2 <- dbeta(theta, shape1 = alpha[2], shape2 = beta[2])
+prior3 <- dbeta(theta, shape1 = alpha[3], shape2 = beta[3])
+prior4 <- dbeta(theta, shape1 = alpha[4], shape2 = beta[4])
+prior5 <- dbeta(theta, shape1 = alpha[5], shape2 = beta[5])
+prior6 <- dbeta(theta, shape1 = alpha[6], shape2 = beta[6])
+prior7 <- dbeta(theta, shape1 = alpha[7], shape2 = beta[7])
+
+#determine posterior densities for each combination prior parameters
+post1 <- dbeta(theta, shape1 = a[1], shape2 = b[1])
+post2 <- dbeta(theta, shape1 = a[2], shape2 = b[2])
+post3 <- dbeta(theta, shape1 = a[3], shape2 = b[3])
+post4 <- dbeta(theta, shape1 = a[4], shape2 = b[4])
+post5 <- dbeta(theta, shape1 = a[5], shape2 = b[5])
+post6 <- dbeta(theta, shape1 = a[6], shape2 = b[6])
+post7 <- dbeta(theta, shape1 = a[7], shape2 = b[7])
+
+#construct 2x2 layout of plots
+par(mfrow = c(2, 2))
+#plot several prior/posterior combinations with legend and descriptive title
+plot(theta, post1, type = "l", col = "orange")
+lines(theta, prior1, col = "blue")
+title(paste("alpha =", alpha[1], "beta =", beta[1]))
+legend("topright", legend = c("posterior", "prior"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+
+plot(theta, post2, type = "l", col = "orange")
+lines(theta, prior2, col = "blue")
+title(paste("alpha =", alpha[2], "beta =", beta[2]))
+legend("topright", legend = c("posterior", "prior"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+
+plot(theta, post5, type = "l", col = "orange")
+lines(theta, prior5, col = "blue")
+title(paste("alpha =", alpha[5], "beta =", beta[5]))
+legend("topright", legend = c("posterior", "prior"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+
+plot(theta, post7, type = "l", col = "orange")
+lines(theta, prior7, col = "blue")
+title(paste("alpha =", alpha[7], "beta =", beta[7]))
+legend("topright", legend = c("posterior", "prior"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+### Analysis using a non-conjugate prior distribution
+
+Suppose we had a prior distribution such that 40% of the probability mass is outside the interval $[0.385,0.585]$, with a symmetric peak between.
+
+We visualize this below.
+
+First, we define the non-conjugate density and verify that it is a density.
+
+```{r}
+#create density function of prior
+custom.prior <- function(x) {
+  out <- numeric(length(x))
+
+  for (i in 1:length(x)) {
+    if (x[i] <=  .385) {
+      out[i] <- .5
+    } else if (x[i] >= .585) {
+      out[i] <- .5
+    } else if ((x[i] > .385) && (x[i] < .485)) {
+      out[i] <- (.5 + 5 * (x[i] - .385)/.1)
+    } else if ((x[i] >= .485) && (x[i] < .585)){
+      out[i] <- (5.5 - 5 * (x[i] - .485)/.1)
+    } else {
+      out[i] <- 0
+    }
+  }
+  return(out)
+}
+```
+
+```{r}
+# make sure custom prior integrates to 1
+integrate(custom.prior, 0, 1, subdivisions = 1000)
+```
+
+We now plot the non-conjugate density.
+
+```{r}
+# theta values at which to evaluate densities
+theta <- seq(0, 1, by = 0.001)
+# custom prior density
+dcustom <- custom.prior(theta)
+
+# plot non-conjugate density
+par(mfrow = c(1, 1))
+plot(theta, dcustom, type = "l", main = "non-conjugate prior density",
+     ylab = "density", ylim = c(0, 5.4))
+```
+
+We can numerically determine the posterior density.
+
+We define non-conjugate posterior and verify that it is a
+proper density.
+
+```{r}
+#create function for posterior density
+custom.post <- function(theta) {
+  dbinom(x = 437, size = 980, prob = theta) *
+    custom.prior(theta)/0.003616298
+}
+
+#make sure posterior integrates to 1
+integrate(f = custom.post, 0, 1, subdivisions = 1000)
+```
+
+We can compare the non-conjugate prior and posterior densities
+
+```{r}
+plot(theta, custom.post(theta), type = "l", col = "orange", ylab = "density")
+lines(theta, dcustom, col = "blue")
+legend("topright", legend = c("posterior", "prior"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+The posterior mean is $0.449$.
+
+The posterior median is $0.449$
+
+The 95% central credible interval is $[0.419,0.481]$.
+
+We can determine these numerically via optimization, but we
+will instead demonstrate this by sampling from the (approximate) posterior distribution.
+
+To obtain a sample from the approximate posterior distribution:
+
+1. Create a sequence of gridded values for $\theta$, e.g., $(0.000,0.001,\ldots,1.000)$.
+2. Evaluate the likelihood function and prior distribution on the grid and multiply them together to get an approximate unnormalized posterior density.
+3. Sample from the grid with weights equal to the unnormalized posterior density.
+
+We create the discretized posterior.
+
+```{r}
+# discrete approximation of posterior density
+discretep <- custom.post(theta) / sum(custom.post(theta))
+plot(theta, discretep, col = "grey", ylab = "density", type = "l")
+```
+
+We sample from the discretized posterior.
+
+```{r}
+#create approximate posterior sample
+theta.sample <- sample(theta, 100000, replace = TRUE, prob = discretep)
+```
+
+We plot the approximate posterior.
+
+```{r}
+plot(density(theta.sample), main = "posterior simulations", xlab = "theta")
+```
+
+```{r}
+mean(theta.sample) # approximate mean
+```
+
+```{r}
+median(theta.sample) # approximate median
+```
+
+```{r}
+# approximate credible interval
+quantile(theta.sample, prob = c(.025, .975))
+```
+
+We visually compare the true and approximate posterior and prior densities.
+
+```{r}
+plot(theta, custom.post(theta), type = "l", col = "orange")
+lines(theta, dcustom, col = "blue")
+lines(density(theta.sample), col = "purple")
+legend("topright", legend = c("posterior", "prior", "approximate posterior"),
+       col = c("orange", "blue", "purple"), lwd = c(1, 1))
+```
+
+Alternatively, we could have sampled from the posterior by
+
+1. Creating an approximate inverse cdf function.
+2. Use the inverse cdf method to generate a sample from the approximate posterior distribution.
+
+### Normal-normal conjugate pair for the mean
+
+A normal prior for the mean parameter $\theta$ is conjugate to the normal data distribution if the variance $\sigma^2$ is known.
+
+Data distribution: $y_1,\ldots,y_n \mid\theta,\sigma^2 \stackrel{\text{i.i.d.}}{\sim}  N(\theta,\sigma^2)$, so
+$$
+p(y_i\mid\theta,\sigma^2)=\frac{1}{\sigma\sqrt{2\pi}}\exp\left[-\frac{1}{2\sigma^2}(y_i-\theta)^2\right],
+$$
+with $\theta\in(-\infty,\infty)$ and $\sigma^2>0$.
+
+The normal distribution is often a good approximation of the data distribution and the posterior distribution.
+
+Prior distribution: $\theta\sim N(\mu_0,\tau_0^2)$, so that
+$$
+p(\theta)\propto\exp\left[-\frac{1}{2\tau_0^2}(\theta-\mu_0)^2\right].
+$$
+
+The **precision** is the inverse of the variance and plays an important role in manipulating normal distributions.
+
+Posterior distribution:
+$$
+\begin{aligned}
+p(\theta\mid y)
+&\propto p(\theta)p(y\mid\theta)\\
+&\propto \exp\left[-\frac{1}{2\tau_0^2}(\theta-\mu_0)^2\right]
+\prod_{i=1}^n\exp\left[-\frac{1}{2\sigma^2}(y_i-\theta)^2\right]\\
+&\propto \exp\left[-\frac{1}{2\tau_n^2}(\theta-\mu_n)^2\right].
+\end{aligned}
+$$
+with
+$$
+\mu_n=\frac{\frac{1}{\tau_0^2}\mu_0+\frac{n}{\sigma^2}\overline y}{\frac{1}{\tau_0^2}+\frac{n}{\sigma^2}},
+\qquad
+\frac{1}{\tau_n^2}=\frac{1}{\tau_0^2}+\frac{n}{\sigma^2}.
+$$
+
+The posterior mean $\mu_n$ is a weighted average of the prior mean and the observed sample mean, with weights proportional to the precisions.
+
+- The larger the variance, the smaller the precision, and the less weight that component ($\overline y$ or $\mu_0$) has in the posterior mean.
+- This is intuitive because if a component has greater variability associated with it, it should play a less prominent role in affecting our posterior belief.
+- As the sample size increases (with everything else held constant), our posterior belief becomes largely determined by $\sigma^2$ and $\overline y$.
+
+**Posterior predictive distribution**
+
+Notice that
+$$
+\begin{aligned}
+p(\widetilde y\mid y)
+&=\int p(\widetilde y,\theta\mid y)\,d\theta\\
+&=\int p(\widetilde y\mid\theta,y)p(\theta\mid y)\,d\theta\\
+&=\int p(\widetilde y\mid\theta)p(\theta\mid y)\,d\theta\\
+&\propto\int \exp\left[-\frac{1}{2\sigma^2}(\widetilde y-\theta)^2\right]
+\exp\left[-\frac{1}{2\tau_n^2}(\theta-\mu_n)^2\right]d\theta.
+\end{aligned}
+$$
+
+The product in the integrand is a quadratic function of $(\widetilde y,\theta)$, so the joint distribution is a normal distribution. Hence, the marginal distribution of $\widetilde y$ will be a normal distribution.
+
+Using properties of the mean and variance:
+
+$$
+E(\widetilde y\mid y)=E\left[E(\widetilde y\mid\theta,y)\mid y\right]=E(\theta\mid y)=\mu_n.
+$$
+
+\begin{align*}
+\text{var}(\tilde y\mid y)
+&=E\left[\text{var}(\tilde y\mid\theta,y)\mid y\right]
++\text{var}\left[E(\widetilde y\mid\theta,y)\mid y\right]\\
+&=E(\sigma^2\mid y)+\text{var}(\theta\mid y)\\
+&=\sigma^2+\tau_n^2.
+\end{align*}
+
+The posterior predictive mean is simply the mean of the posterior distribution and the posterior predictive variance is the sum of the posterior variance and the variance of the data distribution.
+
+### Poisson-gamma conjugate pair
+
+The Poisson model arises naturally in the study of data taking counts, e.g., epidemiology, where the incidence of diseases is studied.
+
+Data distribution: $y_1,y_2,\ldots,y_n\mid\theta\stackrel{i.i.d.}{\sim}\text{Poisson}(\theta)$, with
+$$
+p(y_i\mid\theta)=\frac{\theta^{y_i}e^{-\theta}}{y_i!}I_{\{0,1,2,\ldots\}}(y_i).
+$$
+
+Prior: $\theta\sim\text{Gamma}(\alpha,\beta)$, with
+$$
+p(\theta)=\frac{\beta^\alpha}{\Gamma(\alpha)}\theta^{\alpha-1}e^{-\beta\theta}I_{(0,\infty)}(\theta),
+$$
+for shape parameter $\alpha>0$, and scale parameter $\beta>0$.
+
+Posterior distribution, $p(\theta\mid y)$:
+$$
+\theta\mid y\sim\text{Gamma}\left(\alpha+\sum_{i=1}^n y_i,\ \beta+n\right).
+$$
+
+**Derivation of the posterior**
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+### Extended Poisson-Gamma conjugate pair
+
+An **extended Poisson model** is 
+$$
+y_i\mid\theta,x_i\sim\text{Poisson}(x_i\theta),
+$$
+where $x_i$ is the value of an explanatory variable for observation $i$.
+
+- In epidemiology, $x$ is known as the exposure and the rate is $\theta$.
+
+Data distribution: $y_i\mid\theta,x_i\stackrel{\text{indep.}}{\sim}\text{Poisson}(x_i\theta)$, with joint density
+$$
+p(y\mid\theta)=\theta^{\sum_{i=1}^n y_i}\exp\left(-\theta\sum_{i=1}^n x_i\right)\prod_{i=1}^n\frac{1}{y_i!}.
+$$
+
+Prior: $\theta\sim\text{Gamma}(\alpha,\beta)$.
+
+Posterior distribution:
+$$
+\theta\mid y\sim\text{Gamma}\left(\alpha+\sum_{i=1}^n y_i,\ \beta+\sum_{i=1}^n x_i\right).
+$$
+
+### Example: Asthma (single observation)
+
+Out of a population of 200,000 people, 3 persons died of asthma last year. Thus, a crude estimate of asthma mortality rate in the city is 1.5 cases per 100,000 persons per year.
+
+The data distribution of $y$, the number of deaths in a city of 200,000 in one year, may be expressed as Poisson($2.0\times\theta$), where $\theta$ represents the true underlying mortality rate in the city (in cases per 100,000 persons per year).
+
+Our observation $y=3$ with an exposure rate $x=2.0$.
+
+In the west, asthma mortality rates are around 0.6, and nearly always less than 1.5.
+
+Letting $\theta\sim\text{Gamma}(3,5)$ for the prior density matches these facts well since
+$$
+E(\theta)=\frac{3}{5}=0.6
+\qquad\text{and}\qquad
+\Pr(\theta\leq 1.5)=0.98.
+$$
+
+The posterior distribution is
+$$
+\theta\mid y\sim\text{Gamma}(3+3,5+2)=\text{Gamma}(6,7).
+$$
+
+The mean of the posterior is $6/7=0.86$, a substantial shrinkage toward the prior (since there aren't a lot of data).
+
+We now examine the R code used to determine these results.
+
+We setup our prior parameters.
+```{r}
+alpha <- 3
+beta <- 5
+```
+
+We verify that a $\text{Gamma}(3, 5)$ random variable is almost always less than 1.5.
+
+```{r}
+pgamma(1.5, shape = alpha, rate = beta)
+```
+
+We can approximate our results by drawing samples from our posterior.
+
+```{r}
+post.draws <- rgamma(100000, shape = alpha + 3, rate = beta + 2)
+```
+
+```{r}
+mean(post.draws) # approximate mean
+```
+
+We visually compare our exact and approximate posterior densities.
+
+```{r}
+# 1 x 2 plotting grid
+par(mfrow = c(1, 2))
+# plot approximate posterior
+plot(density(post.draws), xlab = "theta",
+     main = "10,0000 draws from Gamma(6,7)")
+# draw exact posterior
+theta <- seq(0.0001, 3, len = 1000)
+post1 <- dgamma(theta, shape = alpha + 3, rate = beta + 2)
+plot(theta, post1,
+     main = "Gamma(6, 7) density", type = "l",
+     ylab = "density")
+# reset plotting grid
+par(mfrow = c(1, 1))
+```
+
+### Example: Asthma with additional data
+
+Suppose that we have ten years of data and that we have 30 deaths over the 10 years. Assuming a constant population, then the posterior distribution for $\theta$ is
+$$
+p(\theta\mid y)\sim\text{Gamma}(3+30,5+10\times2.0)=\text{Gamma}(33,25).
+$$
+
+The posterior mean is now $33/25=1.32$ and the posterior probability that $\theta$ exceeds 1.0 is 0.93.
+
+Our new posterior is shown below.
+
+```{r}
+theta <- seq(0.0001, 3, len = 1000)
+post2 <- dgamma(theta, shape = alpha + 30, rate = beta + 2 * 10)
+plot(theta, post2,
+     main = "Gamma(33, 25) density", type = "l",
+     ylab = "density",
+     xlim = c(0.5, 2.5))
+```
+
+The R code to compute the posterior probability of interest is
+
+```{r}
+1 - pgamma(1, shape = alpha + 30, rate = beta + 2 * 10)
+```
+
+Alternatively, we can draw samples from our new posterior.
+
+```{r}
+post.draws2 <- rgamma(100000, shape = alpha + 30, rate = beta + 2 * 10)
+```
+
+We plot the approximate posterior.
+
+```{r}
+plot(density(post.draws2), xlab = "theta", main = "10,0000 draws from Gamma(33,25)")
+```
+
+We approximate the posterior mean.
+
+```{r}
+mean(post.draws2)
+```
+
+We use some alternative approaches for creating plots comparing the original posterior with the updated posterior.
+
+We start by organizing our information into data frames.
+
+```{r}
+# display densities side by side
+posterior <- factor(rep(c("Gamma(6, 7)", "Gamma(33, 25)"), each = length(theta)))
+df <- data.frame(theta = rep(theta, 2),
+                 density = c(post1, post2),
+                 posterior = posterior)
+```
+
+Using **ggplot2**:
+```{r}
+library(ggplot2)
+ggplot(df, aes(x = theta, y = density, group = posterior)) +
+  geom_path(aes(col = posterior)) + theme_bw()
+```
+
+Using **lattice**:
+
+```{r}
+library(lattice)
+xyplot(density ~ theta, data = df, group = posterior,
+       type = "l", auto.key = TRUE)
+```
+
+### Exponential-gamma conjugate pair
+
+The exponential model is commonly used to model waiting times and other continuous, positive, real-valued random variables (usually measured on a time scale).
+
+Data distribution: $y_1,y_2,\ldots,y_n\mid\theta\stackrel{\text{i.i.d.}}{\sim}\text{Expon}(\theta)$ with rate $\theta$ and mean $1/\theta$, with
+$$
+p(y_i\mid\theta)=\theta\exp(-y_i\theta)I_{(0,\infty)}(y_i).
+$$
+
+Note: the $\text{Expon}(\theta)$ is a special case of the $\text{Gamma}(\alpha,\beta)$ with $(\alpha,\beta)=(1,\theta)$.
+
+Prior distribution: $\theta\sim\text{Gamma}(\alpha,\beta)$, with
+$$
+p(\theta)=\frac{\beta^\alpha}{\Gamma(\alpha)}\theta^{\alpha-1}e^{-\beta\theta}I_{(0,\infty)}(\theta),
+$$
+for shape parameter $\alpha>0$, and scale parameter $\beta>0$.
+
+Posterior distribution, $p(\theta\mid y)$:
+$$
+\theta\mid y\sim\text{Gamma}\left(\alpha+n,\ \beta+\sum_{i=1}^n y_i\right).
+$$
+
+Note: $p(y\mid\theta)$ is proportional to a $\text{Gamma}(n+1,n\overline y)$ density. A $\text{Gamma}(\alpha,\beta)$ prior for $\theta$ can be thought of as $\alpha-1$ additional exponential observations with total waiting time $\beta$.
+
+**Derivation of the posterior**
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+## Improper prior distributions
+
+An improper prior distribution is not really a distribution; it's simply a function of $\theta$ that may not result in a valid posterior distribution, but they may work.
+
+**Example: Improper prior that works**
+
+Data distribution: $y_i\mid\theta,\sigma^2\stackrel{\text{i.i.d.}}{\sim}N(\theta,\sigma^2)$
+
+Prior distribution: $p(\theta)\propto c$ for all $\theta\in(-\infty,\infty)$
+
+Posterior distribution: $\theta\mid y\sim N(\overline y,\sigma^2/n)$
+
+**Derivation of the posterior**
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+## Objective prior distributions
+
+When prior distributions have no population basis or are not based on genuine prior information, there is typically a desire to have a prior distribution that plays only a minimal role in the posterior distribution.
+
+These distributions are known as vague, flat, diffuse, **noninformative**, or **objective**.
+
+The idea behind these types of priors is to let the data "speak for themselves".
+
+**Jeffreys' prior**
+
+Harold Jeffreys proposed a rule often used to define a noninformative prior based on the prior distribution being invariant to transformation.
+
+Let $\phi=h(\theta)$, where $h(\cdot)$ is a one-to-one function.
+
+The density of $\phi$ may be obtained through the formula
+$$
+p_\phi(\phi)=p_\theta(\theta)\left|\frac{d\theta}{d\phi}\right|=p_\theta\left(h^{-1}(\phi)\right)\left|\frac{dh^{-1}(\phi)}{d\phi}\right|.
+$$
+
+Jeffreys' prior is $p(\theta)=\left[J(\theta)\right]^{1/2}$, where $J(\theta)$ is the **Fisher information** for $\theta$,
+$$
+J(\theta)=E\left[\left(\frac{d\ln p(y\mid\theta)}{d\theta}\right)^2\middle|\theta\right]
+=-E\left[\left(\frac{d^2\ln p(y\mid\theta)}{d\theta^2}\right)\middle|\theta\right].
+$$
+
+Jeffreys chose this rule so that
+$$
+\sqrt{J(\phi)}=\sqrt{J(\theta)}\left|\frac{d\theta}{d\phi}\right|,
+$$
+i.e., the prior for $\phi$, $\sqrt{J(\phi)}$, can be obtained by directly computing the Fisher's information for $\phi$ or finding $\sqrt{J(\theta)}$ and transforming the associated distribution using the change-of-variable formula.
+
+Jeffreys' principle can be extended to multiparameter models.
+
+- Results vary based on whether you multiply the Jeffreys' priors for the parameters independently or use the square root of the determinant of the Fisher's information matrix.
+  - E.g., $\sqrt{J(\theta_1)J(\theta_2)}\neq\sqrt{\det J(\theta)}$ for $\theta=(\theta_1,\theta_2)$.
+- In high-dimensional parameter spaces, hierarchical models are often favored over noninformative priors.
+
+**Reference priors**
+
+Noninformative priors are related to the notion of a **reference prior**.
+
+Reference priors can be:
+
+- A conventional or "default" prior.
+- A prior that expresses ignorance of $\theta$ in a formal sense.
+- A prior that has as little impact as possible on the posterior inference[^1], or alternatively, it maximizes the expected difference between the prior and posterior distributions.
+
+**Maximum entropy prior**
+
+The maximum entropy prior seeks to find the prior that maximizes the entropy of the prior distribution while satisfying a few key characteristics.
+
+The entropy is defined as
+$$
+H[p]=-E[\log p(\theta)]=-\int \log p(\theta)p(\theta)\,d\theta.
+$$
+
+E.g., you might try to find the prior with $E(\theta)=0.5$ that maximizes the entropy.
+
+This is tough because you must consider not just different parameter values, but different distributional families.
+
+**Empirical Bayes**
+
+The Empirical Bayes approach to choosing a prior distribution uses the data to select the parameters of the prior distribution.
+
+E.g., if $\gamma$ denotes the hyperparameters of the prior distribution, then an Empirical Bayes approach might be to choose $\gamma$ such that
+$$
+\widehat\gamma=\underset{\gamma}{\arg\max}\int p(y\mid\theta)p(\theta\mid\gamma)\,d\theta.
+$$
+
+- This is the marginal maximum likelihood estimator for the hyperparameter.
+
+**Pros of Empirical Bayes:**
+
+- It's an objective method for choosing the prior.
+- Typically provides a prior that will behave well computationally.
+
+**Cons of Empirical Bayes:**
+
+- Uses the data twice.
+- Overly optimistic results since the uncertainty in $\gamma$ is ignored.
+
+**Cons of noninformative priors**
+
+- Why use a vague prior if you have useful information?
+- The noninformative prior may not be scale invariant.
+
+**Pros of noninformative priors**
+
+- Provides an approach to choosing a prior when you have a lot of information!
+
+## Jeffreys' prior examples
+
+A probability distribution $p(y\mid\theta)$ belongs to an **exponential family** if it has the form
+$$
+p(y\mid\theta)=f(y)g(\theta)\exp\left(\phi(\theta)^Tt(y)\right),
+$$
+where $\phi(\theta)$ and $t(y)$ are vectors with the same length as $\theta$.
+
+Assuming $\theta$ is a vector of length $p$:
+
+- $t(y)=(t_1(y),\ldots,t_p(y))$ is the vector of sufficient statistics.
+- $\phi(\theta)=(\phi_1(\theta),\ldots,\phi_p(\theta))$ is the vector of natural parameters.
+
+**Example: Natural parameters**
+
+Consider a set of i.i.d. $N(\mu,\sigma^2)$ random variables. Determine the natural parameters $\phi(\theta)$ and the sufficient statistics $t(y)$ for this distribution.
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+If $y_1,\ldots,y_n$ are i.i.d., then the Fisher's information for the $n$ observations is $nJ(\theta)$, where $J(\theta)$ is the Fisher's information for a single observation.
+
+**Example: Jeffreys prior for Binomial data distribution**
+
+If $y\mid\theta\sim\text{Binomial}(n,\theta)$, the log-likelihood is
+\begin{align*}
+\ln p(y\mid\theta) &=\ln\left[\binom{n}{y}\theta^y(1-\theta)^{n-y}\right]\\
+&=\text{constant}+y\ln(\theta)+(n-y)\ln(1-\theta).
+\end{align*}
+
+From this,
+$$
+\frac{d^2\ln p(y\mid\theta)}{d\theta^2}
+=-\frac{n\theta^2+y-2\theta y}{(1-\theta)^2\theta^2}.
+$$
+
+Since $E(y\mid\theta)=n\theta$ and $E(cX)=cE(X)$ for a random variable $X$ and constant $c$, we have
+$$
+J(\theta)=\frac{n\theta^2+n\theta-2n\theta^2}{(1-\theta)^2\theta^2}
+=\frac{n\theta(1-\theta)}{(1-\theta)^2\theta^2}
+=\frac{n}{\theta(1-\theta)}.
+$$
+
+and
+$$
+p(\theta)\propto\theta^{-1/2}(1-\theta)^{-1/2}
+=\text{Beta}\left(\frac12,\frac12\right).
+$$
+
+**Example: Jeffreys prior for a normal distribution**
+
+Determine Jeffreys' prior distribution for $\mu$ when the data are i.i.d. $N(\mu,\sigma^2)$, with $\sigma^2$ fixed.
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+[^1]: See Berger, J.O., Bernardo, J.M., and Sun, D. (2009). *The Formal Definition of Reference Priors*. *The Annals of Statistics*. 37(2).
