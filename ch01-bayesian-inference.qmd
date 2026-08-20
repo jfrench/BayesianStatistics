@@ -148,12 +148,13 @@ After the data $y$ have been observed, we can predict an unknown observable, $\t
 -   Predictive because it is a prediction for an observable $\tilde{y}$.
 
 For continuous $\theta$, the posterior predictive distribution may be derived as
-\begin{align*}
+$$
+\begin{aligned}
 p(\tilde{y} \mid y) &= \int p(\tilde{y},\theta \mid y)\,d\theta \\
-&= \int p(\tilde{y} \mid \theta,y)p(\theta \mid y)\,d\theta \\
+&= \int p(\tilde{y} \mid \theta, y)p(\theta \mid y)\,d\theta \\
 &= \int p(\tilde{y} \mid \theta)p(\theta \mid y)\,d\theta.
-\end{align*}
-
+\end{aligned}
+$$
 Notes:
 
 - The last line follows under the assumption that $y$ and $\tilde{y}$ are conditionally independent given $\theta$, i.e., $p(\tilde{y} \mid \theta, y) = p(\tilde{y} \mid \theta)$.
