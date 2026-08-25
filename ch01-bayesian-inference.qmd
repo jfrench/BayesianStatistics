@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-format: html
-# format: ipynb
-# jupyter: ir
-# execute:
-#   output: false
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 

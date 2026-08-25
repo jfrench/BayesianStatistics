@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-format: html
-# format: ipynb
-# jupyter: ir
-# execute:
-#   output: false
+# format: html
+format: ipynb
+jupyter: ir
+execute:
+  output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -146,6 +146,18 @@ Posterior predictive distribution:
 $$
 P(\tilde{y}=1\mid y)=\frac{y+\alpha}{n+\alpha+\beta}.
 $$
+
+Derivation:
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
 
 ### Example: Placenta previa
 
