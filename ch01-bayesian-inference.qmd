@@ -106,6 +106,7 @@ Bayesian statistics uses probability statements and distributions to draw conclu
 - **Marginal likelihood for $y$ (a.k.a. prior predictive distribution):** $p(y)$
 - **Posterior distribution for $\theta$:** $p(\theta \mid y)$
 - **Posterior predictive distribution for an observable quantity:** $p(\tilde{y} \mid y)$
+
 ## Using Bayes' rule in Bayesian Inference
 
 Since Bayesian statistics treats both $y$ and $\theta$ as random, Bayes' rule can be used to perform inference.
@@ -209,6 +210,17 @@ Likelihood: $\text{Bin}(y \mid n,\theta)$
 Prior: $\text{Beta}(\alpha,\beta)$
 
 - Derive the posterior distribution for $\theta$, $p\left( \theta \mid y \right):$
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
 - Derive the posterior predictive distribution of a new, independent observation, $\tilde{y}$, i.e., $p(\tilde{y} \mid y)$.
     - Since $\tilde{y} \in \{ 0,1\}$, we can simply find $P(\tilde{y} = 1 \mid y)$ and $P(\tilde{y} = 0 \mid y)$.
 
