@@ -234,6 +234,23 @@ Prior: $\text{Beta}(\alpha,\beta)$
 <br><br><br><br><br><br><br><br><br><br><br><br>
 :::
 
+## General sequential Bayesian update formula
+
+Suppose we compute $p(\theta \mid y)$ using available data $y$. We then observe new data, $y_{\mathrm{new}}$, from the same data distribution as $y$.
+
+Assuming that $y$ and $y_{\mathrm{new}}$ are conditionally independent given $\theta$, then the updated posterior using the sequential Bayesian update formula is
+$$
+p(\theta \mid y, y_{\mathrm{new}})
+=
+\frac{
+    p(y_{\mathrm{new}} \mid \theta)\,
+    p(\theta \mid y)
+}{\int p(y_{\mathrm{new}} \mid \theta)
+    p(\theta \mid y)\,
+    d\theta.
+}
+$$
+
 ##  Summarizing (univariate) posterior distributions 
 
 The final output of a Bayesian analysis is the posterior distribution of all model parameters, and possibly, the posterior predictive distribution of observable estimands.
