@@ -4,9 +4,9 @@
 .Ruserdata
 *.rda
 *.docx
-*.pdf
 *.html
 /lectures/old
 /lectures/old/*
 /lectures/media/
 /lectures/media/*
+/lectures
