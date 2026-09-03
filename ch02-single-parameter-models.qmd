@@ -6,11 +6,11 @@ date-format: long
 title-block-banner: true
 wrap: 'none'
 self-contained: true
-format: pdf
-# format: ipynb
-# jupyter: ir
-# execute:
-#   output: false
+# format: pdf
+format: ipynb
+jupyter: ir
+execute:
+  output: false
 ---
 
 An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
@@ -485,37 +485,51 @@ The posterior mean $\mu_n$ is a weighted average of the prior mean and the obser
 
 **Posterior predictive distribution**
 
-Notice that
-$$
-\begin{aligned}
-p(\tilde{y}\mid y)
-&=\int p(\tilde{y}, \theta\mid y)\,d\theta\\
-&=\int p(\tilde{y}\mid\theta,y)p(\theta\mid y)\,d\theta\\
-&=\int p(\tilde{y}\mid\theta)p(\theta\mid y)\,d\theta\\
-&\propto\int \exp\left[-\frac{1}{2\sigma^2}(\tilde{y}-\theta)^2\right]
-\exp\left[-\frac{1}{2\tau_n^2}(\theta-\mu_n)^2\right]d\theta.
-\end{aligned}
-$$
+An interesting derivation:
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
 
 The exponent in the integrand is a quadratic function of $(\tilde{y},\theta)$, so the joint distribution is a bivariate normal distribution. Hence, the marginal distribution of $\tilde{y}$ will be a normal distribution.
 
-Using properties of the mean and variance:
 
-$$
-E(\tilde{y}\mid y)=E\left[E(\tilde{y}\mid\theta,y)\mid y\right]=E(\theta\mid y)=\mu_n.
-$$
+Derivation of the posterior predictive mean and variance:
 
-$$
-\begin{aligned}
-\text{var}(\tilde y\mid y)
-&=E\left[\text{var}(\tilde y\mid\theta,y)\mid y\right]
-+\text{var}\left[E(\tilde{y}\mid\theta,y)\mid y\right]\\
-&=E(\sigma^2\mid y)+\text{var}(\theta\mid y)\\
-&=\sigma^2+\tau_n^2.
-\end{aligned}
-$$
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
 
-The posterior predictive mean is simply the mean of the posterior distribution and the posterior predictive variance is the sum of the posterior variance and the variance of the data distribution.
+
+The posterior predictive mean is simply the mean of the posterior distribution.
+
+The posterior predictive variance is the sum of the posterior variance and the variance of the data distribution.
+
+Thus,
+$$
+\tilde{y} \mid y \sim N(\mu_n, \sigma^2 + \tau_n^2)
+$$
 
 ### Poisson-gamma conjugate pair
 
@@ -523,7 +537,7 @@ The Poisson model arises naturally in the study of data taking counts, e.g., epi
 
 Data distribution: $y_1,y_2,\ldots,y_n\mid\theta\stackrel{\text{i.i.d.}}{\sim}\text{Poisson}(\theta)$, with
 $$
-p(y_i\mid\theta)=\frac{\theta^{y_i}e^{-\theta}}{y_i!}I_{\{0,1,2,\ldots\}}(y_i).
+p(y_i\mid\theta)=\frac{\theta^{y_i}e^{-\theta}}{y_i!}I_{\{0,1,2,\ldots\}}(y_i)I_{(0,\infty)(\theta)}.
 $$
 
 Prior: $\theta\sim\text{Gamma}(\alpha,\beta)$, with
@@ -532,13 +546,39 @@ p(\theta)=\frac{\beta^\alpha}{\Gamma(\alpha)}\theta^{\alpha-1}e^{-\beta\theta}I_
 $$
 for shape parameter $\alpha>0$ and rate (inverse scale) parameter $\beta>0$.
 
-Posterior distribution, $p(\theta\mid y)$:
+Posterior distribution:
+
 $$
 \theta\mid y\sim\text{Gamma}\left(\alpha+\sum_{i=1}^n y_i,\ \beta+n\right).
 $$
 
+Posterior predictive distribution:
+
+$$\tilde{y} \mid y \sim \text{Neg-Bin}(\alpha + \sum_{i=1}^n y_i, \beta + n)$$
+
 **Derivation of the posterior**
 
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
+**Derivation of the posterior predictive distribution**
+
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
 ::: {.content-visible when-format="pdf"}
 \vspace{4in}
 :::
@@ -767,6 +807,25 @@ Posterior distribution: $\theta\mid y\sim N(\overline y,\sigma^2/n)$
 ::: {.content-visible when-format="ipynb"}
 <br><br><br><br><br><br><br><br><br><br><br><br>
 :::
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+::: {.content-visible when-format="pdf"}
+\vspace{4in}
+:::
+::: {.content-visible when-format="html"}
+<div style="height: 4in;"></div>
+:::
+::: {.content-visible when-format="ipynb"}
+<br><br><br><br><br><br><br><br><br><br><br><br>
+:::
+
 
 ## Objective prior distributions
 
