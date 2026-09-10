@@ -1,0 +1,153 @@
+---
+title: "Overview of Computational methods for Bayesian inference"
+author: "Joshua French"
+date: ""
+format:
+  revealjs:
+    slide-level: 1
+self-contained: true
+---
+
+# Introduction
+
+---
+
+## Summary of computational methods
+
+- Bayesian statistics focuses on determining or summarizing the posterior distribution.
+- When a closed-form expression for the posterior distribution is unavailable, we rely on numerical approximations.
+
+---
+
+## Deterministic approximations
+
+-   Maximum a posteriori estimation
+-   Cubature-type integration approaches
+-   Distributional approximations
+
+---
+
+## Stochastic approximations
+
+-   Direct (Monte Carlo) simulation
+-   Markov chain Monte Carlo (MCMC) simulation
+
+---
+
+## Maximum a posteriori estimation
+
+- The *maximum a posteriori* estimator summarizes the posterior with the parameter value(s) that maximize the posterior distribution.
+    - $\displaystyle{\hat{\theta}_{\text{MAP}} = \text{argmax}_{\theta} \ln p(\theta | y) = \text{argmax}_{\theta} \{\ln p(y | \theta ) + \ln p(\theta)\}.}$
+-   In practice, we can find this numerically using optimization functions built-in to our software of choice.
+
+---
+
+## Cubature integration
+
+-   The quantities of interest can often be written as an integral.
+    - We can use fast deterministic methods to evaluating the integral.
+    -   E.g., quadrature rule, Simpson's rule, etc.
+-   The posterior expectation of any function $h(\theta)$ is defined as $$E\left[ h(\theta) \mid y \right] = \int {h(\theta) p(\theta \mid y)} d\theta.$$
+    -   E.g., $p\left( \tilde{y} \mid y \right) = E_{\theta \mid y}\left\lbrack p\left( \tilde{y} \mid \theta,y \right) \right\rbrack.$
+
+--- 
+
+## Distributional approximations
+
+-   The posterior distribution can be approximated by another known distribution.
+-   The most common choice approximates the posterior distribution by
+$$\theta \mid y \sim N(\hat{\theta}, I(\hat{\theta})^{-1}).$$
+    - a.k.a., the Bayesian Central Limit Theorem
+    -   $\hat{\theta}$ is an estimate of $\theta$ such as the MLE or MAP.
+    -   $I(\hat{\theta})$ is the *observed information matrix*.
+    
+---
+
+## Observed information matrix
+    
+-   The observed information matrix is $$I(\hat{\theta}) = -{\mathbf{H}(\theta)} \mid {\theta = \hat{\theta}},$$ where $$\mathbf{H}_{i,j} = \frac{\partial^2}{\partial \theta_i \partial \theta_j} \ln p(y \mid \theta).$$
+-   $\hat{\theta}$ is chosen to be the MLE of $\theta$ from the data or the MAP estimate from the posterior.
+
+---
+
+## Other Distributional Approximations
+
+- Integrated nested Laplace approximation (INLA)
+    - A more advanced normal-based approximation to the posterior that has gained popularity.
+-   Variational Bayes methods
+    - The methods postulate a possibly non-Gaussian parametric distribution for the posterior and then solve for the parameter estimates that make the distributions most similar.
+
+--- 
+
+## Stochastic methods
+
+-   Stochastic methods for approximating the posterior rely on the law of large numbers (LLN).
+-   The LLN says that if $\theta^{(1)},\ldots,\theta^{(B)}$ are i.i.d. realizations from $p(\theta \mid y)$, then for (almost) any function $h\left( \theta \right)$, as $B\rightarrow \infty$:
+$$\frac{1}{B}\sum_{j = 1}^{B}{h(\theta^{\left( j \right)})} \rightarrow E\left\lbrack h\left( \theta \mid y \right) \right\rbrack = \int_{}^{}{h(\theta) p(\theta \mid y) d\theta}.
+$$
+-   The LLN (generally) applies to simulated data that has a Markov structure, i.e., each simulated value only relies on knowing the previous simulated value.
+
+---
+
+## LLN implications
+
+-   $\bar{\theta} = \frac{\sum\theta^{\left( j \right)}}{B} \rightarrow E\left( \theta \mid y \right)$
+-   $\frac{1}{B - 1}\sum\left( \theta^{\left( j \right)} - \ \bar{\theta} \right)^{2} \rightarrow \text{var}\left( \theta \mid y \right)$
+-   $\frac{1}{B} \sum_{j=1}^B I(\theta^{(j)} \leq c) \rightarrow P(\theta \leq c \mid y)$
+-   The empirical distribution of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\} \rightarrow p(\theta \mid y)$
+-   The $\alpha$-quantile of $\left\{ \theta^{\left( 1 \right)},\ldots,\theta^{\left( B \right)} \right\}$ converges to the $\alpha$-quantile of $p(\theta\mid y)$
+
+---
+
+## Direct (Monte Carlo) simulation
+
+-   Direct simulation approximates the posterior by drawing i.i.d. samples from the posterior.
+-   In simple contexts, this can be done using *rejection sampling* (also known as *acceptance-rejection sampling*).
+    -   This tends to not scale very well to high-dimensional contexts.
+    
+---
+
+## Direct simulation (cont)
+    
+-   *Approximate Bayesian computation* (ABC) attempts to perform rejection sampling without evaluating the likelihood function.
+    -   In principle, this will be MUCH faster.
+    -   Possibly erroneous assumptions must be made.
+
+--- 
+
+## MCMC simulation
+
+-   MCMC methods produce correlated samples from the posterior.
+-   The Gibbs sampler is the often the preferred MCMC method.
+    -   Samples are drawn from the full conditional distributions of each parameter.
+    -   E.g., Samples are drawn for $p(\theta_1, \theta_2 \mid y)$ by drawing a sample from $p(\theta_1 \mid y, \theta_2)$, then from $p(\theta_2 \mid y, \theta_1)$, and repeating this process.
+    
+---
+
+## MCMC simulation (cont)
+    
+-   The Metropolis-Hastings algorithm is a more general MCMC method.
+    -   A sample is drawn from a proposal distribution for the parameter.
+    -   The sample is retained with some probability determined by an acceptance ratio.
+    -   This process is repeated iteratively for all parameters.
+-   More advanced Monte Carlo approaches, such as Hamiltonian Monte Carlo, are more efficient, but are also more complex.
+
+---
+
+## Probabilistic Programming Languages
+
+- In practice, people use flexible, efficient probabilistic programming languages (PPLs) to draw samples from the (approximate) posterior.
+- Popular choices include:
+    - Stan (compatible with R, Python, etc.)
+    - Nimble (R specific)
+    - PyMC (Python specific)
+
+--- 
+
+## Conclusions
+
+- Bayesian inference requires us to characterize the posterior distribution and quantities derived from it.
+- **Computational methods make Bayesian inference possible** when analytical solutions are unavailable.
+- Computational methods span deterministic approximations to simulation-based approaches.
+- There is no best computational method.
+- PPLs make complex Bayesian analysis accessible without requiring us to implement the underlying algorithms from scratch.
