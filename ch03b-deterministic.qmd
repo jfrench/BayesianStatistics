@@ -21,11 +21,11 @@ title-block-banner: true
 wrap: 'none'
 ---
 
-To open this information in an interactive Colab notebook, click the Open in Colab graphic below.
+An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
 
 <a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch03b-deterministic.ipynb">
-   <img src="https://colab.research.google.com/assets/colab-badge.svg">
-</a>
+  <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/deterministic.svg" width="300" height="300">
+    </a>
 
 ---
 
