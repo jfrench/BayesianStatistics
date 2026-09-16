@@ -1,5 +1,5 @@
 ---
-title: "Overview of Computational methods for Bayesian inference"
+title: "Overview of Computational Methods for Bayesian Inference"
 author: "Joshua French"
 date: ""
 format:
@@ -147,7 +147,7 @@ $$
 ## Conclusions
 
 - Bayesian inference requires us to characterize the posterior distribution and quantities derived from it.
-- **Computational methods make Bayesian inference possible** when analytical solutions are unavailable.
+- **Computational methods make Bayesian inference possible** when closed-form solutions aren't available.
 - Computational methods span deterministic approximations to simulation-based approaches.
 - There is no best computational method.
-- PPLs make complex Bayesian analysis accessible without requiring us to implement the underlying algorithms from scratch.
+- PPLs make complex Bayesian analysis possible without needing to implement the underlying algorithms from scratch.
