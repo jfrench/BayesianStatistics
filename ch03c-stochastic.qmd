@@ -1,0 +1,680 @@
+---
+title: Stochastic methods for Bayesian inference
+author: Joshua French
+date: ''
+# format:
+#   revealjs:
+#     slide-level: 1
+# self-contained: true
+# execute:
+#   echo: true
+jupyter:
+  kernelspec:
+    name: "ir"
+    language: "R"
+    display_name: "R"
+    path: ""
+format: ipynb
+execute:
+  output: false
+title-block-banner: true
+wrap: 'none'
+---
+
+An interactive version of this content is available as a Colab notebook, which can be accessed by scanning or clicking the QR code below. 
+
+<a href="https://colab.research.google.com/github/jfrench/BayesianStatistics/blob/master/ch03c-stochastic.ipynb">
+  <img src="https://raw.githubusercontent.com/jfrench/BayesianStatistics/refs/heads/master/qr_codes/stochastic.svg" width="300" height="300">
+    </a>
+
+---
+
+# Stochastic methods
+
+---
+
+## Rejection sampling
+
+- Rejection sampling can be used to draw samples from a target density $p(\theta \mid y)$ or its unnormalized version $q(\theta \mid y)$.
+- Rejection sampling assumes there is a *proposal distribution* $G$, with density function $g(\theta)$, such that:
+    -   We can easily draw a realization from $G$.
+    -   If $p(\theta = \theta^{\star} \mid y) > 0$, then $g(\theta = \theta^{\star} ) > 0$.
+    -   The *importance ratio* $p(\theta \mid y) / g(\theta)$ has known bound $M$.
+    -   i.e., $p(\theta\mid y) / g(\theta) \leq M$ for all $\theta$.
+
+---
+
+Rejection sampling draws $B$ observations from $p(\theta\mid y)$ using the following algorithm:
+
+1.  Draw $\theta^{\star}\sim G$.
+2.  Accept $\theta^{\star}$ with probability
+  $$
+  \frac{p(\theta^{\star}\mid y)}{M g(\theta^{\star})}.
+  $$
+  Otherwise, discard it.
+3.  Repeat steps 1 and 2 until $B$ candidates have been accepted.
+
+---
+
+An alternative approach to decide whether we accept the candidate value  $\theta^{\star}$  is:
+
+- Draw $u^{\star}\sim U(0, M g(\theta^{\star} ) )$.
+- Retain $\theta^{\star}$ if $u^{\star} \leq p(\theta^{\star} \mid y)$.
+
+---
+
+Comments about rejection sampling:
+
+-   The unnormalized density, $q(\theta \mid y)$, is almost always used instead of the true density, $p(\theta \mid y)$
+-   $p(\theta \mid y) \leq M g(\theta \mid y)$ ensures the acceptance probability is no larger than 1.
+-   $M$ should be chosen so that $M g(\theta \mid y)$ is as close as possible to $p(\theta\mid y)$.
+
+---
+
+## Rejection sampling example 1
+
+-   Suppose the (unnormalized) target density is $q(\theta \mid y) = \theta(1-\theta)I_{(0,1)}(\theta).$
+-   $q(\theta\mid y)$ is bounded by a $U(0, 1)$ density, i.e., $g(\theta)=I_{(0,1)}(\theta)$.
+-   $\text{argmax}_{\theta}q(\theta \mid y) = 0.5$ with $q(0.5\mid y) = 0.25$.
+-   Pick $M = 0.25$.
+
+---
+
+We define the unnormalized target density. 
+
+```{r}
+qtarget <- function(theta) {
+  theta * (1 - theta) * (theta > 0) * (theta < 1)
+}
+```
+
+We define the bounding function, $g(\theta)M$.
+
+```{r}
+# define bounding function
+gM = function(theta) {
+  rep(.25, length(theta))
+}
+```
+
+---
+
+We visualize the target density and bounding function.
+
+```{r}
+theta <- seq(0, 1, len = 10000)
+par(mar = c(4, 4, 0.4, 0.4)) # edit margins
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+```
+
+---
+
+Consider drawing an observation from $p(\theta \mid y)$:
+
+-   We draw a value, $\theta^*$, from the $U(0,1)$ proposal distribution.
+    -   Suppose this value is $\theta^*=0.6$.
+-   We need to decide whether we retain or reject $\theta^*$.
+    -   Note that $M g(\theta)$ evaluated at $0.6$ is $0.25 \times 1 = 0.25$.
+    -   Note that $q(0.6 \mid y) = 0.6(1-0.6) = 0.24$.
+-   Draw $u^{\star}$ from a $U(0, 0.25)$ density.
+    - Let's say $u^{\star} = 0.066$.
+    - Since $u^{\star}<q(\theta\mid y) = 0.24$, we accept it as a sample from $q(\theta\mid y)$.
+
+---
+
+We visualize this.
+
+```{r}
+#| output: false
+thetastar1 <- 0.6
+u1 <- 0.066
+accept1 <- (u1 <= qtarget(thetastar1))
+
+# plot q and bounding function
+theta = seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+abline(v = thetastar1, col = "grey")
+points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
+```
+
+---
+
+```{r}
+#| echo: false
+thetastar1 <- 0.6
+u1 <- 0.066
+accept1 <- (u1 <= qtarget(thetastar1))
+
+# plot q and bounding function
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+abline(v = thetastar1, col = "grey")
+points(thetastar1, u1, pch = ifelse(accept1, 20, 1))
+```
+
+---
+
+Consider drawing another observation from $p(\theta \mid y)$:
+
+-   We draw a value $\theta^*$ from the $U(0,1)$ distribution.
+    -   Suppose this value is $\theta^*=0.185$.
+-   We draw $u^{\star}=0.176$ from $U(0, Mg(\theta^*))=U(0, 0.25g(0.185))=U(0, 0.25)$.
+-   $u^{\star}=0.176 > 0.151 = q(\theta^{\star}|y) = q(0.185|y)$, so we reject the proposed value of $\theta^{\star}$.
+
+
+---
+
+We visualize this.
+
+```{r}
+#| eval: false
+thetastar2 <- 0.185
+u2 <- 0.176
+accept2 <- (u2 <= qtarget(thetastar2))
+# plot q and bounding function
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+abline(v = thetastar2, col = "grey")
+points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
+```
+
+---
+
+```{r}
+#| echo: false
+thetastar2 <- 0.185
+u2 <- 0.176
+accept2 <- (u2 <= qtarget(thetastar2))
+# plot q and bounding function
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+abline(v = thetastar2, col = "grey")
+points(thetastar2, u2, pch = ifelse(accept2, 20, 1))
+```
+
+---
+
+- We run a rejection sampling algorithm to draw observations
+from the target distribution.
+- We plot closed circles for each $(\theta^*, u^*)$ that's accepted.
+- We plot a closed circle for each $(\theta^*, u^*)$ that's rejected.
+
+```{r}
+#| eval: false
+set.seed(8)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+for(i in 1:25) {
+  thetastar <- runif(1)
+  u <- runif(1, 0, gM(thetastar))
+  accept <- (u <= qtarget(thetastar))
+  points(thetastar, u, pch = ifelse(accept, 20, 1))
+}
+title("Accepted (black dot) vs Rejected (open circle) comparison")
+```
+
+---
+
+```{r}
+#| echo: false
+set.seed(8)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta*"|"*y)))
+lines(theta, gM(theta), col = "blue")
+for(i in 1:25) {
+  thetastar <- runif(1)
+  u <- runif(1, 0, gM(thetastar))
+  accept <- (u <= qtarget(thetastar))
+  points(thetastar, u, pch = ifelse(accept, 20, 1))
+}
+title("Accepted (black dot) vs Rejected (open circle) comparison")
+```
+
+---
+
+## Rejection sampling example 2
+
+We illustrate rejection sampling by trying to draw realizations from an unnormalized Beta(3, 3) density. 
+
+**Target density**
+
+$p(\theta | y) \propto \theta^2  (1 - \theta)^2 I(0<\theta<1)= q(\theta).$
+
+**Proposal distribution**
+
+Since $q(\theta)$ has finite support, our proposal distribution can be $G\sim U(0,1)$. 
+
+- We need to find the bounding constant $M$ for our bounding function.
+
+---
+
+- Taking the derivative of $q(\theta)$ with respect to $\theta$,
+we can determine that the function has a maximum at $\theta = 1/2$.
+- The maximum is $q(1/2) = 0.0625$.
+- Thus, $q(\theta) <= g(\theta)M$ with $M = 0.0625$.
+
+We define the unnormalized target density.
+
+```{r}
+qtarget <- function(theta) {
+	theta^2*(1 - theta)^2 * (theta > 0) * (theta < 1)
+}
+```
+
+---
+
+We define the bounding function.
+
+```{r}
+gM <- function(theta) {
+	rep(.0625, length(theta))
+}
+```
+
+We compare the target density and bounding function.
+
+```{r}
+#| eval: false
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
+```
+
+---
+
+```{r}
+#| echo: false
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
+```
+
+---
+
+We implement our rejection sampling algorithm.
+
+```{r}
+B <- 10000 # number of samples to keep
+mytheta <- numeric(B) # vector to store kept samples
+set.seed(57) # reproducibility
+i <- 0 # the samples accepted
+while (i < B) {
+  x <- runif(1) # sample from G
+  # accept x with probability q(x)/gM(x)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i <- i + 1
+		mytheta[i] <- x
+	}
+}
+```
+
+---
+
+We compare our empirical density to the true density.
+
+```{r}
+#| eval: false
+dapprox <- density(mytheta)
+dtruth <- dbeta(theta, 3, 3)
+
+plot(theta, dtruth, xlab = expression(theta), ylab = "density",
+     main = "", type = "l", col = "blue")
+lines(dapprox, col = "orange")
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+---
+  
+```{r}
+#| echo: false
+dapprox <- density(mytheta)
+dtruth <- dbeta(theta, 3, 3)
+
+plot(theta, dtruth, xlab = expression(theta), ylab = "density", main = "", type = "l", col = "blue")
+lines(dapprox, col = "orange")
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+---
+
+## Rejection sampling example 3
+
+We repeat the previous example with a more efficient proposal distribution.
+
+We know that our target density is symmetric around 0.5, we choose to bound it by a normal distribution centered around 0.5.
+
+**Proposal distribution**
+
+$G\sim N(0.5, 0.25^2)$.
+
+We choose $M=0.04$ for our bounding function (chosen by trial and error).
+
+---
+
+We define bounding function.
+
+```{r}
+gM <- function(theta) {
+	0.04 * dnorm(theta, mean = 0.5, sd = 0.25)
+}
+```
+
+We compare the target density to the bounding function.
+
+```{r}
+#| eval: false
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
+```
+
+---
+
+```{r}
+#| echo: false
+theta <- seq(0, 1, len = 1000)
+plot(theta, qtarget(theta), type = "l", xlab = expression(theta),
+     ylab = expression(q(theta)))
+lines(theta, gM(theta), col = "blue")
+abline(v = 1/2)
+```
+
+---
+
+We implement our rejection sampling algorithm.
+
+```{r}
+set.seed(71)
+B <- 100000
+mytheta = numeric(B)
+i <- 0 # number of candidates retained
+while (i < B) {
+  x <- rnorm(1, mean = 0.5, sd = 0.25) # sample from g distribution
+  # accept x with probability q(x)/gM(x)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i <- i + 1
+		mytheta[i] <- x
+	}
+}
+```
+
+---
+
+We compare our empirical density to the true density.
+
+```{r}
+#| eval: false
+dmytheta <- density(mytheta)
+dtruth <- dbeta(theta, 3, 3)
+plot(theta, dtruth, col = "blue", type = "l", ylab = "density")
+lines(dmytheta, col = "orange")
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+---
+
+```{r}
+#| echo: false
+dmytheta <- density(mytheta)
+dtruth <- dbeta(theta, 3, 3)
+plot(theta, dtruth, col = "blue", type = "l", ylab = "density")
+lines(dmytheta, col = "orange")
+legend("topleft", legend = c("approximation", "truth"),
+       col = c("orange", "blue"), lwd = c(1, 1))
+```
+
+
+---
+
+## Rejection sampling example 4
+
+We want to sample from a folded $N(0,1)$ distribution.
+
+- If $y\sim N(0,1)$, then $|y|$ is a folded $N(0,1)$ distribution.
+
+**Target density**
+
+$$
+q(\theta) = \exp(-\theta^2/2) I_{[0,\infty)}(\theta)
+$$
+
+**Proposal distribution**
+
+$G\sim \text{Exp}(1)$
+
+---
+
+How do we choose a bounding constant?
+
+The optimal solution is find a single intersecting point between the folded normal and our envelope (at the inflection point of the folded normal), which is at $\theta = 1$.
+
+- $\frac{dq(\theta)}{d\theta} = -\exp(-\theta^2/2)\theta$.
+- $\frac{d^2q(\theta)}{d\theta^2} = \exp(-\theta^2/2)(\theta^2-1)$.
+- Setting $g(\theta)M = q(\theta)$ and solving for $M$ when
+$\theta = 1$ results in the solution $M = \exp(1/2)$.
+
+---
+
+We define the target density.
+
+```{r}
+qtarget <- function(theta) {
+	exp(-theta^2/2) * (theta >= 0)
+}
+```
+
+We define the bounding function.
+
+```{r}
+gM <- function(theta) {
+	dexp(theta) * exp(1/2)
+}
+```
+
+We compare the target density to the bounding function.
+
+```{r}
+#| eval: false
+theta <- seq(0, 5, len = 1000)
+plot(theta, qtarget(theta), ylim = c(0, qtarget(0.001)),
+     type = "l", ylab = "qtarget", xlab = expression(theta))
+lines(theta, gM(theta), type = "l", col = "blue")
+legend("topright", legend = c("qtarget", "gM"),
+       lty = 1, col = c("black", "blue"))
+```
+
+---
+
+```{r}
+#| echo: false
+theta <- seq(0, 5, len = 1000)
+plot(theta, qtarget(theta), ylim = c(0, qtarget(0.001)),
+     type = "l", ylab = "qtarget", xlab = expression(theta))
+lines(theta, gM(theta), type = "l", col = "blue")
+legend("topright", legend = c("qtarget", "gM"),
+       lty = 1, col = c("black", "blue"))
+```
+
+---
+
+We implement our rejection sampling algorithm.
+
+```{r}
+B <- 10000 # number of retained samples desired
+mytheta <- numeric(B) # vector to store samples
+i = 0 # number of retained samples
+while (i < B) {
+	x <- rexp(1) # draw a value from proposal distribution
+	# accept the value with probability based on the importance
+	# ratio
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i <- i + 1 # increment i if value retained
+		mytheta[i] <- x # store value
+	}
+}
+```
+
+---
+
+We compare our empirical density to the true density.
+
+```{r}
+#| eval: false
+# true density
+dens <-  function(theta) { sqrt(2/pi)*exp(-theta^2/2) }
+dtruth <- dens(theta)
+# approximate density
+dapprox <- density(mytheta, from = 0, to = 5, cut = 0)
+plot(theta, dtruth, ylab = "density", main = "", type = "l",
+     col = "blue")
+lines(dapprox, col = "orange")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("orange", "blue"))
+```
+
+---
+
+```{r}
+#| echo: false
+# true density
+dens <-  function(theta) { sqrt(2/pi)*exp(-theta^2/2) }
+dtruth <- dens(theta)
+# approximate density
+dapprox <- density(mytheta, from = 0, to = 5, cut = 0)
+plot(theta, dtruth, ylab = "density", main = "", type = "l",
+     col = "blue")
+lines(dapprox, col = "orange")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("orange", "blue"))
+```
+
+--- 
+
+Why didn't that work properly?
+
+We try a different approach using a histogram of the retained samples.
+
+```{r}
+#| eval: false
+# plot with a probability histogram instead
+hist(mytheta, freq = FALSE, breaks = 100, main = "")
+lines(theta, truth, col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("black", "blue"))
+```
+
+---
+
+```{r}
+#| echo: false
+# plot with a probability histogram instead
+hist(mytheta, freq = FALSE, breaks = 100, main = "")
+lines(theta, dtruth, col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+	lwd = c(1, 1), col = c("black", "blue"))
+```
+
+---
+
+## Rejection sampling example 5
+
+- We chose a proposal distribution analytically in the last example.
+- We probably wouldn't do that unless we were forced to.
+- Let's try something more realistic.
+
+**Proposal distribution**
+
+$G \sim \chi^2_2$ with bounding constant $M=2.4$ (chosen by trial and error).
+
+--- 
+
+We create the bounding function.
+
+```{r}
+gM <- function(theta) {
+	2.4 * dchisq(theta, df = 2)
+}
+```
+
+We compare the target density and bounding function.
+
+```{r}
+#| eval: false
+theta <- seq(0, 5, len = 10000)
+plot(theta, gM(theta), type = "l", col = "blue",
+     xlab = expression(theta), ylab = "", ylim = c(0, 1.25))
+lines(theta, qtarget(theta))
+legend("topright", legend = c("q", "gM"), lty = 1,
+       col = c("black", "blue"))
+```
+
+---
+
+```{r}
+#| echo: false
+theta <- seq(0, 5, len = 10000)
+plot(theta, gM(theta), type = "l", col = "blue",
+     xlab = expression(theta), ylab = "", ylim = c(0, 1.25))
+lines(theta, qtarget(theta))
+legend("topright", legend = c("q", "gM"), lty = 1,
+       col = c("black", "blue"))
+```
+
+---
+
+We implement our rejection sampling algorithm.
+
+```{r}
+B = 10000
+mytheta = numeric(B)
+i = 0
+while (i < B) {
+	x = rchisq(1, df = 2)
+	if (runif(1) <= qtarget(x)/gM(x)) {
+		i = i + 1
+		mytheta[i] = x
+	}
+}
+```
+
+---
+
+We compare our empirical density to the true density.
+
+```{r}
+#| eval: false
+hist(mytheta, freq = FALSE, breaks = 100, main = "")
+lines(theta, dens(theta), col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+       lwd = c(1, 1), col = c("black", "blue"))
+```
+
+---
+
+```{r}
+#| echo: false
+hist(mytheta, freq = FALSE, breaks = 100, main = "")
+lines(theta, dens(theta), col = "blue")
+legend("topright", legend = c("approximation", "truth"),
+       lwd = c(1, 1), col = c("black", "blue"))
+```
