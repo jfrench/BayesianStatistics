@@ -34,13 +34,13 @@ library(bayesplot)
 # equal to 312.5.
 
 # load data
-y <- matrix(c(
+reading <- matrix(c(
   59, 77, 43, 39, 34, 46, 32, 26, 42, 38, 38, 43, 55, 68,
   67, 86, 64, 77, 45, 60, 49, 50, 72, 59, 34, 38, 70, 48,
   34, 55, 50, 58, 41, 54, 52, 60, 60, 75, 34, 47, 28, 48,
   35, 33), ncol = 2, byrow = TRUE)
 # reformat
-y <- data.frame(pretest = y[,1], posttest = y[,2])
+reading <- data.frame(pretest = reading[,1], posttest = reading[,2])
 
 # Create model.  Notice the quotes
 reading_code <- "
@@ -73,7 +73,7 @@ generated quantities {
 
 L0 <- matrix(c(625, 312.5, 312.5, 625), nrow = 2)
 
-stan_dat <- list(n = 22, y = as.matrix(y),
+reading_data <- list(n = 22, y = as.matrix(reading),
                  mu0 = c(50, 50), k0 = 1, nu0 = 4, L0 = L0)
 
 # compile and save model if it doesn't already exist
@@ -84,10 +84,16 @@ if (!file.exists("stan/reading_mod.rda")) {
 }
 load(file = "stan/reading_mod.rda")
 
-# draw samples from the model
-reading_fit <- reading_mod$sample(data = stan_dat,
-  seed = 22, chains = 4, parallel_chains = 2,
-  iter_warmup = 5000, iter_sampling = 5000, refresh = 500)
+# Draw samples once and reuse the saved fit
+if (!file.exists("stan/reading_fit.rda")) {
+  reading_fit <- reading_mod$sample(data = reading_data,
+    seed = 18, chains = 4, parallel_chains = 2,
+    iter_warmup = 1000, iter_sampling = 1000, refresh = 500,
+    output_dir = "stan")
+  save(reading_fit, file = "stan/reading_fit.rda")
+}
+load("stan/reading_fit.rda")
+reading_draws <- reading_fit$draws(var = c("mu", "Sigma"))
 
 ### quantiles of mu from original example
 #           1%      25%      50%      75%      99%
@@ -107,13 +113,59 @@ summarize_draws(
 )
 
 # extract posterior samples as a matrix
-samples <- as_draws_matrix(
+reading_draws_matrix <- as_draws_matrix(
   reading_fit$draws(variables = c("mu", "ytilde")))
 
 # determine posterior probability that
 # post-instruction test score mean greater than pre-instruction test score mean
-mean(samples[, "mu[2]"] > samples[, "mu[1]"])
+mean(reading_draws_matrix[, "mu[2]"] > reading_draws_matrix[, "mu[1]"])
 
 # determine probability that post-instruction test score
 # greater than pre-instruction test score for new student
-mean(samples[, "ytilde[2]"] > samples[, "ytilde[1]"])
+mean(reading_draws_matrix[, "ytilde[2]"] > reading_draws_matrix[, "ytilde[1]"])
+
+# Reading comprehension: graphical diagnostics
+mcmc_trace(reading_draws, pars = c("mu[1]", "mu[2]"))
+mcmc_dens_overlay(reading_draws, pars = c("mu[1]", "mu[2]"))
+
+# Joint posterior: plot a subset to avoid overplotting
+reading_mu <- reading_fit$draws(variables = "mu", format = "matrix")
+set.seed(318)
+idx <- sample(seq_len(nrow(reading_mu)),
+              size = min(1000, nrow(reading_mu)))
+plot(reading_mu[idx, "mu[1]"], reading_mu[idx, "mu[2]"],
+     pch = 20, col = adjustcolor("black", alpha.f = 0.35),
+     xlab = expression(mu[1]), ylab = expression(mu[2]))
+
+# HMC/NUTS diagnostics
+reading_fit$diagnostic_summary()
+reading_fit$cmdstan_diagnose()
+
+np <- nuts_params(reading_fit)
+lp <- log_posterior(reading_fit)
+
+mcmc_nuts_divergence(np, lp)
+reading_fit$diagnostic_summary()$num_max_treedepth
+mcmc_nuts_treedepth(np, lp)
+mcmc_nuts_energy(np)
+
+mcmc_pairs(reading_fit$draws(variables = "mu", format = "array"),
+  pars = c("mu[1]", "mu[2]"), np = np)
+
+# Optional second fit with higher target acceptance probability
+if (!file.exists("stan/reading_fit2.rda")) {
+  reading_fit2 <- reading_mod$sample(
+    data = reading_data,
+    seed = 22,
+    chains = 4,
+    parallel_chains = 2,
+    iter_warmup = 5000,
+    iter_sampling = 5000,
+    adapt_delta = 0.95,
+    refresh = 500,
+    output_dir = "stan"
+  )
+  save(reading_fit2, file = "stan/reading_fit2.rda")
+}
+load("stan/reading_fit2.rda")
+reading_fit2$diagnostic_summary()
