@@ -1,233 +1,191 @@
-library(rstan)
+# Updated from the accompanying Bayesian linear regression Quarto presentation.
+# CmdStanR fits and CSV files are saved in stan/ for reuse between runs.
+library(cmdstanr)
+library(posterior)
+library(bayesplot)
 library(ggplot2)
-library(loo) # compute waic and looic
+dir.create("stan", showWarnings = FALSE)
 
-# Example:  Oxygen uptake (Kuehl 2000)
+library(loo)
 
-# Twelve healthy men who did not exercise regularly were recruited
-# to take part in a study of the effects of two different exercise
-# regimens on oxygen uptake.  Six of the twelve men were randomly
-# assigned to a 12-week flat-terrain running program, and the
-# remaining six were assigned to a 12-week step aerobics program.
-# The maximum oxygen uptake of each subject was measured
-# (in liters per minutes) while running on an inclined treadmill,
-
-# Let the aerobic group be group1 and the running group be group 2.
-
-# We will fit the parallel lines model to this data
-
-# Data distribution: y_i | beta, alpha, D, X ~ indep. N(mui, sigma^2)
-# where mui = beta0 + beta1 * x + alpha2 * D2, where D2 is an
-# indicator variable indicating whether an observation
-# comes from the running group.
-
-# Prior distributions:
-# beta0, beta1, alpha2 ~ N(0, 10000)
-# sigma^2 ~ Inv-Gamma(.01, .01)
-
-# The indicator variable is 1 if a person is in the running group, 0 otherwise
-D2 = c(0,0,0,0,0,0,1,1,1,1,1,1)
+# Oxygen uptake: observations
+D2 <- c(0,0,0,0,0,0,1,1,1,1,1,1)
 # The age of participant
-x = c(23,22,22,25,27,20,31,23,27,28,22,24)
+x <- c(23,22,22,25,27,20,31,23,27,28,22,24)
 
 # The change in maximal oxygen uptake
-y = c(-0.87,-10.74,-3.27,-1.97,7.50,-7.25,17.05,4.96,10.40,11.05,0.26,2.51)
+y <- c(-0.87,-10.74,-3.27,-1.97,7.50,-7.25,17.05,4.96,10.40,11.05,0.26,2.51)
 # number of observations
-n = length(y)
+n <- length(y)
 # sample variance of responses
-v = var(y)
+v <- var(y)
 
-# Create model.  Notice the quotes
-pl_mod = "
+# D2 = 1 for running, 0 for aerobic.
+oxygen_data <- list(n = length(y), y = y, x = x, d2 = as.numeric(D2),
+  v = var(y))
+
+# Oxygen: parallel-lines Stan program
+oxygen_pl_code <- "
 data {
-  int<lower=1> n;  // number of observations
-  vector[n] y;     // change in maximal oxygen uptake measurements
-  vector[n] x;     // vector of covariates
-  vector[n] d2;     // vector of indicators
-  real<lower=0> v; // sample variance of y
+  int<lower=1> n;
+  vector[n] y;
+  vector[n] x;
+  vector[n] d2;
+  real<lower=0> v;
 }
 parameters {
-  real<lower=0> sigmasq;
   real beta0;
   real beta1;
   real alpha2;
+  real<lower=0> sigmasq;
 }
 transformed parameters {
-  vector[n] mu;           // mean of observations
-  mu = beta0 + beta1*x + alpha2*d2;
-  //for(i in 1:n) mu[i] = beta0 + beta1*x[i] + alpha2*d2[i];
+  vector[n] mu = beta0 + beta1*x + alpha2*d2;
 }
 model {
-  // prior distributions
-  sigmasq ~ inv_gamma(.01, .01);
   beta0 ~ normal(0, 100);
   beta1 ~ normal(0, 100);
   alpha2 ~ normal(0, 100);
-  // data distribution
-  for(i in 1:n) y[i] ~ normal(mu[i], sqrt(sigmasq));
+  sigmasq ~ inv_gamma(0.01, 0.01);
+  y ~ normal(mu, sqrt(sigmasq));
 }
 generated quantities {
-  real Rbsq;              // goodness-of-fit
-  real log_lik[n];      // log likelihood of each observation
-  Rbsq = 1 - sigmasq/v;
+  real Rbsq = 1 - sigmasq / v;
+  real<lower=0,upper=1> R2 = variance(mu)/(variance(mu)+sigmasq);
+  vector[n] log_lik;
   for (i in 1:n) log_lik[i] = normal_lpdf(y[i] | mu[i], sqrt(sigmasq));
 }
 "
 
-# Specify the data in R, using a list
-# format compatible with Stan:
-dat = list(n = n, y = y, x = x, d2 = D2, v = v)
-
-# draw samples from the model
-if (!file.exists("oxygen_pl_mod.rda")) {
-  oxygen_pl_mod = stan_model(model_code = pl_mod)
-  save(oxygen_pl_mod, file = "oxygen_pl_mod.rda",
-       compress = "xz")
-}
-load("oxygen_pl_mod.rda")
-fit_oxygen_pl = sampling(oxygen_pl_mod, data = dat,
-                         iter = 5000,
-                         control = list(adapt_delta = 0.99),
-                         seed = 43)
-
-# check convergence with gelman-rubin statistics
-summary(fit_oxygen_pl)$summary[,"Rhat"]
-
-# check convergence with trace plots
-stan_trace(fit_oxygen_pl, c("beta0", "beta1", "alpha2", "sigmasq"))
-
-# summary of fitted values
-summary(fit_oxygen_pl)$summary[c("beta0", "beta1", "alpha2", "sigmasq"),]
-
-# posterior means
-summary(fit_oxygen_pl)$summary[c("beta0", "beta1", "alpha2", "sigmasq"),"mean"]
-
-# 95% central posterior intervals
-summary(fit_oxygen_pl)$summary[c("beta0", "beta1", "alpha2", "sigmasq"), c("2.5%", "97.5%")]
-
-# plot of densities
-stan_dens(fit_oxygen_pl, par = c("beta0", "beta1", "alpha2", "sigmasq"),
-          separate_chains = TRUE)
-
-# distribution of Rb^2
-stan_dens(fit_oxygen_pl, "Rbsq") + xlim(c(0.5, 1))
-
-# Plot with estimated regression lines (using means)
-plot(x, y, xlab = "Age", ylab = "Maximum Oxygen Uptake", pch = D2 + 1,
-	col = D2 + 3)
-legend("topleft", pch = c(1, 2), col = c("green", "blue"), legend =
-	c("aerobic", "running"))
-
-# determine means of posteriors
-pl_coef = summary(fit_oxygen_pl)$summary[c("beta0", "beta1", "alpha2"),"mean"]
-abline(pl_coef[1], pl_coef[2], col = "green")
-abline(pl_coef[1] + pl_coef[3], pl_coef[2], col = "blue")
-
-# Create model.  Notice the quotes
-sl_mod = "
+# Oxygen: separate-lines Stan program
+oxygen_sl_code <- "
 data {
-  int<lower=1> n;  // number of observations
-  vector[n] y;     // change in maximal oxygen uptake measurements
-  vector[n] x;     // vector of covariates
-  vector[n] d2;    // vector of indicators
-  real v;          // sample variance of y
+  int<lower=1> n;
+  vector[n] y;
+  vector[n] x;
+  vector[n] d2;
+  real<lower=0> v;
 }
 parameters {
-  real<lower=0> sigmasq;
   real beta0;
   real beta1;
   real alpha2;
   real delta2;
+  real<lower=0> sigmasq;
 }
-transformed parameters{
-  vector[n] mu;   // mean of data distribution
-  for (i in 1:n) {
-    mu[i] = beta0 + beta1*x[i] + alpha2*d2[i] + delta2*x[i]*d2[i];
-  }
+transformed parameters {
+  vector[n] mu = beta0 + beta1*x + alpha2*d2 + delta2*(x .* d2);
 }
 model {
-  // prior distributions
-  sigmasq ~ inv_gamma(.01, .01);
   beta0 ~ normal(0, 100);
   beta1 ~ normal(0, 100);
   alpha2 ~ normal(0, 100);
   delta2 ~ normal(0, 100);
-
-  //data distribution
-  for(i in 1:n) y[i] ~ normal(mu[i], sqrt(sigmasq));
+  sigmasq ~ inv_gamma(0.01, 0.01);
+  y ~ normal(mu, sqrt(sigmasq));
 }
 generated quantities {
-  real Rbsq;          // goodness-of-fit
-  vector[n] log_lik;  // log likelihood of data
-  Rbsq = 1 - sigmasq/v;
-  for (i in 1:n) log_lik[i] = normal_lpdf(y[i]|mu[i], sqrt(sigmasq));
+  real Rbsq = 1 - sigmasq / v;
+  real<lower=0,upper=1> R2 = variance(mu)/(variance(mu)+sigmasq);
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(y[i] | mu[i], sqrt(sigmasq));
 }
 "
 
-# draw samples from the model
-if (!file.exists("oxygen_sl_mod.rda")) {
-  oxygen_sl_mod = stan_model(model_code = sl_mod)
-  save(oxygen_sl_mod, file = "oxygen_sl_mod.rda",
-       compress = "xz")
+# Oxygen: compile both models
+if (!file.exists("stan/oxygen_pl_mod.rda")) {
+  stan_file <- write_stan_file(oxygen_pl_code, dir = "stan")
+  oxygen_pl_mod <- cmdstan_model(stan_file)
+  save(oxygen_pl_mod, file = "stan/oxygen_pl_mod.rda")
 }
-load("oxygen_sl_mod.rda")
-fit_oxygen_sl = sampling(oxygen_sl_mod, data = dat,
-                         iter = 5000,
-                         control = list(adapt_delta = 0.99),
-                         seed = 43)
+load("stan/oxygen_pl_mod.rda")
+if (!file.exists("stan/oxygen_sl_mod.rda")) {
+  stan_file <- write_stan_file(oxygen_sl_code, dir = "stan")
+  oxygen_sl_mod <- cmdstan_model(stan_file)
+  save(oxygen_sl_mod, file = "stan/oxygen_sl_mod.rda")
+}
+load("stan/oxygen_sl_mod.rda")
 
-# check convergence with gelman-rubin statistics
-summary(fit_oxygen_sl)$summary[,"Rhat"]
+# Oxygen: fit both models
+if (!file.exists("stan/oxygen_pl_fit.rda")) {
+  oxygen_pl_fit <- oxygen_pl_mod$sample(data = oxygen_data,
+    seed = 43, chains = 4, parallel_chains = 2,
+    iter_warmup = 2500, iter_sampling = 2500,
+    adapt_delta = 0.99, output_dir = "stan")
+  save(oxygen_pl_fit, file = "stan/oxygen_pl_fit.rda")
+}
+load("stan/oxygen_pl_fit.rda")
+if (!file.exists("stan/oxygen_sl_fit.rda")) {
+  oxygen_sl_fit <- oxygen_sl_mod$sample(data = oxygen_data,
+    seed = 43, chains = 4, parallel_chains = 2,
+    iter_warmup = 2500, iter_sampling = 2500,
+    adapt_delta = 0.99, output_dir = "stan")
+  save(oxygen_sl_fit, file = "stan/oxygen_sl_fit.rda")
+}
+load("stan/oxygen_sl_fit.rda")
 
-# check convergence with trace plots
-stan_trace(fit_oxygen_sl, c("beta0", "beta1", "alpha2", "delta2", "sigmasq"))
+# Oxygen: parallel-lines posterior summaries
+oxygen_pl_fit$summary(variables = c("beta0", "beta1", "alpha2", "sigmasq"))
 
-# summary of fitted values
-summary(fit_oxygen_sl)$summary[c("beta0", "beta1", "alpha2", "delta2", "sigmasq"),]
+# Oxygen: parallel-lines posterior densities
+bayesplot::mcmc_dens_overlay(
+  oxygen_pl_fit$draws(variables = c("beta0", "beta1", "alpha2", "sigmasq")))
 
-# posterior means
-pl_means = summary(fit_oxygen_sl)$summary[c("beta0", "beta1", "alpha2", "delta2", "sigmasq"),"mean"]
-print(pl_means, digits = 2)
+# Oxygen: fitted parallel lines
+pl_means <- oxygen_pl_fit$summary(variables = c("beta0", "beta1", "alpha2"))
+pl_b <- setNames(pl_means$mean, pl_means$variable)
+plot(x, y, pch = D2 + 1, xlab = "Age", ylab = "Change in oxygen uptake")
+legend("topleft", c("aerobic", "running"), pch = 1:2)
+abline(pl_b["beta0"], pl_b["beta1"], lty = 1)
+abline(pl_b["beta0"] + pl_b["alpha2"], pl_b["beta1"], lty = 2)
 
-# 95% central posterior intervals
-pl_cpi = summary(fit_oxygen_sl)$summary[c("beta0", "beta1", "alpha2", "delta2", "sigmasq"), c("2.5%", "97.5%")]
-print(pl_cpi, digits = 2)
+# Oxygen: separate-lines posterior summaries
+oxygen_sl_fit$summary(variables = c("beta0", "beta1", "alpha2", "delta2", "sigmasq"))
 
-# plot of densities
-stan_dens(fit_oxygen_sl, par = c("beta0", "beta1", "alpha2", "delta2", "sigmasq"),
-          separate_chains = TRUE)
+# Oxygen: separate-lines posterior densities
+bayesplot::mcmc_dens_overlay(
+  oxygen_sl_fit$draws(variables = c("beta0", "beta1", "alpha2", "delta2", "sigmasq")))
 
-# distribution of Rb^2
-stan_dens(fit_oxygen_sl, "Rbsq") + xlim(c(0.25, 1))
+# Oxygen: fitted separate lines
+sl_means <- oxygen_sl_fit$summary(variables = c("beta0", "beta1", "alpha2", "delta2"))
+sl_b <- setNames(sl_means$mean, sl_means$variable)
+plot(x, y, pch = D2 + 1, xlab = "Age", ylab = "Change in oxygen uptake")
+legend("topleft", c("aerobic", "running"), pch = 1:2)
+abline(sl_b["beta0"], sl_b["beta1"], lty = 1)
+abline(sl_b["beta0"] + sl_b["alpha2"], sl_b["beta1"] + sl_b["delta2"], lty = 2)
 
-# Plot with estimated regression lines (using means)
-plot(x, y, xlab = "Age", ylab = "Maximum Oxygen Uptake",
-     pch = D2 + 1, col = D2 + 3)
-legend("topleft", pch = c(1, 2), col = c("green", "blue"),
-       legend = c("aerobic", "running"))
+# Oxygen: posterior difference at age 25
+od <- posterior::as_draws_matrix(
+  oxygen_sl_fit$draws(variables = c("alpha2", "delta2")))
+contrast25 <- od[, "alpha2"] + 25 * od[, "delta2"]
+quantile(contrast25, c(0.025, 0.5, 0.975))
+mean(contrast25 > 0)
+# MCMC convergence and HMC/NUTS diagnostics
+oxygen_pl_fit$summary(variables = c("beta0", "beta1", "alpha2", "sigmasq"))
+bayesplot::mcmc_trace(oxygen_pl_fit$draws(variables = c("beta0", "beta1", "alpha2", "sigmasq")))
+bayesplot::mcmc_rank_hist(oxygen_pl_fit$draws(variables = c("beta0", "beta1", "alpha2", "sigmasq")))
+oxygen_pl_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+oxygen_pl_fit$cmdstan_diagnose()
 
-sl_coef = summary(fit_oxygen_sl)$summary[c("beta0", "beta1", "alpha2", "delta2"),"mean"]
-abline(sl_coef[1], sl_coef[2], col = "green")
-abline(sl_coef[1] + sl_coef[3], sl_coef[2] + sl_coef[4],
-       col = "blue")
+# MCMC convergence and HMC/NUTS diagnostics
+oxygen_sl_fit$summary(variables = c("beta0", "beta1", "alpha2", "delta2", "sigmasq"))
+bayesplot::mcmc_trace(oxygen_sl_fit$draws(variables = c("beta0", "beta1", "alpha2", "delta2", "sigmasq")))
+bayesplot::mcmc_rank_hist(oxygen_sl_fit$draws(variables = c("beta0", "beta1", "alpha2", "delta2", "sigmasq")))
+oxygen_sl_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+oxygen_sl_fit$cmdstan_diagnose()
 
-# extract log likelihoods
-ll_pl = extract_log_lik(fit_oxygen_pl, merge_chains = FALSE)
-ll_sl = extract_log_lik(fit_oxygen_sl, merge_chains = FALSE)
-
-# compute waic on both fitted models
-(waic_pl = waic(ll_pl))
-(waic_sl = waic(ll_sl))
-
-# compute relative efficiency of log likelihoods
-r_eff_pl = exp(relative_eff(ll_pl))
-r_eff_sl = exp(relative_eff(ll_sl))
-
-# compute looic for each model
-(looic_pl = loo(ll_pl,
-                 r_eff = r_eff_pl))
-(looic_sl = loo(ll_sl,
-                 r_eff = r_eff_sl))
-
-loo_compare(waic_pl, waic_sl)
-loo_compare(looic_pl, looic_sl)
+# WAIC and PSIS-LOO (requires pointwise log_lik in generated quantities)
+ll_pl <- oxygen_pl_fit$draws(variables = "log_lik", format = "array")
+ll_sl <- oxygen_sl_fit$draws(variables = "log_lik", format = "array")
+waic_pl <- loo::waic(ll_pl)
+waic_sl <- loo::waic(ll_sl)
+loo_pl <- oxygen_pl_fit$loo()
+loo_sl <- oxygen_sl_fit$loo()
+waic_pl
+waic_sl
+loo_pl
+loo_sl
+loo::loo_compare(loo_pl, loo_sl)
+loo::loo_compare(waic_pl, waic_sl)
+loo::pareto_k_table(loo_pl)
+loo::pareto_k_table(loo_sl)

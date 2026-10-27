@@ -1,48 +1,35 @@
-library(rstan)
+# Updated from the accompanying Bayesian linear regression Quarto presentation.
+# CmdStanR fits and CSV files are saved in stan/ for reuse between runs.
+library(cmdstanr)
+library(posterior)
+library(bayesplot)
 library(ggplot2)
+dir.create("stan", showWarnings = FALSE)
 
-# Example:  Evaluation of Tutors
-# Chapter 5 - Bayesian Modeling Using Winbugs by Ntzoufras
-#
-# The director of a private school wishes to employ a new
-# mathematics tutor.  For this reason, the ability of four
-# candidates is examined using a small study.  A group of 25
-# students was randomly divided into four classes (1 for each
-# tutor.  In all classes, the same mathematical topic
-# was taught for 2 hours per day for 1 week.
-# After completing the short course, all
-# students had to take the same test.  Their grades were
-# recorded and compared.  The administrator wishes to employ
-# the tutor whose students attained the higher performance
-# for the given test.
-#
-# Data distribution: y_jk ~ N(mu0 + alpha_j, sigmasq)
-# Prior distribution: mu0, alpha_j ~ N(0, 100^2)
-# sigmasq ~ Inv-Gamma(0.01,0.01).
-#
-# We will use indicator variables when tutor_fitting this model and
-# a corner constraint (alpha1 = 0) to tutor_fit this model.
-
-grades = c(84, 58, 100, 51, 28, 89,
+# Tutors: scores and group assignments
+grades <- c(84, 58, 100, 51, 28, 89,
 			97, 50, 76, 83, 45, 42, 83,
 			64, 47, 83, 81, 83, 34, 61,
 			77, 69, 94, 80, 55, 79)
 
-tutor = rep(1:4, times = c(6, 7, 7, 6))
+tutor <- rep(1:4, times = c(6, 7, 7, 6))
 
-# create indicator variables
-tutor2 = (tutor == 2) + 0
-tutor3 = (tutor == 3) + 0
-tutor4 = (tutor == 4) + 0
+tutor2 <- as.numeric(tutor == 2)
+tutor3 <- as.numeric(tutor == 3)
+tutor4 <- as.numeric(tutor == 4)
 
-# Create model.  Notice the quotes
-stanmod = "
+# Tutors: descriptive summaries
+tapply(grades, tutor, mean)
+boxplot(grades ~ tutor, xlab = "Tutor", ylab = "Test grade")
+
+# Tutors: Stan model
+tutor_code <- "
 data {
-  int<lower=1> n; // number of observations
-  vector[n] y; // data
-  vector[n] tutor2; //indicator for tutor 2
-  vector[n] tutor3; //indicator for tutor 3
-  vector[n] tutor4; //indicator for tutor 4
+  int<lower=1> n;
+  vector[n] y;
+  vector[n] tutor2;
+  vector[n] tutor3;
+  vector[n] tutor4;
 }
 parameters {
   real<lower=0> sigmasq;
@@ -52,85 +39,55 @@ parameters {
   real alpha4;
 }
 model {
-  // create mean vector for use in data distribution
-  vector[n] mu;
-
-  //specify priors
-  mu0 ~ normal(0.0, 100);
-  alpha2 ~ normal(0.0, 100);
-  alpha3 ~ normal(0.0, 100);
-  alpha4 ~ normal(0.0, 100);
+  vector[n] mu = mu0 + alpha2*tutor2 + alpha3*tutor3 + alpha4*tutor4;
+  mu0 ~ normal(0, 100);
+  alpha2 ~ normal(0, 100);
+  alpha3 ~ normal(0, 100);
+  alpha4 ~ normal(0, 100);
   sigmasq ~ inv_gamma(0.01, 0.01);
-
-  // compute mu.  This is not stored since it's declared
-  // in the model block
-  mu = mu0 + alpha2*tutor2 + alpha3*tutor3 + alpha4*tutor4;
-
-  // data distribution
-  for(i in 1:n){
-    y[i] ~ normal(mu[i], sqrt(sigmasq));
-  }
+  y ~ normal(mu, sqrt(sigmasq));
+}
+generated quantities {
+  vector[4] group_mean;
+  group_mean[1] = mu0;
+  group_mean[2] = mu0 + alpha2;
+  group_mean[3] = mu0 + alpha3;
+  group_mean[4] = mu0 + alpha4;
 }
 "
 
-stan_dat = list(n = length(grades), y = grades,
-                tutor2 = tutor2, tutor3 = tutor3,
-                tutor4 = tutor4)
-
-if (!file.exists("tutor_mod.rda")) {
-  # # tutor_fit = stan(model_code = stanmod, data = stan_dat, iter = 10000)
-  tutor_mod = stan_model(model_code = stanmod)
-  # save model
-  save(tutor_mod, file = "tutor_mod.rda", compress = "xz")
+# Tutors: compile and sample
+tutor_data <- list(n = length(grades), y = grades,
+  tutor2 = tutor2, tutor3 = tutor3, tutor4 = tutor4)
+if (!file.exists("stan/tutor_mod.rda")) {
+  stan_file <- write_stan_file(tutor_code, dir = "stan")
+  tutor_mod <- cmdstan_model(stan_file)
+  save(tutor_mod, file = "stan/tutor_mod.rda")
 }
-load(file = "tutor_mod.rda")
-# draw samples from the model
-tutor_fit = sampling(tutor_mod, data = stan_dat,
-                     iter = 10000)
+load("stan/tutor_mod.rda")
+if (!file.exists("stan/tutor_fit.rda")) {
+  tutor_fit <- tutor_mod$sample(data = tutor_data,
+    seed = 41, chains = 4, parallel_chains = 2,
+    iter_warmup = 2000, iter_sampling = 2000, output_dir = "stan")
+  save(tutor_fit, file = "stan/tutor_fit.rda")
+}
+load("stan/tutor_fit.rda")
 
-# alternative example with specified starting values
-# init_list = list(list(sigmasq = 1, mu0 = 9, alpha2 = 0, alpha3 = 9, alpha4 = 4),
-#                  list(sigmasq = 2, mu0 = 25, alpha2 = 1, alpha3 = -5, alpha4 = 1),
-#                  list(sigmasq = 3, mu0 = 50, alpha2 = 2, alpha3 = -19, alpha4 = 10),
-#                  list(sigmasq = 4, mu0 = 75, alpha2 = 3, alpha3 = -10, alpha4 = 7))
-#
-# tutor_fit = sampling(tutor_mod, data = stan_dat, iter = 10000, chains = 4,
-#                      init = init_list)
+# Tutors: posterior summaries
+tutor_fit$summary(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"))
 
-# summary of tutor_fitted values
-summary(tutor_fit)$summary
+# Tutors: posterior distributions of group means
+bayesplot::mcmc_dens_overlay(tutor_fit$draws(variables = "group_mean"))
 
-# check convergence with gelman-rubin statistics
-summary(tutor_fit)$summary[,"Rhat"]
-
-# plot of densities
-stan_dens(tutor_fit,
-          par = c("mu0", "alpha2", "alpha3", "alpha4"),
-          separate_chains = TRUE)
-
-# 95% central posterior intervals
-summary(tutor_fit)$summary[,c("2.5%", "97.5%")]
-
-# posterior means
-summary(tutor_fit)$summary[,"mean"]
-
-# get samples
-samples = rstan::extract(tutor_fit)
-# create data frame of sample of means for
-# each group
-df = data.frame(mean = c(samples$mu0,
-                samples$mu0 + samples$alpha2,
-                samples$mu0 + samples$alpha3,
-                samples$mu0 + samples$alpha4),
-                tutor = rep(c("tutor 1", "tutor 2",
-                              "tutor 3", "tutor 4"),
-                            each = length(samples$mu)))
-
-# parallel boxplots
-ggplot(df) + geom_boxplot(aes(y = mean, x = tutor))
-# parallel violin plots
-ggplot(df) + geom_violin(aes(y = mean, x = tutor))
-# overlaid density plots
-ggplot(df) + geom_density(aes(x = mean, fill = tutor),
-                          alpha = 0.4)
-
+# Tutors: calculate posterior probabilities
+gm <- posterior::as_draws_matrix(tutor_fit$draws(variables = "group_mean"))
+mean(gm[, "group_mean[4]"] > gm[, "group_mean[1]"])
+mean(gm[, "group_mean[4]"] > gm[, "group_mean[2]"])
+mean(gm[, "group_mean[4]"] > gm[, "group_mean[3]"])
+mean(max.col(gm, ties.method = "first") == 4)
+# MCMC convergence and HMC/NUTS diagnostics
+tutor_fit$summary(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"))
+bayesplot::mcmc_trace(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
+bayesplot::mcmc_rank_hist(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
+tutor_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+tutor_fit$cmdstan_diagnose()

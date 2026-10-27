@@ -1,30 +1,13 @@
-library(rstan)
+# Updated from the accompanying Bayesian linear regression Quarto presentation.
+# CmdStanR fits and CSV files are saved in stan/ for reuse between runs.
+library(cmdstanr)
+library(posterior)
 library(bayesplot)
+library(ggplot2)
+dir.create("stan", showWarnings = FALSE)
 
-# Example:  Soft drink delivery times (Chapter 5 of Bayesian
-# Modeling Using Winbugs by Ntzoufras
-#
-# We are interested in estimation of the required time
-# needed by each employee in a delivery system network to
-# refill an automatic vending machine.  For this reason, a
-# small quality assurance study was set up by an industrial
-# engineer of the company.  As the response variable, the
-# engineer considered the total service time (measured in
-# minutes) of each machine, including its stocking with
-# beverage products and any required maintenance or
-# housekeeping. After examining the problem, the industrial
-# engineer recommended two important variables that affect
-# delivery time:  the number of cases of stocked products
-# and the distance walked by the employee (measured in
-# feet).
-#
-# Data distribution: y_i ~ N(x_i^T*beta, 1/tau) for i = 1, 2, ..., n
-# Prior distributions:
-# beta_j ~ N(0, 10^4) (sigmasq = 10^4)
-# tau ~ Gamma(0.01,0.01).
-
-# load and format data set
-soda = matrix(c(
+# Soda: observed data
+soda <- matrix(c(
   16.68,	7,	560,
   11.5,	3,	220,
   12.03,	3,	340,
@@ -51,118 +34,97 @@ soda = matrix(c(
   19.83,	8,	635,
   10.75,	4,	150),
   ncol = 3, byrow = TRUE)
-soda = as.data.frame(soda)
-colnames(soda) = c("Time", "Cases", "Distance")
+soda <- as.data.frame(soda)
+colnames(soda) <- c("Time", "Cases", "Distance")
 
-# obtain the number of observations
-n = length(soda$Cases)
-# obtain the sample variance of the data
-v = var(soda$Time)
+X_soda <- cbind(1, soda$Cases, soda$Distance)
+n_soda <- nrow(soda)
+v_soda <- var(soda$Time)
 
-# Create model.  Notice the quotes
-stanmod = "
+# Soda: Stan program
+soda_code <- "
 data {
-  int<lower=1> n; // number of observations
-  vector[n] y; // data
-  vector[n] cases; //covariate
-  vector[n] dist; //covariate
-  real<lower=0> v; // sample variance of y
+  int<lower=1> n;
+  vector[n] y;
+  vector[n] cases;
+  vector[n] dist;
+  real<lower=0> v;
 }
 parameters {
-  real<lower=0> prec; // tau
   real beta0;
   real beta1;
   real beta2;
+  real<lower=0> prec;
 }
-transformed parameters{
-  real<lower=0> sigma; //get sigma from the precision
-  sigma = sqrt(1/prec);
+transformed parameters {
+  real<lower=0> sigma = inv_sqrt(prec);
 }
 model {
-  //specify priors
-  beta0 ~ normal(0.0, 100);
-  beta1 ~ normal(0.0, 100);
-  beta2 ~ normal(0.0, 100);
+  beta0 ~ normal(0, 100);
+  beta1 ~ normal(0, 100);
+  beta2 ~ normal(0, 100);
   prec ~ gamma(0.01, 0.01);
-
-  // data distribution
-  for(i in 1:n){
-    y[i] ~ normal(beta0 + beta1*cases[i] + beta2*dist[i], sigma);
-  }
+  y ~ normal(beta0 + beta1 * cases + beta2 * dist, sigma);
 }
 generated quantities {
-  real<lower=0> sigmasq; //get sigmasq from the precision
-  real Rbsq;
-  sigmasq = 1/prec;
-  Rbsq = 1 - sigmasq / v;
+  real<lower=0> sigmasq = 1 / prec;
+  real Rbsq = 1 - sigmasq / v;
+  vector[n] mu = beta0 + beta1 * cases + beta2 * dist;
+  real<lower=0,upper=1> R2 = variance(mu) / (variance(mu) + sigmasq);
+  vector[n] log_lik;
+  for (i in 1:n) log_lik[i] = normal_lpdf(y[i] | mu[i], sigma);
 }
 "
 
-stan_dat = list(n = n, y = soda$Time, cases = soda$Cases,
-                 dist = soda$Distance, v = v)
-
-# if compiled model doesn't already exist,
-# compile the model, sample from model,
-# returns object of class stan
-# save model
-if (!file.exists("soda_mod.rda")) {
-  soda_fit = stan(model_code = stanmod, data = stan_dat,
-                  iter = 10000, chains = 4)
-  # save(soda_fit, file = "soda_fit.rda", compress = "xz")
-  # load(file = "soda_fit.rda")
-  soda_mod = stan_model(model_code = stanmod)
-  # save model
-  save(soda_mod, file = "soda_mod.rda", compress = "xz")
+# Soda: compile and save model
+soda_data <- list(n = n_soda, y = soda$Time,
+  cases = soda$Cases, dist = soda$Distance, v = v_soda)
+if (!file.exists("stan/soda_mod.rda")) {
+  stan_file <- write_stan_file(soda_code, dir = "stan")
+  soda_mod <- cmdstan_model(stan_file)
+  save(soda_mod, file = "stan/soda_mod.rda")
 }
-load(file = "soda_mod.rda")
-# # draw samples from the model
-soda_fit = sampling(soda_mod, data = stan_dat,
-                    iter = 10000, chains = 4)
+load("stan/soda_mod.rda")
 
-# summary of soda_fitted values
-summary(soda_fit)$summary
-
-# plot of densities
-stan_dens(soda_fit,
-          par = c("beta0", "beta1", "beta2", "sigmasq"),
-          separate_chains = TRUE)
-
-# check convergence with gelman-rubin statistics
-summary(soda_fit)$summary[,"Rhat"]
-
-# 95% central posterior intervals
-summary(soda_fit)$summary[,c("2.5%", "97.5%")]
-
-# posterior means
-summary(soda_fit)$summary[,"mean"]
-
-# distribution of Rb^2
-stan_dens(soda_fit, "Rbsq")
-
-# how to draw from the predictive distribution of each
-# observation
-
-# extracting the MCMC samples from the soda_fit object
-samples = extract(soda_fit)
-ncycles = length(samples[[1]])
-# each row of yrep is a sample from the pp distribution
-yrep = matrix(0, ncol = nrow(soda), nrow = ncycles)
-for (i in seq_len(nrow(soda))) {
-  mui = samples$beta0 + samples$beta1 * soda$Cases[i] + samples$beta2 * soda$Distance[i]
-  yrep[, i] = rnorm(ncycles, mean = mui, sd = samples$sigma)
+# Soda: fit the regression
+if (!file.exists("stan/soda_fit.rda")) {
+  soda_fit <- soda_mod$sample(
+    data = soda_data, seed = 30, chains = 4,
+    parallel_chains = 2, iter_warmup = 2000,
+    iter_sampling = 2000, refresh = 500,
+    output_dir = "stan"
+  )
+  save(soda_fit, file = "stan/soda_fit.rda")
 }
+load("stan/soda_fit.rda")
 
-# approximate posterior predictive density for an observation
-# with the same covariates as observation 1
-plot(density(yrep[,1]))
+# Soda: posterior summaries
+soda_fit$summary(variables = c("beta0", "beta1", "beta2", "sigmasq"))
 
-# posterior predictive check
-y = soda$Time
-ppc_hist(y, yrep[sample(1:ncycles, 8),])
+# Soda: 95% central posterior intervals
+posterior::summarise_draws(
+  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")),
+  mean,
+  q2.5 = function(x) quantile(x, 0.025),
+  q97.5 = function(x) quantile(x, 0.975)
+)
 
-# scatterplot of y vs yrep
-ppc_scatter(y, yrep[10:18,])
+# Soda: posterior densities
+bayesplot::mcmc_dens_overlay(
+  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq"))
+)
 
-# scatterplot of y vs average yrep
-ppc_scatter_avg(y, yrep)
+# Soda: posterior probability of positive slopes
+soda_draws <- posterior::as_draws_matrix(
+  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "R2")))
+mean(soda_draws[, "beta1"] > 0)
+mean(soda_draws[, "beta2"] > 0)
 
+# Soda: posterior of Bayesian $R^2$
+bayesplot::mcmc_dens(soda_fit$draws(variables = "R2"))
+# MCMC convergence and HMC/NUTS diagnostics
+soda_fit$summary(variables = c("beta0", "beta1", "beta2", "sigmasq"))
+bayesplot::mcmc_trace(soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")))
+bayesplot::mcmc_rank_hist(soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")))
+soda_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+soda_fit$cmdstan_diagnose()

@@ -43,7 +43,7 @@ generated quantities {
 
 # Observed data and prior parameters
 y <- c(1.64, 1.70, 1.72, 1.74, 1.82, 1.82, 1.82, 1.90, 2.08)
-stan_dat <- list(n = length(y), y = y, mu0 = 1.9,
+midge_data <- list(n = length(y), y = y, mu0 = 1.9,
                  k0 = 1, nu0 = 1, sigma0 = 0.1)
 
 # compile if the saved model is missing.
@@ -56,7 +56,7 @@ load("stan/midge_mod.rda")
 
 # Draw samples (1000 warmup + 1000 retained draws per chain)
 midge_fit <- midge_mod$sample(
-  data = stan_dat, seed = 4, chains = 4, parallel_chains = 2,
+  data = midge_data, seed = 4, chains = 4, parallel_chains = 2,
   iter_warmup = 1000, iter_sampling = 1000, refresh = 500)
 
 # Posterior draws for model parameters
@@ -74,8 +74,7 @@ mcmc_acf(draws, pars = c("mu", "sigmasq"))
 # central 95% posterior interval from previous analysis
 # mu:      (1.727237, 1.900704)
 # sigmasq: (0.007488022, 0.047175081)
-summarize_draws(draws, lb = function(x) quantile(x, 0.025),
-                ub = function (x) quantile(x, 0.975))
+summarize_draws(draws, ~quantile2(.x, prob = c(.025, 0.975)))
 
 # Posterior predictive checks
 # Rows = posterior draws; columns = replicated observations.

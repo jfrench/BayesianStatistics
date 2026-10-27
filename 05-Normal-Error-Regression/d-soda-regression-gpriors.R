@@ -1,30 +1,15 @@
-library(rstan)
-library(dplyr)
-library(tidyr)
+# Updated from the accompanying Bayesian linear regression Quarto presentation.
+# CmdStanR fits and CSV files are saved in stan/ for reuse between runs.
+library(cmdstanr)
+library(posterior)
+library(bayesplot)
 library(ggplot2)
+dir.create("stan", showWarnings = FALSE)
 
-#Example:  Soft drink delivery times (Chapter 5 of Bayesian Modeling
-#Using Winbugs by Ntzoufras
-#
-#We are interested in estimation of the required time needed by
-#each employee in a delivery system network to refill an automatic
-#vending machine.  For this reason, a small quality assurance study
-#was set up by an industrial engineer of the company.  As the
-#response variable, the engineer considered the total service time
-#(measured in minutes) of each machine, including its stocking with
-#beverage products and any required maintenance or housekeeping.
-#After examining the problem, the industrial engineer recommended
-#two important variables that affect delivery time:  the number
-#of cases of stocked products and the distance walked by the
-#employee (measured in feet).
-#
-# Data distribution: y_i ~ N(x_i *beta, 1/tau).
-# Prior distributions:
-# beta ~ N(0, sigma^2 * c^2 * (X'X)^(-1))
-# tau ~ Gamma(0.01,0.01).
+library(tidyr)
 
-# load and format data set
-soda = matrix(c(
+# Soda: observed data
+soda <- matrix(c(
   16.68,	7,	560,
   11.5,	3,	220,
   12.03,	3,	340,
@@ -51,104 +36,101 @@ soda = matrix(c(
   19.83,	8,	635,
   10.75,	4,	150),
   ncol = 3, byrow = TRUE)
-soda = as.data.frame(soda)
-colnames(soda) = c("Time", "Cases", "Distance")
+soda <- as.data.frame(soda)
+colnames(soda) <- c("Time", "Cases", "Distance")
 
-# Create X matrix using explanatory variables
-X = cbind(1, soda$Cases, soda$Distance)
-# Determine number of observations
-n = length(soda$Cases)
-# Sample variance of responses
-v = var(soda$Time)
+X_soda <- cbind(1, soda$Cases, soda$Distance)
+n_soda <- nrow(soda)
+v_soda <- var(soda$Time)
 
-# Create model.  Notice the quotes
-mod = "
+# Soda $g$-prior: Stan model
+soda_g_code <- "
 data {
-  int<lower=1> n; // number of observations
-  vector[n] y; // data
-  matrix[n, 3] X; //covariates
-  vector[3] mu0; //prior mean for beta
-  cov_matrix[3] V; //V part of Zellner's g-prior
-  real<lower=0> csq; //constant for Zellner's g-prior
-  real<lower=0> v; //sample variance
+  int<lower=1> n;
+  vector[n] y;
+  matrix[n,3] X;
+  vector[3] mu0;
+  cov_matrix[3] V;
+  real<lower=0> g;
+  real<lower=0> v;
 }
 parameters {
-  real<lower=0> prec;
   vector[3] beta;
+  real<lower=0> prec;
 }
-transformed parameters{
-  real<lower=0> sigmasq; //get sigmasq from the precision
-  sigmasq = 1/prec;
+transformed parameters {
+  real<lower=0> sigmasq = 1 / prec;
 }
 model {
-  vector[n] mu;  // mean of responses.  Temporary
-  mu = X * beta;
-
-  // prior distributions
-  beta ~ multi_normal(mu0, sigmasq*csq*V);
+  beta ~ multi_normal(mu0, sigmasq * g * V);
   prec ~ gamma(0.01, 0.01);
-  // data distribution
-  for(i in 1:n) y[i] ~ normal(mu[i], sqrt(sigmasq));
+  y ~ normal(X * beta, sqrt(sigmasq));
 }
 generated quantities {
-  real Rbsq;
-  Rbsq = 1 - sigmasq / v;
+  real Rbsq = 1 - sigmasq / v;
+  vector[n] mu = X * beta;
+  real<lower=0,upper=1> R2 = variance(mu) / (variance(mu) + sigmasq);
 }
 "
 
-dat1 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
-             V = solve(crossprod(X)), v = v, csq = n)
-
-dat2 = list(n = n, y = soda$Time, X = X, mu0 = c(0, 0, 0),
-            V = solve(crossprod(X)), v = v, csq = 100^2)
-
-if (!file.exists("soda_gprior_mod.rda")) {
-  # fit models using stan with for both g-priors
-  soda_fit1 = stan(model_code = mod, data = dat1,
-              iter = 10000, seed = 30)
-  soda_fit2 = stan(model_code = mod, data = dat2,
-               iter = 10000, seed = 31)
-  # compile model
-  soda_gprior_mod = stan_model(model_code = mod)
-  # save model
-  save(soda_gprior_mod, file = "soda_gprior_mod.rda",
-       compress = "xz")
+# Soda $g$-prior: compile once
+if (!file.exists("stan/soda_g_mod.rda")) {
+  stan_file <- write_stan_file(soda_g_code, dir = "stan")
+  soda_g_mod <- cmdstan_model(stan_file)
+  save(soda_g_mod, file = "stan/soda_g_mod.rda")
 }
-load(file = "soda_gprior_mod.rda")
-# draw samples from the model
-soda_gprior_fit1 = sampling(soda_gprior_mod, data = dat1,
-                            iter = 10000, seed = 30)
-soda_gprior_fit2 = sampling(soda_gprior_mod, data = dat2,
-                            iter = 10000, seed = 31)
+load("stan/soda_g_mod.rda")
+soda_g_data <- list(n = n_soda, y = soda$Time,
+  X = X_soda, mu0 = rep(0, 3),
+  V = solve(crossprod(X_soda)), v = v_soda, g = n_soda)
 
-# combine results into a data frame
-fits = rbind(cbind(as.data.frame(soda_gprior_fit1),
-                   model = "model1"),
-             cbind(as.data.frame(soda_gprior_fit2),
-                   model = "model2"))
+# Soda: fit both $g$-priors
+if (!file.exists("stan/soda_g1_fit.rda")) {
+  soda_g_data$g <- n_soda
+  soda_g1_fit <- soda_g_mod$sample(data = soda_g_data,
+    seed = 30, chains = 4, parallel_chains = 2,
+    iter_warmup = 2000, iter_sampling = 2000,
+    output_dir = "stan")
+  save(soda_g1_fit, file = "stan/soda_g1_fit.rda")
+}
+load("stan/soda_g1_fit.rda")
+if (!file.exists("stan/soda_g2_fit.rda")) {
+  soda_g_data$g <- 100^2
+  soda_g2_fit <- soda_g_mod$sample(data = soda_g_data,
+    seed = 31, chains = 4, parallel_chains = 2,
+    iter_warmup = 2000, iter_sampling = 2000,
+    output_dir = "stan")
+  save(soda_g2_fit, file = "stan/soda_g2_fit.rda")
+}
+load("stan/soda_g2_fit.rda")
 
-# restructure data frame for plotting
-df = tidyr::pivot_longer(
-  data = fits,
-  cols = c("beta[1]", "beta[2]", "beta[3]"),
-  names_to = "parameter"
-)
+# Soda: compare $g$-prior posterior summaries
+soda_g1_fit$summary(variables = c("beta", "sigmasq"))
+soda_g2_fit$summary(variables = c("beta", "sigmasq"))
 
-# check convergence with gelman-rubin statistics
-summary(soda_gprior_fit1)$summary[,"Rhat"]
-summary(soda_gprior_fit2)$summary[,"Rhat"]
+# Soda: compare $g$-prior densities
+g1 <- as.data.frame(posterior::as_draws_matrix(
+  soda_g1_fit$draws(variables = "beta")))
+g2 <- as.data.frame(posterior::as_draws_matrix(
+  soda_g2_fit$draws(variables = "beta")))
+g1$prior <- "g = n"
+g2$prior <- "g = 100^2"
+g_betas <- rbind(g1, g2)
+g_long <- tidyr::pivot_longer(g_betas, cols = starts_with("beta"),
+  names_to = "parameter", values_to = "value")
+ggplot(g_long, aes(value, fill = prior)) +
+  geom_density(alpha = 0.4) +
+  facet_wrap(~parameter, scales = "free") + theme_bw()
+# MCMC convergence and HMC/NUTS diagnostics
+soda_g1_fit$summary(variables = c("beta", "sigmasq"))
+bayesplot::mcmc_trace(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
+bayesplot::mcmc_rank_hist(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
+soda_g1_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+soda_g1_fit$cmdstan_diagnose()
 
-# density plots of betas
-ggplot(df, aes(x = value)) + geom_density(aes(fill = model), alpha = 0.4) +
-  facet_wrap(~ parameter, scales = "free") + theme_bw()
-
-# 95% central posterior intervals and means
-summarize(group_by(df, parameter, model),
-          mean = mean(value),
-          l = quantile(value, prob = 0.025),
-          u = quantile(value, prob = 0.975)
-          )
-
-# comparison of Rbsq
-ggplot(fits, aes(x = Rbsq)) + theme_bw() +
-  geom_density(aes(fill = model), alpha = 0.4)
+# MCMC convergence and HMC/NUTS diagnostics
+soda_g2_fit$summary(variables = c("beta", "sigmasq"))
+bayesplot::mcmc_trace(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
+bayesplot::mcmc_rank_hist(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
+soda_g2_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+soda_g2_fit$cmdstan_diagnose()

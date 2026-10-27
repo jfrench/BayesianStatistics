@@ -85,6 +85,9 @@ qt(c(0.05, 0.95), df = n - 1) * s / sqrt(n) + m
 # Quantiles of Inv-Chisq(n-1, s^2): (n-1)*s^2 / chi-square quantiles
 (n - 1) * s^2 / qchisq(c(0.95, 0.05), df = n - 1)
 
+# 90% central posterior intervals
+summarize_draws(draws, ~quantile2(.x, probs = c(0.05, 0.95)))
+
 # Posterior predictive checks
 # Convert generated yrep variables into a draws-by-observations matrix.
 yrep <- as_draws_matrix(sol_fit$draws(variables = "yrep"))

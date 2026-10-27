@@ -18,7 +18,7 @@ library(posterior)
 # Prior: theta ~ Beta(1, 1)
 # Posterior: Beta(y + 1, n - y + 1) = Beta(438, 544)
 
-# Create model.  Notice the quotes
+# Create program.  Notice the quotes
 birth_code <- "
 data {
   int<lower=1> n; // number of births
@@ -40,7 +40,7 @@ generated quantities{
 "
 
 # Specify the data in R in Stan format
-stan_dat <- list(n = 980, y = 437, alpha = 1, beta = 1)
+birth_data <- list(n = 980, y = 437, alpha = 1, beta = 1)
 
 # compile and save model if it doesn't already exist
 if (!file.exists("stan/birth_mod.rda")) {
@@ -54,24 +54,28 @@ if (!file.exists("stan/birth_mod.rda")) {
 load(file = "stan/birth_mod.rda")
 
 # draw samples from the model
-birth_sample <-
-  birth_mod$sample(data = stan_dat, seed = 18, chains = 4,
+birth_fit <-
+  birth_mod$sample(data = birth_data, seed = 18, chains = 4,
     parallel_chains = 2, iter_warmup = 1000,
     iter_sampling = 1000, refresh = 500)
 
 # extract posterior draws in data.frame format
-draws <- birth_sample$draws(var = c("theta", "ytilde"))
+draws <- birth_fit$draws(var = c("theta", "ytilde"))
 
 # summarize posterior draws
 summarize_draws(draws)
 
 # trace plot
 mcmc_trace(draws, pars = c("theta"))
+# rank plot
+mcmc_rank_hist(draws, pars = "theta")
 # central posterior interval (median shown as point, by default)
 mcmc_intervals(draws, pars = "theta")
 # area plot of each parameter (shows 50% credible interval by default)
 mcmc_areas(draws, pars = c("theta"))
 mcmc_areas(draws, pars = c("ytilde"))
+# correct but broken plot
+# mcmc_areas(draws, pars = c("theta", "ytilde"))
 # histogram
 mcmc_hist(draws, pars = c("theta", "ytilde"))
 # histogram by chain
