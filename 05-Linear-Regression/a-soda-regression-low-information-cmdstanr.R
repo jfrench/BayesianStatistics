@@ -67,7 +67,6 @@ model {
 }
 generated quantities {
   real<lower=0> sigmasq = 1 / prec;
-  real Rbsq = 1 - sigmasq / v;
   vector[n] mu = beta0 + beta1 * cases + beta2 * dist;
   real<lower=0,upper=1> R2 = variance(mu) / (variance(mu) + sigmasq);
   vector[n] log_lik;
@@ -97,34 +96,22 @@ if (!file.exists("stan/soda_fit.rda")) {
 }
 load("stan/soda_fit.rda")
 
-# Soda: posterior summaries
-soda_fit$summary(variables = c("beta0", "beta1", "beta2", "sigmasq"))
+soda_draws <- soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq"))
 
-# Soda: 95% central posterior intervals
-posterior::summarise_draws(
-  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")),
-  mean,
-  q2.5 = function(x) quantile(x, 0.025),
-  q97.5 = function(x) quantile(x, 0.975)
-)
+# posterior summary and convergence diagnostics
+summarize_draws(soda_draws)
 
-# Soda: posterior densities
-bayesplot::mcmc_dens_overlay(
-  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq"))
-)
+# posterior densities
+mcmc_dens_overlay(soda_draws)
 
 # Soda: posterior probability of positive slopes
-soda_draws <- posterior::as_draws_matrix(
-  soda_fit$draws(variables = c("beta0", "beta1", "beta2", "R2")))
-mean(soda_draws[, "beta1"] > 0)
-mean(soda_draws[, "beta2"] > 0)
+soda_draws_matrix <- as_draws_matrix(soda_draws)
+mean(soda_draws_matrix[, "beta1"] > 0)
+mean(soda_draws_matrix[, "beta2"] > 0)
 
-# Soda: posterior of Bayesian $R^2$
-bayesplot::mcmc_dens(soda_fit$draws(variables = "R2"))
+# Soda: posterior of Bayesian R-squared
+mcmc_dens(soda_fit$draws(variables = "R2"))
 
 # MCMC convergence and HMC/NUTS diagnostics
-soda_fit$summary(variables = c("beta0", "beta1", "beta2", "sigmasq"))
-mcmc_trace(soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")))
-mcmc_rank_hist(soda_fit$draws(variables = c("beta0", "beta1", "beta2", "sigmasq")))
+mcmc_rank_hist(soda_draws)
 soda_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
-soda_fit$cmdstan_diagnose()

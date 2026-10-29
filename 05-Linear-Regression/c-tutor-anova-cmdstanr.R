@@ -73,20 +73,24 @@ if (!file.exists("stan/tutor_fit.rda")) {
 load("stan/tutor_fit.rda")
 
 # Tutors: posterior summaries
-tutor_fit$summary(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"))
+tutor_fit$summary(
+  var = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"),
+  default_summary_measures())
 
 # Tutors: posterior distributions of group means
-bayesplot::mcmc_dens_overlay(tutor_fit$draws(variables = "group_mean"))
+mcmc_dens_overlay(tutor_fit$draws(variables = "group_mean"))
 
 # Tutors: calculate posterior probabilities
-gm <- posterior::as_draws_matrix(tutor_fit$draws(variables = "group_mean"))
+gm <- as_draws_matrix(tutor_fit$draws(variables = "group_mean"))
 mean(gm[, "group_mean[4]"] > gm[, "group_mean[1]"])
 mean(gm[, "group_mean[4]"] > gm[, "group_mean[2]"])
 mean(gm[, "group_mean[4]"] > gm[, "group_mean[3]"])
 mean(max.col(gm, ties.method = "first") == 4)
+
 # MCMC convergence and HMC/NUTS diagnostics
-tutor_fit$summary(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"))
-bayesplot::mcmc_trace(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
-bayesplot::mcmc_rank_hist(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
-tutor_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
-tutor_fit$cmdstan_diagnose()
+tutor_fit$summary(
+  variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq"),
+  default_convergence_measures())
+mcmc_trace(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
+mcmc_rank_hist(tutor_fit$draws(variables = c("mu0", "alpha2", "alpha3", "alpha4", "sigmasq")))
+tutor_fit$diagnostic_summary()

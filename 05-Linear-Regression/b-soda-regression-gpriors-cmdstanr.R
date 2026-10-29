@@ -65,7 +65,6 @@ model {
   y ~ normal(X * beta, sqrt(sigmasq));
 }
 generated quantities {
-  real Rbsq = 1 - sigmasq / v;
   vector[n] mu = X * beta;
   real<lower=0,upper=1> R2 = variance(mu) / (variance(mu) + sigmasq);
 }
@@ -103,8 +102,12 @@ if (!file.exists("stan/soda_g2_fit.rda")) {
 load("stan/soda_g2_fit.rda")
 
 # Soda: compare $g$-prior posterior summaries
-soda_g1_fit$summary(variables = c("beta", "sigmasq"))
-soda_g2_fit$summary(variables = c("beta", "sigmasq"))
+soda_g1_fit$summary(
+  variables = c("beta", "sigmasq"),
+  default_summary_measures())
+soda_g2_fit$summary(
+  variables = c("beta", "sigmasq"),
+  default_summary_measures())
 
 # Soda: compare $g$-prior densities
 g1 <- as.data.frame(posterior::as_draws_matrix(
@@ -119,16 +122,17 @@ g_long <- tidyr::pivot_longer(g_betas, cols = starts_with("beta"),
 ggplot(g_long, aes(value, fill = prior)) +
   geom_density(alpha = 0.4) +
   facet_wrap(~parameter, scales = "free") + theme_bw()
-# MCMC convergence and HMC/NUTS diagnostics
-soda_g1_fit$summary(variables = c("beta", "sigmasq"))
-bayesplot::mcmc_trace(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
-bayesplot::mcmc_rank_hist(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
-soda_g1_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
-soda_g1_fit$cmdstan_diagnose()
 
 # MCMC convergence and HMC/NUTS diagnostics
-soda_g2_fit$summary(variables = c("beta", "sigmasq"))
-bayesplot::mcmc_trace(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
-bayesplot::mcmc_rank_hist(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
+soda_g1_fit$summary(variables = c("beta", "sigmasq"),
+                    default_convergence_measures())
+mcmc_trace(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
+mcmc_rank_hist(soda_g1_fit$draws(variables = c("beta", "sigmasq")))
+soda_g1_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
+
+# MCMC convergence and HMC/NUTS diagnostics
+soda_g2_fit$summary(variables = c("beta", "sigmasq"),
+                    default_convergence_measures())
+mcmc_trace(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
+mcmc_rank_hist(soda_g2_fit$draws(variables = c("beta", "sigmasq")))
 soda_g2_fit$diagnostic_summary()  # divergences, maximum treedepth, E-BFMI
-soda_g2_fit$cmdstan_diagnose()
