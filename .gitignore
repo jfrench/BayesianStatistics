@@ -6,6 +6,7 @@
 *.docx
 *.html
 *.pdf
+*.csv
 /lectures/old
 /lectures/old/*
 /lectures/media/
